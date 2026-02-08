@@ -1,27 +1,50 @@
-// import { NextResponse } from "next/server";
-// import type { NextRequest } from "next/server";
+// middleware.ts
+import { withAuth } from 'next-auth/middleware';
+import { NextResponse } from 'next/server';
 
-// export function middleware(request: NextRequest) {
-//   const pathname = request.nextUrl.pathname;
+export default withAuth(
+  function middleware(req) {
+    // Allow authenticated requests through
+    return NextResponse.next();
+  },
+  {
+    callbacks: {
+      authorized: ({ token, req }) => {
+        const pathname = req.nextUrl.pathname;
 
-//   console.log('Request URL:', request.url);
+        // Public routes that don't require authentication
+        const publicRoutes = [
+          '/user/login',
+          '/user/register',
+          '/auth/error',
+          '/invite',
+          '/',
+        ];
 
-//   if (pathname.startsWith("/home") || pathname.startsWith("/dashboard")) {
-//     const token =
-//       request.cookies.get("next-auth.session-token") ||
-//       request.cookies.get("__Secure-next-auth.session-token");
+        // Check if current path is a public route
+        const isPublicRoute = publicRoutes.some(route =>
+          pathname === route || pathname.startsWith(`${route}/`)
+        );
 
-//     console.log('Token:', token);
+        // Allow public routes without token
+        if (isPublicRoute) {
+          return true;
+        }
 
-//     if (!token) {
-//       console.log('No token found, redirecting to login');
-//       return NextResponse.redirect(new URL("/user/login", request.url));
-//     }
-//   }
+        // Require token for protected routes
+        return !!token;
+      },
+    },
+    pages: {
+      signIn: '/user/login',
+      error: '/auth/error',
+    },
+  }
+);
 
-//   return NextResponse.next();
-// }
-
-// export const config = {
-//   matcher: ["/home/:path*", "/dashboard/:path*"],
-// };
+export const config = {
+  matcher: [
+    // Match all paths except static files and api routes
+    '/((?!api|_next/static|_next/image|favicon.ico|.*\\.png$|.*\\.svg$).*)',
+  ],
+};

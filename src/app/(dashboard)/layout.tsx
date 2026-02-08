@@ -2,6 +2,7 @@
 import { ReactNode } from "react";
 import { Open_Sans } from 'next/font/google';
 import { NextAuthProvider } from '@/providers/NextAuthProvider';
+import { OrganizationProvider } from '@/contexts/OrganizationContext';
 import { AppSidebar } from "@/components/sub/navbars/app-sidebar";
 import {
   Breadcrumb,
@@ -21,7 +22,7 @@ import { SiteHeader } from '@/components/main/site-header';
 import { ToastProvider } from "@/components/ui/toast-provider";
 
 // Initialize Open Sans font
-const openSans = Open_Sans({ 
+const openSans = Open_Sans({
   subsets: ['latin'],
   weight: ['300', '400', '500', '600', '700'],
   display: 'swap',
@@ -35,19 +36,21 @@ interface DashboardLayoutProps {
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <NextAuthProvider>
-      <ToastProvider>
-        <SidebarProvider>
-          <AppSidebar variant="inset" />
-          <SidebarInset>
-            <SiteHeader />
-            <div className="flex flex-1 flex-col">
-              <div className="@container/main  p-3">
-                {children}
+      <OrganizationProvider>
+        <ToastProvider>
+          <SidebarProvider>
+            <AppSidebar variant="inset" />
+            <SidebarInset>
+              <SiteHeader />
+              <div className="flex flex-1 flex-col">
+                <div className="@container/main p-4 md:p-6">
+                  {children}
+                </div>
               </div>
-            </div>
-          </SidebarInset>
-        </SidebarProvider>
-      </ToastProvider>
+            </SidebarInset>
+          </SidebarProvider>
+        </ToastProvider>
+      </OrganizationProvider>
     </NextAuthProvider>
   );
 }

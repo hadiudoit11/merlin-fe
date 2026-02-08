@@ -1,48 +1,23 @@
 "use client";
 
-import { SectionCards } from '@/components/sub/analytics/section-cards';
-import { ChartAreaInteractive } from '@/components/sub/analytics/chart-area-interactive';
-import { DataTable } from '@/components/sub/analytics/data-table';
-import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import { Loader2 } from "lucide-react";
 
-// Sample data for the DataTable
-const data = [
-  // Your data here
-];
-
+// Redirect home to canvas - canvas is now the main working area
 export default function HomePage() {
-  const { data: session, status } = useSession();
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (status === 'loading') return;
-    setIsLoading(false);
-    
-    if (!session || session?.error === 'RefreshAccessTokenError') {
-      router.push('/user/login');
-      return;
-    }
-    
-    if (!session?.user.organization) {
-      router.push('/onboarding');
-      return;
-    }
-  }, [session, status, router]);
-
-  if (status === 'loading' || isLoading) {
-    return <div className="text-text-primary">Loading...</div>;
-  }
+    router.replace('/canvas');
+  }, [router]);
 
   return (
-    <div className="flex flex-col md:gap-6 md:py-6">
-      <SectionCards />
-      <div className="px-4 lg:px-6">
-        <ChartAreaInteractive />
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="flex flex-col items-center gap-3">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <span className="text-sm text-muted-foreground">Redirecting to canvas...</span>
       </div>
-      <DataTable data={data} />
     </div>
   );
 }

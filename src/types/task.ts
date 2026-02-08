@@ -1,0 +1,142 @@
+/**
+ * Task types matching the Merlin backend Task model.
+ */
+
+export type TaskStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
+export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
+export type TaskSource = 'manual' | 'zoom' | 'slack' | 'calendar' | 'email' | 'jira' | 'ai_extracted';
+
+export interface LinkedNode {
+  id: number;
+  name: string;
+  node_type: string;
+}
+
+export interface Task {
+  id: number;
+  title: string;
+  description: string | null;
+  assignee_name: string | null;
+  assignee_email: string | null;
+  due_date: string | null;
+  due_date_text: string | null;
+  status: TaskStatus;
+  priority: TaskPriority;
+  source: TaskSource;
+  source_id: string | null;
+  source_url: string | null;
+  context: string | null;
+  canvas_id: number | null;
+  tags: string[];
+  is_overdue: boolean;
+  linked_nodes: LinkedNode[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TaskCreate {
+  title: string;
+  description?: string;
+  assignee_name?: string;
+  assignee_email?: string;
+  due_date?: string;
+  due_date_text?: string;
+  priority?: TaskPriority;
+  canvas_id?: number;
+  tags?: string[];
+}
+
+export interface TaskUpdate {
+  title?: string;
+  description?: string;
+  assignee_name?: string;
+  assignee_email?: string;
+  due_date?: string;
+  due_date_text?: string;
+  status?: TaskStatus;
+  priority?: TaskPriority;
+  canvas_id?: number;
+  tags?: string[];
+}
+
+export interface TaskListResponse {
+  tasks: Task[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
+export interface TaskStats {
+  total: number;
+  pending: number;
+  in_progress: number;
+  completed: number;
+  overdue: number;
+}
+
+export interface TaskFilters {
+  status?: TaskStatus;
+  priority?: TaskPriority;
+  source?: TaskSource;
+  canvas_id?: number;
+  assignee_email?: string;
+  overdue?: boolean;
+  page?: number;
+  page_size?: number;
+}
+
+// For Kanban board columns
+export interface TasksByStatus {
+  pending: Task[];
+  in_progress: Task[];
+  completed: Task[];
+  cancelled: Task[];
+}
+
+export const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
+  pending: 'To Do',
+  in_progress: 'In Progress',
+  completed: 'Done',
+  cancelled: 'Cancelled',
+};
+
+export const TASK_PRIORITY_LABELS: Record<TaskPriority, string> = {
+  low: 'Low',
+  medium: 'Medium',
+  high: 'High',
+  urgent: 'Urgent',
+};
+
+export const TASK_PRIORITY_COLORS: Record<TaskPriority, string> = {
+  low: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300',
+  medium: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
+  high: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300',
+  urgent: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
+};
+
+export const TASK_STATUS_COLORS: Record<TaskStatus, string> = {
+  pending: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300',
+  in_progress: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
+  completed: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
+  cancelled: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
+};
+
+export const TASK_SOURCE_LABELS: Record<TaskSource, string> = {
+  manual: 'Manual',
+  zoom: 'Zoom',
+  slack: 'Slack',
+  calendar: 'Calendar',
+  email: 'Email',
+  jira: 'Jira',
+  ai_extracted: 'AI Extracted',
+};
+
+// Helper to group tasks by status for Kanban view
+export function groupTasksByStatus(tasks: Task[]): TasksByStatus {
+  return {
+    pending: tasks.filter(t => t.status === 'pending'),
+    in_progress: tasks.filter(t => t.status === 'in_progress'),
+    completed: tasks.filter(t => t.status === 'completed'),
+    cancelled: tasks.filter(t => t.status === 'cancelled'),
+  };
+}

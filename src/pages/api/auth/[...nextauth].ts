@@ -1,8 +1,16 @@
 // src/pages/api/auth/[...nextauth].ts
 
-import NextAuth, { NextAuthOptions, Session } from 'next-auth';
+import NextAuth, { NextAuthOptions, Session, Account } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import { JWT, User } from 'next-auth';
+import Auth0Provider from 'next-auth/providers/auth0';
+import { JWT } from 'next-auth/jwt';
+
+// Check if Auth0 is configured
+const isAuth0Configured = !!(
+  process.env.AUTH0_CLIENT_ID &&
+  process.env.AUTH0_CLIENT_SECRET &&
+  process.env.AUTH0_ISSUER
+);
 
 export async function refreshAccessToken(token: JWT): Promise<JWT> {
   try {
@@ -18,7 +26,6 @@ export async function refreshAccessToken(token: JWT): Promise<JWT> {
     });
 
     const refreshedTokens = await response.json();
-    console.log(`Refreshed Tokens: ${JSON.stringify(refreshedTokens)}`);
 
     if (!response.ok) {
       throw new Error('Failed to refresh token');
@@ -39,75 +46,120 @@ export async function refreshAccessToken(token: JWT): Promise<JWT> {
   }
 }
 
+// Build providers list
+const providers = [];
+
+// Add Auth0 provider if configured (primary auth method)
+if (isAuth0Configured) {
+  providers.push(
+    Auth0Provider({
+      clientId: process.env.AUTH0_CLIENT_ID!,
+      clientSecret: process.env.AUTH0_CLIENT_SECRET!,
+      issuer: process.env.AUTH0_ISSUER!,
+      authorization: {
+        params: {
+          audience: process.env.AUTH0_AUDIENCE,
+          scope: 'openid profile email',
+        },
+      },
+    })
+  );
+}
+
+// Add credentials provider for legacy/fallback auth
+providers.push(
+  CredentialsProvider({
+    name: 'Credentials',
+    credentials: {
+      email: { label: 'Email', type: 'text' },
+      password: { label: 'Password', type: 'password' },
+    },
+    authorize: async (credentials) => {
+      const backendURL = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL;
+      const res = await fetch(`${backendURL}/api/v1/auth/login/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(credentials),
+      });
+
+      const user = await res.json();
+
+      if (res.ok && user) {
+        return {
+          ...user,
+          organization: user.organization,
+          organization_name: user.organization_name,
+        };
+      } else {
+        return null;
+      }
+    },
+  })
+);
+
 export const authOptions: NextAuthOptions = {
-  providers: [
-    CredentialsProvider({
-      name: 'Credentials',
-      credentials: {
-        email: { label: 'Email', type: 'text' },
-        password: { label: 'Password', type: 'password' },
-      },
-      authorize: async (credentials) => {
-        const backendURL = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL;
-        const res = await fetch(`${backendURL}/api/v1/auth/login/`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(credentials),
-        });
-
-        const user = await res.json();
-        console.log(user);
-        console.log('AuthServiceResponse:', user);
-
-        if (res.ok && user) {
-          // Return the user along with the organization information
-          return {
-            ...user,
-            organization: user.organization,
-            organization_name: user.organization_name,
-          } as User;
-        } else {
-          return null;
-        }
-      },
-    }),
-  ],
-  secret: process.env.SECRET_KEY,
-  jwt: {
-    signingKey: { kty: 'oct', k: process.env.SECRET_KEY },
-    encryption: false,
-  },
+  providers,
+  secret: process.env.NEXTAUTH_SECRET || process.env.SECRET_KEY,
   callbacks: {
-    async jwt({ token, user }: { token: JWT; user?: User }): Promise<JWT> {
-      if (user) {
-        token.accessToken = user.access_token;
-        token.refreshToken = user.refresh_token;
-        token.accessTokenExpires = Date.now() + user.access_token_expires_in * 1000;
-        token.email = user.email;
-        token.organization = user.organization;
-        token.organization_name = user.organization_name; // Add organization data to the token
+    async jwt({ token, user, account }: { token: JWT; user?: any; account?: Account | null }): Promise<JWT> {
+      // Initial sign in
+      if (account && user) {
+        // Auth0 login
+        if (account.provider === 'auth0') {
+          token.accessToken = account.access_token;
+          token.idToken = account.id_token;
+          token.refreshToken = account.refresh_token;
+          token.accessTokenExpires = account.expires_at ? account.expires_at * 1000 : undefined;
+          token.provider = 'auth0';
+          token.email = user.email;
+          token.name = user.name;
+          token.picture = user.picture;
+          token.sub = account.providerAccountId; // Auth0 user ID
+        }
+        // Credentials login (legacy)
+        else if (account.provider === 'credentials') {
+          token.accessToken = user.access_token;
+          token.refreshToken = user.refresh_token;
+          token.accessTokenExpires = user.access_token_expires_in
+            ? Date.now() + user.access_token_expires_in * 1000
+            : undefined;
+          token.provider = 'credentials';
+          token.email = user.email;
+          token.organization = user.organization;
+          token.organization_name = user.organization_name;
+        }
       }
 
-      // If token is not expired or will expire in more than 1 minute
-      if (token.accessTokenExpires && Date.now() < token.accessTokenExpires - 60000) {
-        return token;
+      // Return previous token if not expired (for credentials)
+      if (token.provider === 'credentials') {
+        if (token.accessTokenExpires && Date.now() < token.accessTokenExpires - 60000) {
+          return token;
+        }
+        // Refresh credentials token
+        return refreshAccessToken(token);
       }
 
-      // Access token has expired, refresh it
-      console.log('Access token expired, refreshing...');
-      return refreshAccessToken(token);
+      // For Auth0, the token is managed by Auth0 - no refresh needed here
+      return token;
     },
     async session({ session, token }: { session: Session; token: JWT }): Promise<Session> {
-      console.log('Session callback called');
-      session.accessToken = token.accessToken;
-      session.refreshToken = token.refreshToken;
-      session.user.email = token.email!;
-      session.user.organization = token.organization;
-      session.user.organization_name = token.organization_name;
-      if (token.error === 'RefreshAccessTokenError') {
-        session.error = 'RefreshAccessTokenError';
+      // Pass token data to session
+      session.accessToken = token.accessToken as string;
+      session.idToken = token.idToken as string;
+      session.provider = token.provider as string;
+
+      if (session.user) {
+        session.user.email = token.email as string;
+        session.user.name = token.name as string;
+        session.user.image = token.picture as string;
+        session.user.organization = token.organization as number | undefined;
+        session.user.organization_name = token.organization_name as string | undefined;
       }
-      console.log(session);
+
+      if (token.error) {
+        session.error = token.error as string;
+      }
+
       return session;
     },
   },
@@ -116,9 +168,9 @@ export const authOptions: NextAuthOptions = {
     error: '/auth/error',
   },
   session: {
-    jwt: true,
+    strategy: 'jwt',
   },
-  debug: true,
+  debug: process.env.NODE_ENV === 'development',
 };
 
 export default NextAuth(authOptions);
