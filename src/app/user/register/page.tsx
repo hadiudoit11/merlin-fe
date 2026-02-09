@@ -44,8 +44,27 @@ export default function Register() {
     setIsLoading(true);
 
     try {
-      // TODO: Implement registration API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+      const response = await fetch(`${backendUrl}/api/v1/auth/register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+          full_name: `${formData.firstName} ${formData.lastName}`.trim(),
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.detail || "Registration failed. Please try again.");
+        setIsLoading(false);
+        return;
+      }
+
       router.push("/user/login?registered=true");
     } catch (err) {
       setError("An error occurred. Please try again.");
@@ -233,7 +252,7 @@ export default function Register() {
           transition={{ duration: 0.5 }}
           className="w-full max-w-md"
         >
-          <Card className="border-0 shadow-xl" style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+          <Card className="border-0 shadow-xl bg-white text-gray-900" style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
             <CardHeader className="space-y-1 pb-4">
               <div className="lg:hidden flex items-center gap-3 mb-4">
                 <TypequestLogo size={36} />
