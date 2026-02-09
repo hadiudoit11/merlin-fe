@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useAuth } from '@clerk/nextjs';
+import { useSession } from 'next-auth/react';
 import FinancialApiService from '@/lib/financial-api';
 import {
   ImportedTransaction,

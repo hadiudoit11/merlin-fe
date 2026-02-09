@@ -130,13 +130,18 @@ export const authOptions: NextAuthOptions = {
         }
       }
 
-      // Return previous token if not expired (for credentials)
+      // Return token (no refresh for credentials - backend doesn't support it)
+      // User will need to re-login when token expires
       if (token.provider === 'credentials') {
-        if (token.accessTokenExpires && Date.now() < token.accessTokenExpires - 60000) {
-          return token;
+        // Check if token is expired
+        if (token.accessTokenExpires && Date.now() >= token.accessTokenExpires) {
+          // Token expired - mark as error so user re-authenticates
+          return {
+            ...token,
+            error: 'TokenExpiredError',
+          };
         }
-        // Refresh credentials token
-        return refreshAccessToken(token);
+        return token;
       }
 
       // For Auth0, the token is managed by Auth0 - no refresh needed here

@@ -2,10 +2,13 @@
 # Multi-stage build for development and production
 
 # ==================== Base Stage ====================
-FROM node:20-alpine AS base
+# Using slim instead of alpine to avoid glibc compatibility issues with native modules
+FROM node:20-slim AS base
 
-# Install libc6-compat for alpine compatibility
-RUN apk add --no-cache libc6-compat
+# Install required system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    wget \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
