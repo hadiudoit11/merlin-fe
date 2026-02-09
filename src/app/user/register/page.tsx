@@ -18,7 +18,7 @@ export default function Register() {
     password: "",
     confirmPassword: "",
   });
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<{ message: string; requestId?: string } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [agreeToTerms, setAgreeToTerms] = useState(false);
   const router = useRouter();
@@ -32,12 +32,12 @@ export default function Register() {
     setError(null);
 
     if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match");
+      setError({ message: "Passwords do not match" });
       return;
     }
 
     if (!agreeToTerms) {
-      setError("Please agree to the terms and conditions");
+      setError({ message: "Please agree to the terms and conditions" });
       return;
     }
 
@@ -60,14 +60,25 @@ export default function Register() {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.detail || "Registration failed. Please try again.");
+        // Handle structured error response from backend
+        const detail = data.detail;
+        if (typeof detail === 'object' && detail.message) {
+          setError({
+            message: detail.message,
+            requestId: detail.request_id,
+          });
+        } else {
+          setError({
+            message: typeof detail === 'string' ? detail : "Registration failed. Please try again.",
+          });
+        }
         setIsLoading(false);
         return;
       }
 
       router.push("/user/login?registered=true");
     } catch (err) {
-      setError("An error occurred. Please try again.");
+      setError({ message: "An error occurred. Please try again." });
       setIsLoading(false);
     }
   };
@@ -381,7 +392,12 @@ export default function Register() {
                     className="p-3 rounded-lg"
                     style={{ backgroundColor: '#fff5f5', border: '1px solid #ffcccc' }}
                   >
-                    <p className="text-sm" style={{ color: '#cc0000' }}>{error}</p>
+                    <p className="text-sm" style={{ color: '#cc0000' }}>{error.message}</p>
+                    {error.requestId && (
+                      <p className="text-xs mt-1" style={{ color: '#999999' }}>
+                        Request ID: {error.requestId}
+                      </p>
+                    )}
                   </motion.div>
                 )}
 
