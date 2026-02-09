@@ -257,7 +257,7 @@ const Login: React.FC = () => {
           transition={{ duration: 0.5 }}
           className="w-full max-w-md"
         >
-          <Card className="border-0 shadow-xl" style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+          <Card className="border-0 shadow-xl bg-white" style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
             <CardHeader className="space-y-1 pb-6">
               <div className="lg:hidden flex items-center gap-3 mb-4">
                 <TypequestLogo size={36} />
