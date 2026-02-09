@@ -32,7 +32,7 @@ export default function CreateUser() {
   useEffect(() => {
     async function fetchUsers() {
       try {
-        const response: Site[] = await apiGet('http://localhost:8000/api/v1/auth/site/users/');
+        const response: Site[] = await apiGet(process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000/api/v1/auth/site/users/');
 
         if (!response || !Array.isArray(response)) {
           console.error('Invalid response format or no data from server');

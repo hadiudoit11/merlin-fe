@@ -39,7 +39,8 @@ export default function ArticleUpdate({ params }: ArticleUpdateProps) {
       // Fetch the article data using the id
       const fetchArticle = async () => {
         try {
-          const response = await fetch(`http://localhost:8000/api/v1/article/detail/${id}/`, {
+          const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+          const response = await fetch(`${backendUrl}/api/v1/article/detail/${id}/`, {
             headers: {
               'Authorization': `Bearer ${session.accessToken}`, // Assuming you have accessToken in session
             },

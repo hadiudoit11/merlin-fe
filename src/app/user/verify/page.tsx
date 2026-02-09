@@ -35,8 +35,15 @@ function VerifyEmailContent() {
       }
 
       try {
-        // TODO: Implement actual verification API call
-        await new Promise((resolve) => setTimeout(resolve, 2000));
+        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+        const response = await fetch(`${backendUrl}/api/v1/auth/verify-email?token=${encodeURIComponent(token)}`, {
+          method: "POST",
+        });
+
+        if (!response.ok) {
+          throw new Error("Verification failed");
+        }
+
         setStatus("success");
       } catch (err) {
         setStatus("error");
@@ -54,7 +61,7 @@ function VerifyEmailContent() {
         transition={{ duration: 0.5 }}
         className="w-full max-w-md"
       >
-        <Card className="border-0 shadow-xl" style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+        <Card className="border-0 shadow-xl bg-white text-gray-900" style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
           <CardHeader className="space-y-1 pb-6 text-center">
             <div className="flex justify-center mb-4">
               <TypequestLogo size={64} />

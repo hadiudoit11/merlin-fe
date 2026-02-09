@@ -9,7 +9,7 @@ const ArticleCreateButton: React.FC = () => {
     const createArticle = async () => {
         try {
             const response = await apiPost(
-                'http://localhost:8000/api/v1/article/create/',
+                process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000/api/v1/article/create/',
                 {
                     title: "Untitled Document",
                     description: "Lorem Ipsum dolor, lorem ipsum dolor",

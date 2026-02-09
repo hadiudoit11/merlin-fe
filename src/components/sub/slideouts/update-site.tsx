@@ -47,7 +47,7 @@ export default function SiteUpdate({ open, setOpen, siteId }: SiteUpdateProps) {
 
       try {
         const siteResponse = await apiGet(`http://localhost:8000/api/v1/auth/site/detail/${siteId}/`);
-        const allUsersResponse = await apiGet('http://localhost:8000/api/v1/auth/organization/users/');
+        const allUsersResponse = await apiGet(process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000/api/v1/auth/organization/users/');
         
         setFormData({
           name: siteResponse.name || '',

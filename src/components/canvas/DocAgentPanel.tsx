@@ -86,11 +86,36 @@ export function DocAgentPanel({
     }
   }, [messages]);
 
-  // Simulate agent response (replace with actual API call)
-  const simulateAgentResponse = useCallback(async (userMessage: string): Promise<ChatMessage> => {
-    await new Promise(resolve => setTimeout(resolve, 1500));
+  // Agent response - calls backend API or shows preview mode
+  const getAgentResponse = useCallback(async (userMessage: string): Promise<ChatMessage> => {
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
-    // Generate mock suggestions based on the request
+    try {
+      const response = await fetch(`${backendUrl}/api/v1/ai/document-assist`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: userMessage,
+          document_content: documentContent,
+          document_title: documentTitle,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return {
+          id: `msg-${Date.now()}`,
+          role: 'agent',
+          content: data.response,
+          timestamp: new Date(),
+          suggestions: data.suggestions || [],
+        };
+      }
+    } catch (error) {
+      // Backend not available - fall through to preview mode
+    }
+
+    // Preview mode - generate sample suggestions
     const suggestions: AgentSuggestion[] = [];
 
     if (userMessage.toLowerCase().includes('improve') || userMessage.toLowerCase().includes('rewrite')) {
@@ -142,14 +167,14 @@ export function DocAgentPanel({
     setIsLoading(true);
 
     try {
-      const agentResponse = await simulateAgentResponse(inputValue);
+      const agentResponse = await getAgentResponse(inputValue);
       setMessages(prev => [...prev, agentResponse]);
     } catch (error) {
       console.error('Error getting agent response:', error);
     } finally {
       setIsLoading(false);
     }
-  }, [inputValue, isLoading, simulateAgentResponse]);
+  }, [inputValue, isLoading, getAgentResponse]);
 
   const handleQuickAction = useCallback((actionId: string) => {
     const actionMessages: Record<string, string> = {

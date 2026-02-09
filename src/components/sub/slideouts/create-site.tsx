@@ -153,42 +153,6 @@ export default function SiteCreate({ open, setOpen }: SiteCreateProps) {
     }
   };
 
-  // Update test function to use environment variable
-  const testApiEndpoint = async () => {
-    try {
-      const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:80';
-      console.log('Testing API endpoint directly...');
-      console.log(`Backend URL from env: ${backendURL}`);
-      
-      // First try to get all users to see if endpoint works
-      const url = `${backendURL}/api/v1/auth/organization/users/`;
-      console.log(`Making direct test request to: ${url}`);
-      
-      const response = await fetch(url, {
-        headers: {
-          'Authorization': `Bearer ${session?.accessToken}`,
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      console.log('Response status:', response.status);
-      console.log('Response headers:', response.headers);
-      
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Direct API test succeeded! Data:', data);
-        alert('API test successful! Check console for details.');
-      } else {
-        const errorText = await response.text();
-        console.error('Direct API test failed:', errorText);
-        alert(`API test failed! Status: ${response.status}. Check console for details.`);
-      }
-    } catch (error) {
-      console.error('Error testing API:', error);
-      alert(`API test error: ${error.message}`);
-    }
-  };
-
   return (
     <Transition.Root show={open} as={Fragment}>
       <Dialog as="div" className="relative z-10" onClose={setOpen}>
@@ -433,15 +397,6 @@ export default function SiteCreate({ open, setOpen }: SiteCreateProps) {
                                     <div className="h-5 w-5 border-t-2 border-blue-500 rounded-full animate-spin"></div>
                                   </div>
                                 )}
-                              </div>
-                              <div className="mt-2">
-                                <button
-                                  type="button"
-                                  onClick={testApiEndpoint}
-                                  className="inline-flex items-center rounded bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-700 hover:bg-blue-100"
-                                >
-                                  Test API Connection
-                                </button>
                               </div>
                             </div>
 

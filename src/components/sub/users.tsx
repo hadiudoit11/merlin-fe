@@ -45,7 +45,7 @@ export default function CreateUser() {
   useEffect(() => {
     async function fetchSites() {
       try {
-        const response = await apiGet('http://localhost:8000/api/v1/auth/site/users/') as ApiSite[];
+        const response = await apiGet(process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000/api/v1/auth/site/users/') as ApiSite[];
         if (!response) {
           console.error('No response from server');
           return;

@@ -25,7 +25,7 @@ export default function Roles() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const data: RoleType[] = await apiGet('http://localhost:8000/api/v1/access/roles/');
+        const data: RoleType[] = await apiGet(process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000/api/v1/access/roles/');
         if (!data) {
           console.error('Response is undefined');
           return;
