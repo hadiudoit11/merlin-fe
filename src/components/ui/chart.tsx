@@ -355,6 +355,30 @@ function getPayloadConfigFromPayload(
     : config[key as keyof typeof config]
 }
 
+// Simple Chart placeholder component for Tremor-style API compatibility
+// TODO: Replace with actual chart implementation using recharts
+interface ChartProps {
+  type?: "bar" | "pie" | "line" | "area"
+  data?: Array<Record<string, unknown>>
+  index?: string
+  categories?: string[]
+  category?: string
+  colors?: string[]
+  yAxisWidth?: number
+  className?: string
+}
+
+function Chart({ type = "bar", data = [], className = "" }: ChartProps) {
+  return (
+    <div className={cn("flex items-center justify-center bg-muted/20 rounded-lg", className)}>
+      <div className="text-center text-muted-foreground">
+        <p className="text-sm">{type.charAt(0).toUpperCase() + type.slice(1)} Chart</p>
+        <p className="text-xs">{data.length} data points</p>
+      </div>
+    </div>
+  )
+}
+
 export {
   ChartContainer,
   ChartTooltip,
@@ -362,4 +386,5 @@ export {
   ChartLegend,
   ChartLegendContent,
   ChartStyle,
+  Chart,
 }

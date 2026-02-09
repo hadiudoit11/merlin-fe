@@ -1,18 +1,18 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { 
-  Upload, 
-  FileText, 
-  CheckCircle, 
-  XCircle, 
-  Clock, 
+import {
+  Upload,
+  FileText,
+  CheckCircle,
+  XCircle,
+  Clock,
   TrendingUp,
   DollarSign,
   Activity,
@@ -26,7 +26,7 @@ import { ImportHistoryPanel } from '@/components/financial/import-history-panel'
 import { AnalyticsPanel } from '@/components/financial/analytics-panel';
 import { FileUploadPanel } from '@/components/financial/file-upload-panel';
 
-export default function FinancialDashboard() {
+function FinancialDashboardContent() {
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState('overview');
   const { statistics, loading: statsLoading, refresh: refreshStats } = useReviewStatistics();
@@ -269,5 +269,17 @@ export default function FinancialDashboard() {
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+export default function FinancialDashboard() {
+  return (
+    <Suspense fallback={
+      <div className="flex-1 flex items-center justify-center p-6">
+        <Activity className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    }>
+      <FinancialDashboardContent />
+    </Suspense>
   );
 } 

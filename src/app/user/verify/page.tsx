@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
@@ -7,7 +7,7 @@ import { CheckCircle2, XCircle, Loader2, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 
-export default function VerifyEmail() {
+function VerifyEmailContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
@@ -148,5 +148,17 @@ export default function VerifyEmail() {
         </Card>
       </motion.div>
     </div>
+  );
+}
+
+export default function VerifyEmail() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center p-8 bg-[#fafafa]">
+        <Loader2 className="h-16 w-16 animate-spin" style={{ color: '#ff6b6b' }} />
+      </div>
+    }>
+      <VerifyEmailContent />
+    </Suspense>
   );
 }

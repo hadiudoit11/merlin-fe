@@ -13,7 +13,7 @@ import {
 
 // Hook for managing pending transactions
 export function usePendingTransactions(filters?: TransactionFilters) {
-  const { getToken } = useAuth();
+  const { data: session } = useSession();
   const [transactions, setTransactions] = useState<ImportedTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -23,7 +23,7 @@ export function usePendingTransactions(filters?: TransactionFilters) {
     try {
       setLoading(true);
       setError(null);
-      const token = await getToken();
+      const token = session?.accessToken;
       if (!token) throw new Error('No authentication token');
 
       const service = new FinancialApiService(token);
@@ -35,7 +35,7 @@ export function usePendingTransactions(filters?: TransactionFilters) {
     } finally {
       setLoading(false);
     }
-  }, [getToken, filters]);
+  }, [session, filters]);
 
   useEffect(() => {
     fetchTransactions();
@@ -50,7 +50,7 @@ export function usePendingTransactions(filters?: TransactionFilters) {
 
 // Hook for managing imports
 export function useImports() {
-  const { getToken } = useAuth();
+  const { data: session } = useSession();
   const [imports, setImports] = useState<ImportSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -59,7 +59,7 @@ export function useImports() {
     try {
       setLoading(true);
       setError(null);
-      const token = await getToken();
+      const token = session?.accessToken;
       if (!token) throw new Error('No authentication token');
 
       const service = new FinancialApiService(token);
@@ -70,7 +70,7 @@ export function useImports() {
     } finally {
       setLoading(false);
     }
-  }, [getToken]);
+  }, [session]);
 
   useEffect(() => {
     fetchImports();
@@ -85,7 +85,7 @@ export function useImports() {
 
 // Hook for managing review statistics
 export function useReviewStatistics() {
-  const { getToken } = useAuth();
+  const { data: session } = useSession();
   const [statistics, setStatistics] = useState<ReviewStatistics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -94,7 +94,7 @@ export function useReviewStatistics() {
     try {
       setLoading(true);
       setError(null);
-      const token = await getToken();
+      const token = session?.accessToken;
       if (!token) throw new Error('No authentication token');
 
       const service = new FinancialApiService(token);
@@ -105,7 +105,7 @@ export function useReviewStatistics() {
     } finally {
       setLoading(false);
     }
-  }, [getToken]);
+  }, [session]);
 
   useEffect(() => {
     fetchStatistics();
@@ -120,7 +120,7 @@ export function useReviewStatistics() {
 
 // Hook for managing analytics
 export function useAnalytics() {
-  const { getToken } = useAuth();
+  const { data: session } = useSession();
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -129,7 +129,7 @@ export function useAnalytics() {
     try {
       setLoading(true);
       setError(null);
-      const token = await getToken();
+      const token = session?.accessToken;
       if (!token) throw new Error('No authentication token');
 
       const service = new FinancialApiService(token);
@@ -140,7 +140,7 @@ export function useAnalytics() {
     } finally {
       setLoading(false);
     }
-  }, [getToken]);
+  }, [session]);
 
   useEffect(() => {
     fetchAnalytics();
@@ -155,7 +155,7 @@ export function useAnalytics() {
 
 // Hook for managing categories
 export function useCategories() {
-  const { getToken } = useAuth();
+  const { data: session } = useSession();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -164,7 +164,7 @@ export function useCategories() {
     try {
       setLoading(true);
       setError(null);
-      const token = await getToken();
+      const token = session?.accessToken;
       if (!token) throw new Error('No authentication token');
 
       const service = new FinancialApiService(token);
@@ -175,7 +175,7 @@ export function useCategories() {
     } finally {
       setLoading(false);
     }
-  }, [getToken]);
+  }, [session]);
 
   useEffect(() => {
     fetchCategories();
@@ -190,7 +190,7 @@ export function useCategories() {
 
 // Hook for managing accounts
 export function useAccounts() {
-  const { getToken } = useAuth();
+  const { data: session } = useSession();
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -199,7 +199,7 @@ export function useAccounts() {
     try {
       setLoading(true);
       setError(null);
-      const token = await getToken();
+      const token = session?.accessToken;
       if (!token) throw new Error('No authentication token');
 
       const service = new FinancialApiService(token);
@@ -210,7 +210,7 @@ export function useAccounts() {
     } finally {
       setLoading(false);
     }
-  }, [getToken]);
+  }, [session]);
 
   useEffect(() => {
     fetchAccounts();
@@ -225,7 +225,7 @@ export function useAccounts() {
 
 // Hook for transaction actions
 export function useTransactionActions() {
-  const { getToken } = useAuth();
+  const { data: session } = useSession();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -233,7 +233,7 @@ export function useTransactionActions() {
     try {
       setLoading(true);
       setError(null);
-      const token = await getToken();
+      const token = session?.accessToken;
       if (!token) throw new Error('No authentication token');
 
       const service = new FinancialApiService(token);
@@ -245,13 +245,13 @@ export function useTransactionActions() {
     } finally {
       setLoading(false);
     }
-  }, [getToken]);
+  }, [session]);
 
   const rejectTransaction = useCallback(async (transactionId: string, reviewNotes?: string, reason?: string) => {
     try {
       setLoading(true);
       setError(null);
-      const token = await getToken();
+      const token = session?.accessToken;
       if (!token) throw new Error('No authentication token');
 
       const service = new FinancialApiService(token);
@@ -263,7 +263,7 @@ export function useTransactionActions() {
     } finally {
       setLoading(false);
     }
-  }, [getToken]);
+  }, [session]);
 
   const modifyTransaction = useCallback(async (
     transactionId: string,
@@ -279,7 +279,7 @@ export function useTransactionActions() {
     try {
       setLoading(true);
       setError(null);
-      const token = await getToken();
+      const token = session?.accessToken;
       if (!token) throw new Error('No authentication token');
 
       const service = new FinancialApiService(token);
@@ -291,13 +291,13 @@ export function useTransactionActions() {
     } finally {
       setLoading(false);
     }
-  }, [getToken]);
+  }, [session]);
 
   const batchApprove = useCallback(async (transactionIds: string[], reviewNotes?: string) => {
     try {
       setLoading(true);
       setError(null);
-      const token = await getToken();
+      const token = session?.accessToken;
       if (!token) throw new Error('No authentication token');
 
       const service = new FinancialApiService(token);
@@ -309,13 +309,13 @@ export function useTransactionActions() {
     } finally {
       setLoading(false);
     }
-  }, [getToken]);
+  }, [session]);
 
   const batchReject = useCallback(async (transactionIds: string[], reviewNotes?: string, reason?: string) => {
     try {
       setLoading(true);
       setError(null);
-      const token = await getToken();
+      const token = session?.accessToken;
       if (!token) throw new Error('No authentication token');
 
       const service = new FinancialApiService(token);
@@ -327,7 +327,7 @@ export function useTransactionActions() {
     } finally {
       setLoading(false);
     }
-  }, [getToken]);
+  }, [session]);
 
   return {
     loading,
@@ -342,7 +342,7 @@ export function useTransactionActions() {
 
 // Hook for file upload
 export function useFileUpload() {
-  const { getToken } = useAuth();
+  const { data: session } = useSession();
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -350,7 +350,7 @@ export function useFileUpload() {
     try {
       setUploading(true);
       setError(null);
-      const token = await getToken();
+      const token = session?.accessToken;
       if (!token) throw new Error('No authentication token');
 
       const service = new FinancialApiService(token);
@@ -362,7 +362,7 @@ export function useFileUpload() {
     } finally {
       setUploading(false);
     }
-  }, [getToken]);
+  }, [session]);
 
   return { uploading, error, uploadStatement };
 } 
