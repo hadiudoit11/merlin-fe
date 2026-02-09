@@ -16,6 +16,7 @@ import {
   HelpCircle,
   Sparkles,
   Bot,
+  CheckSquare,
 } from "lucide-react"
 
 import { NavMain } from "@/components/sub/navbars/nav-main"
@@ -66,6 +67,12 @@ const mainNavItems = [
     icon: BarChart3,
     description: "Track performance",
   },
+  {
+    title: "Tasks",
+    url: "/tasks",
+    icon: CheckSquare,
+    description: "Action items & to-dos",
+  },
 ]
 
 const organizationNavItems = [
@@ -106,10 +113,21 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader className="border-b border-border/50 px-2 py-3">
         {/* Logo */}
         <div className="flex items-center gap-2 px-2 mb-3">
-          <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-purple-500/25">
-            <span className="text-sm font-black text-white">T</span>
-          </div>
-          <span className="font-bold text-lg bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+          <svg width="32" height="32" viewBox="0 0 120 120" className="flex-shrink-0">
+            <rect x="10" y="20" width="100" height="90" rx="12" fill="#2d2d2d" stroke="#1a1a1a" strokeWidth="3" />
+            <defs>
+              <linearGradient id="keyGradSidebar" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#4a4a4a" />
+                <stop offset="100%" stopColor="#2d2d2d" />
+              </linearGradient>
+            </defs>
+            <rect x="18" y="24" width="84" height="74" rx="8" fill="url(#keyGradSidebar)" />
+            <path d="M60 40 L75 60 L67 60 L67 80 L53 80 L53 60 L45 60 Z" fill="#ff6b6b" />
+          </svg>
+          <span
+            className="font-semibold text-lg"
+            style={{ fontFamily: 'Fraunces, Georgia, serif', color: '#2d2d2d' }}
+          >
             Typequest
           </span>
         </div>
@@ -136,16 +154,22 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     className={`
                       group relative rounded-lg transition-all duration-200
                       ${isActive
-                        ? 'bg-gradient-to-r from-violet-500/10 to-purple-500/10 text-violet-700 dark:text-violet-400 font-medium'
+                        ? 'bg-[#ff6b6b]/10 font-medium'
                         : 'hover:bg-muted/50'
                       }
                     `}
                   >
                     <a href={item.url} className="flex items-center gap-3 px-3 py-2.5">
-                      <item.icon className={`h-4 w-4 ${isActive ? 'text-violet-600' : 'text-muted-foreground group-hover:text-foreground'}`} />
-                      <span>{item.title}</span>
+                      <item.icon
+                        className={`h-4 w-4 ${isActive ? '' : 'text-muted-foreground group-hover:text-foreground'}`}
+                        style={isActive ? { color: '#ff6b6b' } : undefined}
+                      />
+                      <span style={isActive ? { color: '#ff6b6b' } : undefined}>{item.title}</span>
                       {isActive && (
-                        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-gradient-to-b from-violet-600 to-purple-600 rounded-r-full" />
+                        <div
+                          className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-r-full"
+                          style={{ backgroundColor: '#ff6b6b' }}
+                        />
                       )}
                     </a>
                   </SidebarMenuButton>

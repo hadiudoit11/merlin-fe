@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -10,7 +10,20 @@ import { AgentWizard } from '@/components/canvas/AgentWizard';
 import { CanvasFloatingToolbar } from '@/components/canvas/CanvasFloatingToolbar';
 import { NodeSettingsPanel } from '@/components/canvas/NodeSettingsPanel';
 import { CanvasAgentPanel } from '@/components/canvas/CanvasAgentPanel';
+import { isLiveblocksEnabled } from '@/lib/liveblocks.config';
+import { useSession } from 'next-auth/react';
 import { useCanvas } from '@/hooks/useCanvas';
+
+// Dynamic imports for collaboration (only load if enabled)
+const CollaborationRoom = isLiveblocksEnabled
+  ? require('@/components/collaboration').CollaborationRoom
+  : null;
+const Cursors = isLiveblocksEnabled
+  ? require('@/components/collaboration').Cursors
+  : null;
+const Collaborators = isLiveblocksEnabled
+  ? require('@/components/collaboration').Collaborators
+  : null;
 import { NodeType, UpdateNodeRequest, AgentNodeConfig, CONNECTION_RULES } from '@/types/canvas';
 import { toast } from 'sonner';
 
@@ -18,6 +31,9 @@ export default function CanvasPage() {
   const params = useParams();
   const router = useRouter();
   const canvasId = Number(params?.id);
+
+  const { data: session } = useSession();
+  const userId = session?.user?.email || undefined;
 
   const {
     canvas,
@@ -38,7 +54,13 @@ export default function CanvasPage() {
     addConnection,
     deleteConnection,
     saveCanvas,
+    autoLayout,
+    undoLayout,
+    canUndoLayout,
   } = useCanvas({ canvasId });
+
+  // Canvas container ref for collaboration cursor tracking
+  const canvasContainerRef = useRef<HTMLDivElement>(null);
 
   // Track which doc node is expanded to full-screen editor
   const [expandedNodeId, setExpandedNodeId] = useState<number | null>(null);
@@ -306,6 +328,32 @@ export default function CanvasPage() {
     toast.info('Delete functionality coming soon');
   }, []);
 
+  // Auto-layout handler
+  const handleAutoLayout = useCallback(() => {
+    autoLayout();
+    toast.success('Nodes arranged! Use Undo Layout to revert.');
+  }, [autoLayout]);
+
+  // Undo layout handler
+  const handleUndoLayout = useCallback(() => {
+    undoLayout();
+    toast.success('Layout reverted.');
+  }, [undoLayout]);
+
+  // Keyboard shortcuts for layout
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Cmd/Ctrl + L for auto-layout
+      if ((e.metaKey || e.ctrlKey) && e.key === 'l') {
+        e.preventDefault();
+        handleAutoLayout();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleAutoLayout]);
+
   // AI Assistant handlers
   const handleOpenAssistant = useCallback(() => {
     setIsAgentPanelOpen(true);
@@ -400,8 +448,12 @@ export default function CanvasPage() {
     );
   }
 
-  return (
-    <div className="fixed inset-0 bg-background">
+  // Check if collaboration is enabled (Liveblocks API key exists)
+  const isCollaborationEnabled = isLiveblocksEnabled;
+
+  // Canvas content (with or without collaboration wrapper)
+  const canvasContent = (
+    <div ref={canvasContainerRef} className="fixed inset-0 bg-background">
       {/* Full-screen Canvas */}
       <Canvas
         nodes={nodes}
@@ -428,6 +480,9 @@ export default function CanvasPage() {
         className="w-full h-full"
       />
 
+      {/* Collaboration: Other users' cursors */}
+      {isCollaborationEnabled && <Cursors />}
+
       {/* Floating Toolbar - hidden when doc editor is open */}
       {!expandedNodeId && (
         <CanvasFloatingToolbar
@@ -450,7 +505,17 @@ export default function CanvasPage() {
           onDuplicate={handleDuplicate}
           onDelete={handleDeleteCanvas}
           onOpenAssistant={handleOpenAssistant}
+          onAutoLayout={handleAutoLayout}
+          onUndoLayout={handleUndoLayout}
+          canUndoLayout={canUndoLayout}
         />
+      )}
+
+      {/* Collaboration: Show who's online */}
+      {isCollaborationEnabled && !expandedNodeId && (
+        <div className="fixed top-4 right-48 z-50">
+          <Collaborators maxDisplay={4} />
+        </div>
       )}
 
       {/* Full-screen Doc Editor */}
@@ -481,10 +546,12 @@ export default function CanvasPage() {
         onComplete={handleAgentWizardComplete}
       />
 
-      {/* AI Canvas Assistant */}
+      {/* AI Canvas Assistant - Sessions are private per user */}
       <CanvasAgentPanel
         isOpen={isAgentPanelOpen}
         onClose={() => setIsAgentPanelOpen(false)}
+        canvasId={canvasId}
+        userId={userId}
         onCreateNode={handleAgentCreateNode}
         onConnectNodes={handleAgentConnectNodes}
         onUpdateNode={handleAgentUpdateNode}
@@ -493,4 +560,15 @@ export default function CanvasPage() {
       />
     </div>
   );
+
+  // Wrap with collaboration room if enabled
+  if (isCollaborationEnabled) {
+    return (
+      <CollaborationRoom roomId={`canvas-${canvasId}`}>
+        {canvasContent}
+      </CollaborationRoom>
+    );
+  }
+
+  return canvasContent;
 }

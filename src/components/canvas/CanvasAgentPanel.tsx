@@ -16,6 +16,7 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { NodeType } from '@/types/canvas';
+import { api } from '@/lib/api';
 
 // Message types
 interface AgentMessage {
@@ -29,7 +30,7 @@ interface AgentMessage {
 
 // Actions the agent can take
 interface AgentAction {
-  type: 'create_node' | 'connect_nodes' | 'update_node' | 'delete_node';
+  type: 'create_node' | 'connect_nodes' | 'update_node' | 'delete_node' | 'get_canvas_state';
   description: string;
   status: 'pending' | 'complete' | 'error';
   params: Record<string, unknown>;
@@ -38,6 +39,8 @@ interface AgentAction {
 interface CanvasAgentPanelProps {
   isOpen: boolean;
   onClose: () => void;
+  canvasId?: number; // For session scoping
+  userId?: string; // For session scoping
   onCreateNode: (type: NodeType, name: string, content?: string) => Promise<number | null>;
   onConnectNodes: (sourceId: number, targetId: number) => Promise<boolean>;
   onUpdateNode: (nodeId: number, data: { name?: string; content?: string }) => Promise<void>;
@@ -45,27 +48,65 @@ interface CanvasAgentPanelProps {
   getCanvasState: () => { nodes: Array<{ id: number; name: string; type: NodeType; content?: string }>; connections: Array<{ sourceId: number; targetId: number }> };
 }
 
+const DEFAULT_WELCOME_MESSAGE: AgentMessage = {
+  id: '1',
+  role: 'assistant',
+  content: "Hi! I'm your canvas assistant. I can help you create and organize nodes on your canvas. Try saying things like:\n\n- \"Create a problem statement about user retention\"\n- \"Add an objective to improve onboarding\"\n- \"Connect the problem to the objective\"\n- \"What's on my canvas?\"",
+  timestamp: new Date(),
+};
+
+// Get session storage key for user-specific agent history
+function getSessionKey(canvasId?: number, userId?: string): string {
+  return `agent-session-${canvasId || 'unknown'}-${userId || 'anonymous'}`;
+}
+
 export function CanvasAgentPanel({
   isOpen,
   onClose,
+  canvasId,
+  userId,
   onCreateNode,
   onConnectNodes,
   onUpdateNode,
   onDeleteNode,
   getCanvasState,
 }: CanvasAgentPanelProps) {
-  const [messages, setMessages] = useState<AgentMessage[]>([
-    {
-      id: '1',
-      role: 'assistant',
-      content: "Hi! I'm your canvas assistant. I can help you create and organize nodes on your canvas. Try saying things like:\n\n- \"Create a problem statement about user retention\"\n- \"Add an objective to improve onboarding\"\n- \"Connect the problem to the objective\"\n- \"What's on my canvas?\"",
-      timestamp: new Date(),
-    },
-  ]);
+  const [messages, setMessages] = useState<AgentMessage[]>([DEFAULT_WELCOME_MESSAGE]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Load messages from session storage on mount (user-specific)
+  useEffect(() => {
+    const sessionKey = getSessionKey(canvasId, userId);
+    try {
+      const saved = sessionStorage.getItem(sessionKey);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        // Convert timestamp strings back to Date objects
+        const restored = parsed.map((m: AgentMessage) => ({
+          ...m,
+          timestamp: new Date(m.timestamp),
+        }));
+        setMessages(restored);
+      }
+    } catch (e) {
+      console.error('Failed to load agent session:', e);
+    }
+  }, [canvasId, userId]);
+
+  // Save messages to session storage when they change (user-specific)
+  useEffect(() => {
+    if (messages.length > 1) {
+      const sessionKey = getSessionKey(canvasId, userId);
+      try {
+        sessionStorage.setItem(sessionKey, JSON.stringify(messages));
+      } catch (e) {
+        console.error('Failed to save agent session:', e);
+      }
+    }
+  }, [messages, canvasId, userId]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -81,13 +122,56 @@ export function CanvasAgentPanel({
     }
   }, [isOpen]);
 
-  // Process user message and generate response
-  const processMessage = useCallback(async (userMessage: string) => {
+  // Conversation history for the AI (stored in ref to persist across renders)
+  const conversationHistoryRef = useRef<Array<{ role: string; content: unknown }>>([]);
+
+  // Process user message using the real AI backend
+  const processMessage = useCallback(async (userMessage: string): Promise<{ responseText: string; actions: AgentAction[] }> => {
+    // If no canvasId, fall back to a simple response
+    if (!canvasId) {
+      return {
+        responseText: "I need a canvas to work with. Please open a canvas first.",
+        actions: [],
+      };
+    }
+
+    try {
+      // Call the real AI backend
+      const response = await api.chatWithCanvasAgent(canvasId, userMessage, conversationHistoryRef.current);
+
+      // Update conversation history for context
+      conversationHistoryRef.current.push({ role: 'user', content: userMessage });
+      conversationHistoryRef.current.push({ role: 'assistant', content: response.response });
+
+      // Keep history manageable (last 20 messages)
+      if (conversationHistoryRef.current.length > 20) {
+        conversationHistoryRef.current = conversationHistoryRef.current.slice(-20);
+      }
+
+      // Map backend actions to frontend format
+      const actions: AgentAction[] = response.actions.map((action: { type: string; description: string; status: string; params: Record<string, unknown> }) => ({
+        type: action.type as AgentAction['type'],
+        description: action.description,
+        status: action.status as 'pending' | 'complete' | 'error',
+        params: action.params,
+      }));
+
+      return {
+        responseText: response.response,
+        actions,
+      };
+    } catch (error) {
+      console.error('Canvas agent error:', error);
+
+      // Fallback to local processing if API fails
+      return processMessageLocally(userMessage);
+    }
+  }, [canvasId]);
+
+  // Local fallback processing when API is unavailable
+  const processMessageLocally = useCallback(async (userMessage: string): Promise<{ responseText: string; actions: AgentAction[] }> => {
     const canvasState = getCanvasState();
     const lowerMessage = userMessage.toLowerCase();
-
-    // Simple intent detection and action execution
-    // In production, this would call an LLM API with tools
 
     const actions: AgentAction[] = [];
     let responseText = '';
@@ -163,108 +247,16 @@ export function CanvasAgentPanel({
         responseText = "I couldn't create the key result. Please try again.";
       }
     }
-    // Create metric
-    else if (lowerMessage.includes('metric') && (lowerMessage.includes('create') || lowerMessage.includes('add'))) {
-      const match = userMessage.match(/(?:to|for|about|called|named)\s+(.+?)(?:\.|$)/i);
-      const topic = match ? match[1].trim() : 'New Metric';
-      const name = topic.charAt(0).toUpperCase() + topic.slice(1);
-
-      const nodeId = await onCreateNode('metric', name, '');
-      if (nodeId) {
-        actions.push({
-          type: 'create_node',
-          description: `Created metric: "${name}"`,
-          status: 'complete',
-          params: { type: 'metric', name, id: nodeId },
-        });
-        responseText = `I've created a metric: "${name}".`;
-      } else {
-        responseText = "I couldn't create the metric. Please try again.";
-      }
-    }
-    // Create document
-    else if ((lowerMessage.includes('doc') || lowerMessage.includes('document') || lowerMessage.includes('note')) && (lowerMessage.includes('create') || lowerMessage.includes('add'))) {
-      const match = userMessage.match(/(?:about|for|called|named|titled)\s+(.+?)(?:\.|$)/i);
-      const topic = match ? match[1].trim() : 'New Document';
-      const name = topic.charAt(0).toUpperCase() + topic.slice(1);
-
-      const nodeId = await onCreateNode('doc', name, '');
-      if (nodeId) {
-        actions.push({
-          type: 'create_node',
-          description: `Created document: "${name}"`,
-          status: 'complete',
-          params: { type: 'doc', name, id: nodeId },
-        });
-        responseText = `I've created a document: "${name}". Double-click it to edit the content.`;
-      } else {
-        responseText = "I couldn't create the document. Please try again.";
-      }
-    }
-    // Connect nodes
-    else if (lowerMessage.includes('connect')) {
-      // Try to find node names in the message
-      const nodes = canvasState.nodes;
-      let sourceNode = null;
-      let targetNode = null;
-
-      for (const node of nodes) {
-        const nodeName = node.name.toLowerCase();
-        if (lowerMessage.includes(nodeName) || lowerMessage.includes(nodeName.split(':')[1]?.trim() || '')) {
-          if (!sourceNode) {
-            sourceNode = node;
-          } else if (!targetNode) {
-            targetNode = node;
-            break;
-          }
-        }
-      }
-
-      if (sourceNode && targetNode) {
-        const success = await onConnectNodes(sourceNode.id, targetNode.id);
-        if (success) {
-          actions.push({
-            type: 'connect_nodes',
-            description: `Connected "${sourceNode.name}" to "${targetNode.name}"`,
-            status: 'complete',
-            params: { sourceId: sourceNode.id, targetId: targetNode.id },
-          });
-          responseText = `Done! I've connected "${sourceNode.name}" to "${targetNode.name}".`;
-        } else {
-          responseText = `I couldn't connect those nodes. They might already be connected or the connection isn't allowed.`;
-        }
-      } else if (nodes.length < 2) {
-        responseText = "You need at least 2 nodes to create a connection. Would you like me to create some nodes first?";
-      } else {
-        responseText = "I couldn't identify which nodes to connect. Please mention the node names, like: \"Connect Problem Statement to Objective\"";
-      }
-    }
-    // Help
-    else if (lowerMessage.includes('help')) {
-      responseText = "Here's what I can do:\n\n" +
-        "**Create nodes:**\n" +
-        "- \"Create a problem statement about X\"\n" +
-        "- \"Add an objective to improve Y\"\n" +
-        "- \"Create a key result to increase Z by 20%\"\n" +
-        "- \"Add a metric called Revenue\"\n" +
-        "- \"Create a document about planning\"\n\n" +
-        "**Connect nodes:**\n" +
-        "- \"Connect Problem to Objective\"\n\n" +
-        "**View canvas:**\n" +
-        "- \"What's on my canvas?\"\n" +
-        "- \"Show me all nodes\"";
-    }
-    // Default response
+    // Help or default
     else {
-      responseText = "I'm not sure what you'd like me to do. Try asking me to:\n" +
-        "- Create a problem statement, objective, key result, or metric\n" +
-        "- Connect two nodes together\n" +
+      responseText = "I'm running in offline mode. Try asking me to:\n" +
+        "- Create a problem statement, objective, or key result\n" +
         "- Show what's on your canvas\n\n" +
-        "Or just say \"help\" for more options!";
+        "For full AI capabilities, ensure the backend is connected.";
     }
 
     return { responseText, actions };
-  }, [getCanvasState, onCreateNode, onConnectNodes]);
+  }, [getCanvasState, onCreateNode]);
 
   const handleSend = useCallback(async () => {
     if (!input.trim() || isLoading) return;

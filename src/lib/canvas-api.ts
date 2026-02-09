@@ -243,6 +243,28 @@ class CanvasApiService {
   async deleteMetric(metricId: number): Promise<void> {
     await this.client.delete(`/metrics/${metricId}`);
   }
+
+  // ============ Canvas Agent Operations ============
+
+  async chatWithCanvasAgent(
+    canvasId: number,
+    message: string,
+    conversationHistory?: Array<{ role: string; content: unknown }>
+  ): Promise<{
+    response: string;
+    actions: Array<{
+      type: string;
+      description: string;
+      status: string;
+      params: Record<string, unknown>;
+    }>;
+  }> {
+    const response = await this.client.post(`/agent/${canvasId}/chat`, {
+      message,
+      conversation_history: conversationHistory,
+    });
+    return response.data;
+  }
 }
 
 // Export singleton instance

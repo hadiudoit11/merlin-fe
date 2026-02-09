@@ -24,10 +24,7 @@
   }
 }
 
-body {
-  color: var(--text-primary);
-  background: var(--background-main);
-}
+/* Body styles are defined in @layer base below */
 
 @layer utilities {
   .text-balance {

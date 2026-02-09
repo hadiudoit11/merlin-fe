@@ -52,6 +52,7 @@ const securityHeaders = [
  **/
 const config = {
   reactStrictMode: true,
+  output: "standalone", // Enable standalone output for Docker
   pageExtensions: ["ts", "tsx", "js", "jsx", "md", "mdx"],
   eslint: {
     dirs: ["pages", "components", "lib", "layouts", "scripts"],

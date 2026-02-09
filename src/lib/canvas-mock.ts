@@ -424,7 +424,7 @@ class MockCanvasApi {
 
     await this.createNode({
       name: 'Q1 Objectives',
-      node_type: 'okr',
+      node_type: 'objective',
       canvas_id: canvas.id,
       position_x: 100,
       position_y: 450,
@@ -442,6 +442,98 @@ class MockCanvasApi {
       height: 150,
       config: { service: 'Slack', connected: true },
     });
+  }
+
+  // ============ Canvas Agent Operations (Mock) ============
+
+  async chatWithCanvasAgent(
+    canvasId: number,
+    message: string,
+    _conversationHistory?: Array<{ role: string; content: unknown }>
+  ): Promise<{
+    response: string;
+    actions: Array<{
+      type: string;
+      description: string;
+      status: string;
+      params: Record<string, unknown>;
+    }>;
+  }> {
+    // Mock implementation - simulate AI response
+    await new Promise((resolve) => setTimeout(resolve, 500)); // Simulate API delay
+
+    const lowerMessage = message.toLowerCase();
+    let response = '';
+    const actions: Array<{
+      type: string;
+      description: string;
+      status: string;
+      params: Record<string, unknown>;
+    }> = [];
+
+    if (lowerMessage.includes('problem') && (lowerMessage.includes('create') || lowerMessage.includes('add'))) {
+      const match = message.match(/(?:about|for|regarding|on)\s+(.+?)(?:\.|$)/i);
+      const topic = match ? match[1].trim() : 'New Problem';
+      const name = `Problem: ${topic.charAt(0).toUpperCase() + topic.slice(1)}`;
+
+      const node = await this.createNode({
+        name,
+        node_type: 'problem',
+        canvas_id: canvasId,
+        content: `Define the problem: ${topic}`,
+        position_x: 200,
+        position_y: 200,
+      });
+
+      actions.push({
+        type: 'create_node',
+        description: `Created problem statement: "${name}"`,
+        status: 'complete',
+        params: { type: 'problem', name, id: node.id },
+      });
+
+      response = `I've created a problem statement about "${topic}". Would you like me to add an objective to address this problem?`;
+    } else if (lowerMessage.includes('objective') && (lowerMessage.includes('create') || lowerMessage.includes('add'))) {
+      const match = message.match(/(?:to|for|about)\s+(.+?)(?:\.|$)/i);
+      const topic = match ? match[1].trim() : 'New Objective';
+      const name = `Objective: ${topic.charAt(0).toUpperCase() + topic.slice(1)}`;
+
+      const node = await this.createNode({
+        name,
+        node_type: 'objective',
+        canvas_id: canvasId,
+        content: topic,
+        position_x: 400,
+        position_y: 200,
+      });
+
+      actions.push({
+        type: 'create_node',
+        description: `Created objective: "${name}"`,
+        status: 'complete',
+        params: { type: 'objective', name, id: node.id },
+      });
+
+      response = `I've created an objective: "${topic}". Would you like me to add key results for this objective?`;
+    } else if (lowerMessage.includes("what's on") || lowerMessage.includes('show me') || lowerMessage.includes('list')) {
+      const nodes = await this.listNodes(canvasId);
+      if (nodes.length === 0) {
+        response = "Your canvas is empty. Would you like me to help you create some nodes?";
+      } else {
+        response = `Your canvas has ${nodes.length} node(s):\n\n`;
+        nodes.forEach((node, i) => {
+          response += `${i + 1}. **${node.name}** (${node.node_type})\n`;
+        });
+      }
+    } else {
+      response = "I'm running in mock mode. In production, I'll use Claude AI to understand your requests better!\n\n" +
+        "For now, try:\n" +
+        "- \"Create a problem statement about user retention\"\n" +
+        "- \"Add an objective to improve onboarding\"\n" +
+        "- \"What's on my canvas?\"";
+    }
+
+    return { response, actions };
   }
 }
 

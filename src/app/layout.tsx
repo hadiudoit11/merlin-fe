@@ -22,7 +22,7 @@ interface RootLayoutProps {
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="en" suppressHydrationWarning className={`h-full ${openSans.variable}`}>
-      <body className="h-full bg-bg-main text-text-primary font-primary">
+      <body className="h-full bg-background text-foreground font-primary">
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

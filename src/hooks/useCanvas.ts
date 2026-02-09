@@ -12,6 +12,7 @@ import {
   CreateConnectionRequest,
   NodeType,
 } from '@/types/canvas';
+import { autoLayoutByHierarchy, calculateCenterViewport } from '@/lib/canvas-layout';
 
 interface UseCanvasOptions {
   canvasId: number;
@@ -56,6 +57,12 @@ interface UseCanvasReturn {
   // Canvas operations
   saveCanvas: () => Promise<void>;
   refreshCanvas: () => Promise<void>;
+
+  // Layout
+  autoLayout: () => void;
+  undoLayout: () => void;
+  canUndoLayout: boolean;
+  fitToScreen: (containerWidth: number, containerHeight: number) => void;
 }
 
 export function useCanvas({ canvasId, autoSave = true, saveDebounceMs = 1000 }: UseCanvasOptions): UseCanvasReturn {
@@ -69,6 +76,10 @@ export function useCanvas({ canvasId, autoSave = true, saveDebounceMs = 1000 }: 
 
   const pendingPositionUpdates = useRef<Map<number, { x: number; y: number }>>(new Map());
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Undo/Redo history for layout changes
+  const [layoutHistory, setLayoutHistory] = useState<Array<{ id: number; x: number; y: number }[]>>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
 
   // Load canvas data
   const loadCanvas = useCallback(async () => {
@@ -343,6 +354,62 @@ export function useCanvas({ canvasId, autoSave = true, saveDebounceMs = 1000 }: 
     await loadCanvas();
   }, [loadCanvas]);
 
+  // Save current positions to history before layout changes
+  const savePositionsToHistory = useCallback(() => {
+    const currentPositions = nodes.map((n) => ({
+      id: n.id,
+      x: n.position_x,
+      y: n.position_y,
+    }));
+
+    setLayoutHistory((prev) => {
+      // Remove any "future" history if we've undone and are making new changes
+      const newHistory = prev.slice(0, historyIndex + 1);
+      // Add current positions and limit history size
+      return [...newHistory.slice(-9), currentPositions];
+    });
+    setHistoryIndex((prev) => Math.min(prev + 1, 9));
+  }, [nodes, historyIndex]);
+
+  // Auto-layout nodes using dagre algorithm
+  const autoLayout = useCallback(() => {
+    if (nodes.length === 0) return;
+
+    // Save current positions before applying layout
+    savePositionsToHistory();
+
+    const result = autoLayoutByHierarchy(nodes, connections, {
+      direction: 'TB',
+      nodeSpacing: 80,
+      rankSpacing: 120,
+    });
+
+    // Update all node positions
+    moveNodes(result.nodes);
+  }, [nodes, connections, moveNodes, savePositionsToHistory]);
+
+  // Undo the last layout change
+  const undoLayout = useCallback(() => {
+    if (historyIndex < 0 || layoutHistory.length === 0) return;
+
+    const previousPositions = layoutHistory[historyIndex];
+    if (previousPositions) {
+      moveNodes(previousPositions);
+      setHistoryIndex((prev) => prev - 1);
+    }
+  }, [historyIndex, layoutHistory, moveNodes]);
+
+  // Check if undo is available
+  const canUndoLayout = historyIndex >= 0 && layoutHistory.length > 0;
+
+  // Fit viewport to show all nodes
+  const fitToScreen = useCallback((containerWidth: number, containerHeight: number) => {
+    if (nodes.length === 0) return;
+
+    const newViewport = calculateCenterViewport(nodes, containerWidth, containerHeight);
+    setViewport(newViewport);
+  }, [nodes]);
+
   // Cleanup
   useEffect(() => {
     return () => {
@@ -378,5 +445,9 @@ export function useCanvas({ canvasId, autoSave = true, saveDebounceMs = 1000 }: 
     deleteConnection,
     saveCanvas,
     refreshCanvas,
+    autoLayout,
+    undoLayout,
+    canUndoLayout,
+    fitToScreen,
   };
 }

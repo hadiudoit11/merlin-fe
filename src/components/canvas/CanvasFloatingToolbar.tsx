@@ -64,8 +64,10 @@ import {
   EyeOff,
   AlertCircle,
   Sparkles,
+  LayoutGrid,
 } from 'lucide-react';
 import { NodeType } from '@/types/canvas';
+import { colors } from '@/styles/colors';
 
 interface CanvasFloatingToolbarProps {
   canvasName: string;
@@ -95,6 +97,10 @@ interface CanvasFloatingToolbarProps {
   onDelete?: () => void;
   // AI Assistant
   onOpenAssistant?: () => void;
+  // Auto Layout
+  onAutoLayout?: () => void;
+  onUndoLayout?: () => void;
+  canUndoLayout?: boolean;
 }
 
 const NODE_TYPES: Array<{ type: NodeType; label: string; icon: React.ComponentType<{ className?: string }>; color: string }> = [
@@ -172,6 +178,9 @@ export function CanvasFloatingToolbar({
   onDuplicate,
   onDelete,
   onOpenAssistant,
+  onAutoLayout,
+  onUndoLayout,
+  canUndoLayout = false,
 }: CanvasFloatingToolbarProps) {
   const [activeTool, setActiveTool] = useState<'select' | 'pan'>('select');
   const [internalMenuOpen, setInternalMenuOpen] = useState(false);
@@ -301,6 +310,26 @@ export function CanvasFloatingToolbar({
             <Maximize className="h-4 w-4" />
             <span>Fit to Screen</span>
           </button>
+
+          <button
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-accent transition-colors text-left text-sm"
+            onClick={() => { onAutoLayout?.(); closeMenu(); }}
+          >
+            <LayoutGrid className="h-4 w-4" />
+            <span>Auto Layout</span>
+            <span className="ml-auto text-xs text-muted-foreground">Cmd+L</span>
+          </button>
+
+          {canUndoLayout && (
+            <button
+              className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-accent transition-colors text-left text-sm"
+              onClick={() => { onUndoLayout?.(); closeMenu(); }}
+            >
+              <Undo className="h-4 w-4" />
+              <span>Undo Layout</span>
+              <span className="ml-auto text-xs text-muted-foreground">Cmd+Z</span>
+            </button>
+          )}
 
           <Separator className="my-2" />
 

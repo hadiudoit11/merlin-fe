@@ -33,6 +33,7 @@ import {
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { AgentNodeConfig, IntegrationType } from '@/types/canvas';
+import { colors } from '@/styles/colors';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -83,18 +84,34 @@ const NODE_ICONS: Record<NodeType, React.ComponentType<{ className?: string }>> 
   custom: Puzzle,
 };
 
-const NODE_COLORS: Record<NodeType, string> = {
-  doc: 'border-blue-500/50',
-  agent: 'border-emerald-500/50',
-  webhook: 'border-orange-500/50',
-  api: 'border-green-500/50',
-  mcp: 'border-purple-500/50',
-  problem: 'border-rose-500/50',
-  objective: 'border-yellow-500/50',
-  keyresult: 'border-amber-500/50',
-  metric: 'border-cyan-500/50',
-  integration: 'border-pink-500/50',
-  custom: 'border-gray-500/50',
+// Brand-aligned node border colors
+const NODE_BORDER_COLORS: Record<NodeType, string> = {
+  doc: colors.node.doc.border,
+  agent: colors.node.agent.border,
+  webhook: colors.node.webhook.border,
+  api: colors.node.api.border,
+  mcp: colors.node.mcp.border,
+  problem: colors.node.problem.border,
+  objective: colors.node.objective.border,
+  keyresult: colors.node.keyresult.border,
+  metric: colors.node.metric.border,
+  integration: colors.node.integration.border,
+  custom: colors.node.custom.border,
+};
+
+// Brand-aligned node badge styles
+const NODE_BADGE_STYLES: Record<NodeType, { bg: string; text: string }> = {
+  doc: { bg: colors.node.doc.bg, text: colors.node.doc.text },
+  agent: { bg: colors.node.agent.bg, text: colors.node.agent.text },
+  webhook: { bg: colors.node.webhook.bg, text: colors.node.webhook.text },
+  api: { bg: colors.node.api.bg, text: colors.node.api.text },
+  mcp: { bg: colors.node.mcp.bg, text: colors.node.mcp.text },
+  problem: { bg: colors.node.problem.bg, text: colors.node.problem.text },
+  objective: { bg: colors.node.objective.bg, text: colors.node.objective.text },
+  keyresult: { bg: colors.node.keyresult.bg, text: colors.node.keyresult.text },
+  metric: { bg: colors.node.metric.bg, text: colors.node.metric.text },
+  integration: { bg: colors.node.integration.bg, text: colors.node.integration.text },
+  custom: { bg: colors.node.custom.bg, text: colors.node.custom.text },
 };
 
 export function CanvasNode({
@@ -224,6 +241,8 @@ export function CanvasNode({
     onUpdate(node.id, { is_collapsed: !node.is_collapsed });
   }, [node.id, node.is_collapsed, onUpdate]);
 
+  const borderColor = NODE_BORDER_COLORS[node.node_type as NodeType] || colors.node.custom.border;
+
   const style: React.CSSProperties = {
     position: 'absolute',
     left: node.position_x,
@@ -232,6 +251,7 @@ export function CanvasNode({
     height: node.is_collapsed ? 'auto' : node.height,
     transform: CSS.Transform.toString(transform),
     zIndex: isDragging ? 1000 : node.z_index,
+    borderColor: `${borderColor}80`, // 50% opacity
   };
 
   return (
@@ -240,7 +260,6 @@ export function CanvasNode({
       style={style}
       className={cn(
         'shadow-lg transition-shadow cursor-pointer select-none bg-card border-2 group',
-        NODE_COLORS[node.node_type as NodeType],
         isSelected && 'ring-2 ring-primary ring-offset-2',
         isDragging && 'opacity-80 shadow-2xl',
         isConnecting && 'ring-2 ring-green-500/50 cursor-crosshair',
@@ -268,20 +287,13 @@ export function CanvasNode({
           )} />
 
           {/* Node type badge */}
-          <div className={cn(
-            'flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium flex-shrink-0',
-            node.node_type === 'doc' && 'bg-blue-500/20 text-blue-600 dark:text-blue-400',
-            node.node_type === 'agent' && 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400',
-            node.node_type === 'webhook' && 'bg-orange-500/20 text-orange-600 dark:text-orange-400',
-            node.node_type === 'api' && 'bg-green-500/20 text-green-600 dark:text-green-400',
-            node.node_type === 'mcp' && 'bg-purple-500/20 text-purple-600 dark:text-purple-400',
-            node.node_type === 'problem' && 'bg-rose-500/20 text-rose-600 dark:text-rose-400',
-            node.node_type === 'objective' && 'bg-yellow-500/20 text-yellow-600 dark:text-yellow-400',
-            node.node_type === 'keyresult' && 'bg-amber-500/20 text-amber-600 dark:text-amber-400',
-            node.node_type === 'metric' && 'bg-cyan-500/20 text-cyan-600 dark:text-cyan-400',
-            node.node_type === 'integration' && 'bg-pink-500/20 text-pink-600 dark:text-pink-400',
-            node.node_type === 'custom' && 'bg-gray-500/20 text-gray-600 dark:text-gray-400',
-          )}>
+          <div
+            className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium flex-shrink-0"
+            style={{
+              backgroundColor: NODE_BADGE_STYLES[node.node_type as NodeType]?.bg || colors.node.custom.bg,
+              color: NODE_BADGE_STYLES[node.node_type as NodeType]?.text || colors.node.custom.text,
+            }}
+          >
             <Icon className="h-3 w-3" />
             <span className="uppercase">{node.node_type === 'keyresult' ? 'KEY RESULT' : node.node_type === 'problem' ? 'PROBLEM' : node.node_type}</span>
           </div>

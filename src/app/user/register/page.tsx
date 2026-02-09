@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Mail, Lock, User, ArrowRight, Loader2, CheckCircle2, Sparkles, Zap, Target } from "lucide-react";
+import { Mail, Lock, User, ArrowRight, Loader2, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -53,12 +53,6 @@ export default function Register() {
     }
   };
 
-  const features = [
-    { icon: Target, text: "Visual OKR tracking" },
-    { icon: Zap, text: "Real-time collaboration" },
-    { icon: Sparkles, text: "AI-powered insights" },
-  ];
-
   const benefits = [
     "Unlimited canvases and nodes",
     "Team collaboration tools",
@@ -66,48 +60,59 @@ export default function Register() {
     "Priority support",
   ];
 
+  // Typequest Level Up Key Logo Component
+  const TypequestLogo = ({ size = 48, className = "" }: { size?: number; className?: string }) => (
+    <svg width={size} height={size} viewBox="0 0 120 120" className={className}>
+      <rect x="10" y="20" width="100" height="90" rx="12" fill="#2d2d2d" stroke="#1a1a1a" strokeWidth="3" />
+      <defs>
+        <linearGradient id="keyGradRegister" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#4a4a4a" />
+          <stop offset="100%" stopColor="#2d2d2d" />
+        </linearGradient>
+      </defs>
+      <rect x="18" y="24" width="84" height="74" rx="8" fill="url(#keyGradRegister)" />
+      <path d="M60 40 L75 60 L67 60 L67 80 L53 80 L53 60 L45 60 Z" fill="#ff6b6b" />
+    </svg>
+  );
+
   return (
-    <div className="min-h-screen flex">
-      {/* Left side - Modern gradient with glassmorphism */}
+    <div className="min-h-screen flex font-[family-name:var(--font-space-grotesk)]">
+      {/* Left side - Charcoal background with branding */}
       <motion.div
         initial={{ opacity: 0, x: -50 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.6 }}
-        className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-12 flex-col justify-between relative overflow-hidden"
+        className="hidden lg:flex lg:w-1/2 p-12 flex-col justify-between relative overflow-hidden"
+        style={{ backgroundColor: '#2d2d2d' }}
       >
-        {/* Animated gradient orbs */}
+        {/* Decorative gradient orbs */}
         <div className="absolute inset-0 overflow-hidden">
           <motion.div
             animate={{
               scale: [1, 1.2, 1],
-              opacity: [0.3, 0.5, 0.3],
+              opacity: [0.15, 0.25, 0.15],
             }}
             transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute -top-40 -right-40 w-96 h-96 bg-purple-500/30 rounded-full blur-3xl"
+            className="absolute -top-40 -right-40 w-96 h-96 rounded-full blur-3xl"
+            style={{ backgroundColor: '#ff6b6b' }}
           />
           <motion.div
             animate={{
               scale: [1.2, 1, 1.2],
-              opacity: [0.2, 0.4, 0.2],
+              opacity: [0.1, 0.2, 0.1],
             }}
             transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute -bottom-40 -left-40 w-96 h-96 bg-indigo-500/30 rounded-full blur-3xl"
+            className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full blur-3xl"
+            style={{ backgroundColor: '#4ecdc4' }}
           />
           <motion.div
             animate={{
               scale: [1, 1.3, 1],
-              opacity: [0.1, 0.3, 0.1],
+              opacity: [0.08, 0.15, 0.08],
             }}
             transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-violet-500/20 rounded-full blur-3xl"
-          />
-          {/* Grid pattern overlay */}
-          <div
-            className="absolute inset-0 opacity-[0.03]"
-            style={{
-              backgroundImage: `linear-gradient(rgba(255,255,255,.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.1) 1px, transparent 1px)`,
-              backgroundSize: '50px 50px'
-            }}
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full blur-3xl"
+            style={{ backgroundColor: '#ffe66d' }}
           />
         </div>
 
@@ -117,12 +122,15 @@ export default function Register() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="flex items-center gap-3"
+            className="flex items-center gap-4"
           >
-            <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-purple-500/25">
-              <span className="text-2xl font-black text-white tracking-tight">T</span>
-            </div>
-            <span className="text-2xl font-bold text-white tracking-tight">Typequest</span>
+            <TypequestLogo size={48} />
+            <span
+              className="text-2xl font-semibold text-white"
+              style={{ fontFamily: 'Fraunces, Georgia, serif' }}
+            >
+              Typequest
+            </span>
           </motion.div>
         </div>
 
@@ -133,12 +141,13 @@ export default function Register() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
           >
-            <h1 className="text-4xl lg:text-5xl font-bold text-white leading-tight tracking-tight">
+            <h1
+              className="text-4xl lg:text-5xl font-semibold text-white leading-tight"
+              style={{ fontFamily: 'Fraunces, Georgia, serif' }}
+            >
               Start building
               <br />
-              <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-indigo-400 bg-clip-text text-transparent">
-                your vision.
-              </span>
+              <span style={{ color: '#ff6b6b' }}>your vision.</span>
             </h1>
           </motion.div>
 
@@ -146,7 +155,8 @@ export default function Register() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="text-lg text-white/60 max-w-md leading-relaxed"
+            className="text-lg max-w-md leading-relaxed"
+            style={{ color: '#888888' }}
           >
             Join thousands of product teams using Typequest to align on goals
             and ship faster.
@@ -167,8 +177,8 @@ export default function Register() {
                 transition={{ delay: 0.6 + i * 0.1 }}
                 className="flex items-center gap-3"
               >
-                <CheckCircle2 className="h-5 w-5 text-purple-400" />
-                <span className="text-white/80">{benefit}</span>
+                <CheckCircle2 className="h-5 w-5" style={{ color: '#4ecdc4' }} />
+                <span style={{ color: '#aaaaaa' }}>{benefit}</span>
               </motion.div>
             ))}
           </motion.div>
@@ -180,16 +190,24 @@ export default function Register() {
             transition={{ delay: 0.9 }}
             className="flex flex-wrap gap-3 pt-4"
           >
-            {features.map((feature, i) => (
+            {[
+              { emoji: '🎯', text: 'Visual OKR tracking' },
+              { emoji: '⚡', text: 'Real-time collaboration' },
+              { emoji: '✨', text: 'AI-powered insights' },
+            ].map((feature, i) => (
               <motion.div
                 key={feature.text}
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 1 + i * 0.1 }}
-                className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm"
+                className="flex items-center gap-2 px-4 py-2 rounded-full border"
+                style={{
+                  backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                  borderColor: 'rgba(255, 255, 255, 0.1)'
+                }}
               >
-                <feature.icon className="h-4 w-4 text-purple-400" />
-                <span className="text-sm text-white/80">{feature.text}</span>
+                <span>{feature.emoji}</span>
+                <span className="text-sm" style={{ color: '#aaaaaa' }}>{feature.text}</span>
               </motion.div>
             ))}
           </motion.div>
@@ -200,30 +218,39 @@ export default function Register() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.1 }}
-          className="relative z-10 text-white/30 text-sm"
+          className="relative z-10 text-sm"
+          style={{ color: '#666666' }}
         >
           © 2025 Typequest. All rights reserved.
         </motion.div>
       </motion.div>
 
       {/* Right side - Register form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-background">
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-[#fafafa]">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
           className="w-full max-w-md"
         >
-          <Card className="border-0 shadow-2xl shadow-purple-500/5">
+          <Card className="border-0 shadow-xl" style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
             <CardHeader className="space-y-1 pb-4">
-              <div className="lg:hidden flex items-center gap-2 mb-4">
-                <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-purple-500/25">
-                  <span className="text-lg font-black text-white">T</span>
-                </div>
-                <span className="text-xl font-bold tracking-tight">Typequest</span>
+              <div className="lg:hidden flex items-center gap-3 mb-4">
+                <TypequestLogo size={36} />
+                <span
+                  className="text-xl font-semibold"
+                  style={{ fontFamily: 'Fraunces, Georgia, serif', color: '#2d2d2d' }}
+                >
+                  Typequest
+                </span>
               </div>
-              <CardTitle className="text-2xl font-bold tracking-tight">Create your account</CardTitle>
-              <CardDescription className="text-muted-foreground">
+              <CardTitle
+                className="text-2xl font-semibold"
+                style={{ fontFamily: 'Fraunces, Georgia, serif', color: '#2d2d2d' }}
+              >
+                Create your account
+              </CardTitle>
+              <CardDescription style={{ color: '#888888' }}>
                 Get started with your free account
               </CardDescription>
             </CardHeader>
@@ -232,11 +259,11 @@ export default function Register() {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="firstName" className="text-sm font-medium">
+                    <Label htmlFor="firstName" className="text-sm font-medium" style={{ color: '#2d2d2d' }}>
                       First name
                     </Label>
                     <div className="relative">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 z-10" style={{ color: '#888888' }} />
                       <Input
                         id="firstName"
                         name="firstName"
@@ -244,13 +271,14 @@ export default function Register() {
                         placeholder="John"
                         value={formData.firstName}
                         onChange={handleChange}
-                        className="pl-10 h-11 border-2 focus:border-purple-500 focus:ring-purple-500/20"
+                        className="!pl-12 h-11 border-2"
+                        style={{ borderColor: '#e0e0e0' }}
                         required
                       />
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="lastName" className="text-sm font-medium">
+                    <Label htmlFor="lastName" className="text-sm font-medium" style={{ color: '#2d2d2d' }}>
                       Last name
                     </Label>
                     <Input
@@ -260,18 +288,19 @@ export default function Register() {
                       placeholder="Doe"
                       value={formData.lastName}
                       onChange={handleChange}
-                      className="h-11 border-2 focus:border-purple-500 focus:ring-purple-500/20"
+                      className="h-11 border-2"
+                      style={{ borderColor: '#e0e0e0' }}
                       required
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-sm font-medium">
+                  <Label htmlFor="email" className="text-sm font-medium" style={{ color: '#2d2d2d' }}>
                     Work email
                   </Label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 z-10" style={{ color: '#888888' }} />
                     <Input
                       id="email"
                       name="email"
@@ -279,18 +308,19 @@ export default function Register() {
                       placeholder="you@company.com"
                       value={formData.email}
                       onChange={handleChange}
-                      className="pl-10 h-11 border-2 focus:border-purple-500 focus:ring-purple-500/20"
+                      className="!pl-12 h-11 border-2"
+                      style={{ borderColor: '#e0e0e0' }}
                       required
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="password" className="text-sm font-medium">
+                  <Label htmlFor="password" className="text-sm font-medium" style={{ color: '#2d2d2d' }}>
                     Password
                   </Label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 z-10" style={{ color: '#888888' }} />
                     <Input
                       id="password"
                       name="password"
@@ -298,18 +328,19 @@ export default function Register() {
                       placeholder="Create a strong password"
                       value={formData.password}
                       onChange={handleChange}
-                      className="pl-10 h-11 border-2 focus:border-purple-500 focus:ring-purple-500/20"
+                      className="!pl-12 h-11 border-2"
+                      style={{ borderColor: '#e0e0e0' }}
                       required
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="confirmPassword" className="text-sm font-medium">
+                  <Label htmlFor="confirmPassword" className="text-sm font-medium" style={{ color: '#2d2d2d' }}>
                     Confirm password
                   </Label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 z-10" style={{ color: '#888888' }} />
                     <Input
                       id="confirmPassword"
                       name="confirmPassword"
@@ -317,7 +348,8 @@ export default function Register() {
                       placeholder="Confirm your password"
                       value={formData.confirmPassword}
                       onChange={handleChange}
-                      className="pl-10 h-11 border-2 focus:border-purple-500 focus:ring-purple-500/20"
+                      className="!pl-12 h-11 border-2"
+                      style={{ borderColor: '#e0e0e0' }}
                       required
                     />
                   </div>
@@ -327,9 +359,10 @@ export default function Register() {
                   <motion.div
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="p-3 rounded-lg bg-destructive/10 border border-destructive/20"
+                    className="p-3 rounded-lg"
+                    style={{ backgroundColor: '#fff5f5', border: '1px solid #ffcccc' }}
                   >
-                    <p className="text-sm text-destructive">{error}</p>
+                    <p className="text-sm" style={{ color: '#cc0000' }}>{error}</p>
                   </motion.div>
                 )}
 
@@ -338,18 +371,19 @@ export default function Register() {
                     id="terms"
                     checked={agreeToTerms}
                     onCheckedChange={(checked) => setAgreeToTerms(checked as boolean)}
-                    className="mt-0.5 border-2 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
+                    className="mt-0.5 h-5 w-5 border-2 border-gray-300 data-[state=checked]:bg-[#ff6b6b] data-[state=checked]:border-[#ff6b6b] data-[state=checked]:text-white"
                   />
                   <Label
                     htmlFor="terms"
-                    className="text-sm font-normal text-muted-foreground cursor-pointer leading-relaxed"
+                    className="text-sm font-normal cursor-pointer leading-relaxed"
+                    style={{ color: '#888888' }}
                   >
                     I agree to the{" "}
-                    <Link href="/terms" className="text-purple-600 hover:underline">
+                    <Link href="/terms" className="font-medium transition-colors" style={{ color: '#ff6b6b' }}>
                       Terms of Service
                     </Link>{" "}
                     and{" "}
-                    <Link href="/privacy" className="text-purple-600 hover:underline">
+                    <Link href="/privacy" className="font-medium transition-colors" style={{ color: '#ff6b6b' }}>
                       Privacy Policy
                     </Link>
                   </Label>
@@ -358,7 +392,11 @@ export default function Register() {
                 <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }} className="pt-2">
                   <Button
                     type="submit"
-                    className="w-full h-12 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 shadow-lg shadow-purple-500/25 transition-all duration-200"
+                    className="w-full h-12 text-white font-semibold transition-all duration-200"
+                    style={{
+                      backgroundColor: '#ff6b6b',
+                      borderRadius: '50px',
+                    }}
                     disabled={isLoading}
                   >
                     {isLoading ? (
@@ -375,11 +413,12 @@ export default function Register() {
             </CardContent>
 
             <CardFooter className="flex flex-col space-y-4 pt-2">
-              <p className="text-center text-sm text-muted-foreground">
+              <p className="text-center text-sm" style={{ color: '#888888' }}>
                 Already have an account?{" "}
                 <Link
                   href="/user/login"
-                  className="text-purple-600 hover:text-purple-700 font-semibold transition-colors"
+                  className="font-semibold transition-colors"
+                  style={{ color: '#ff6b6b' }}
                 >
                   Sign in
                 </Link>
