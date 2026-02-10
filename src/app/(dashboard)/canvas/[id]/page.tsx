@@ -10,6 +10,7 @@ import { AgentWizard } from '@/components/canvas/AgentWizard';
 import { CanvasFloatingToolbar } from '@/components/canvas/CanvasFloatingToolbar';
 import { NodeSettingsPanel } from '@/components/canvas/NodeSettingsPanel';
 import { CanvasAgentPanel } from '@/components/canvas/CanvasAgentPanel';
+import { MCPSetupDialog } from '@/components/canvas/MCPSetupDialog';
 import { isLiveblocksEnabled } from '@/lib/liveblocks.config';
 import { useSession } from 'next-auth/react';
 import { useCanvas } from '@/hooks/useCanvas';
@@ -83,6 +84,9 @@ export default function CanvasPage() {
 
   // AI Assistant panel state
   const [isAgentPanelOpen, setIsAgentPanelOpen] = useState(false);
+
+  // MCP Setup dialog state
+  const [isMCPDialogOpen, setIsMCPDialogOpen] = useState(false);
 
   // For adding nodes from toolbar (center of viewport)
   const getViewportCenter = useCallback(() => {
@@ -359,6 +363,11 @@ export default function CanvasPage() {
     setIsAgentPanelOpen(true);
   }, []);
 
+  // MCP Setup handler
+  const handleOpenMCPSetup = useCallback(() => {
+    setIsMCPDialogOpen(true);
+  }, []);
+
   const handleAgentCreateNode = useCallback(
     async (type: NodeType, name: string, content?: string) => {
       const center = getViewportCenter();
@@ -505,6 +514,7 @@ export default function CanvasPage() {
           onDuplicate={handleDuplicate}
           onDelete={handleDeleteCanvas}
           onOpenAssistant={handleOpenAssistant}
+          onOpenMCPSetup={handleOpenMCPSetup}
           onAutoLayout={handleAutoLayout}
           onUndoLayout={handleUndoLayout}
           canUndoLayout={canUndoLayout}
@@ -557,6 +567,13 @@ export default function CanvasPage() {
         onUpdateNode={handleAgentUpdateNode}
         onDeleteNode={handleAgentDeleteNode}
         getCanvasState={getCanvasState}
+      />
+
+      {/* MCP Setup Dialog */}
+      <MCPSetupDialog
+        isOpen={isMCPDialogOpen}
+        onClose={() => setIsMCPDialogOpen(false)}
+        canvasId={canvasId}
       />
     </div>
   );

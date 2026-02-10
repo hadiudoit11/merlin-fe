@@ -14,6 +14,7 @@ import {
   Terminal,
   ExternalLink,
   AlertCircle,
+  Download,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,11 +53,17 @@ interface Token {
   name: string;
   token_prefix: string;
   scopes: string[];
+  allowed_canvas_ids: number[] | null;
   is_active: boolean;
   last_used_at: string | null;
   use_count: number;
   created_at: string;
   expires_at: string | null;
+}
+
+interface Canvas {
+  id: number;
+  name: string;
 }
 
 interface NewTokenResponse {
@@ -72,6 +79,7 @@ interface NewTokenResponse {
 export default function APITokensPage() {
   const { data: session } = useSession();
   const [tokens, setTokens] = useState<Token[]>([]);
+  const [canvases, setCanvases] = useState<Canvas[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -82,14 +90,33 @@ export default function APITokensPage() {
   // Form state
   const [tokenName, setTokenName] = useState("");
   const [expiresIn, setExpiresIn] = useState<string>("never");
+  const [canvasAccess, setCanvasAccess] = useState<string>("all"); // "all" or "specific"
+  const [selectedCanvasIds, setSelectedCanvasIds] = useState<number[]>([]);
 
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
   useEffect(() => {
     if (session?.accessToken) {
       fetchTokens();
+      fetchCanvases();
     }
   }, [session]);
+
+  const fetchCanvases = async () => {
+    try {
+      const response = await fetch(`${backendUrl}/api/v1/canvases/`, {
+        headers: {
+          Authorization: `Bearer ${session?.accessToken}`,
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setCanvases(data);
+      }
+    } catch (err) {
+      console.error("Failed to fetch canvases:", err);
+    }
+  };
 
   const fetchTokens = async () => {
     try {
@@ -114,12 +141,21 @@ export default function APITokensPage() {
     setError(null);
 
     try {
-      const body: { name: string; expires_in_days?: number } = {
+      const body: {
+        name: string;
+        expires_in_days?: number;
+        allowed_canvas_ids?: number[];
+      } = {
         name: tokenName,
       };
 
       if (expiresIn !== "never") {
         body.expires_in_days = parseInt(expiresIn);
+      }
+
+      // Add canvas restrictions if specific canvases selected
+      if (canvasAccess === "specific" && selectedCanvasIds.length > 0) {
+        body.allowed_canvas_ids = selectedCanvasIds;
       }
 
       const response = await fetch(`${backendUrl}/api/v1/tokens/`, {
@@ -137,6 +173,8 @@ export default function APITokensPage() {
         fetchTokens();
         setTokenName("");
         setExpiresIn("never");
+        setCanvasAccess("all");
+        setSelectedCanvasIds([]);
       } else {
         const errData = await response.json();
         setError(errData.detail || "Failed to create token");
@@ -220,19 +258,29 @@ export default function APITokensPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="text-sm text-blue-800">
-          <p className="mb-2">
+          <p className="mb-3">
             Use the Model Context Protocol (MCP) to let Claude manage your canvases,
             nodes, and tasks directly. Create a token below to get started.
           </p>
-          <a
-            href="https://docs.anthropic.com/en/docs/claude-code"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-blue-600 hover:underline"
-          >
-            Learn more about MCP
-            <ExternalLink className="h-3 w-3" />
-          </a>
+          <div className="flex items-center gap-4">
+            <a
+              href="/mcp_server_api.py"
+              download="mcp_server_api.py"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors"
+            >
+              <Download className="h-4 w-4" />
+              Download MCP Server
+            </a>
+            <a
+              href="https://docs.anthropic.com/en/docs/claude-code"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-blue-600 hover:underline"
+            >
+              Learn more about MCP
+              <ExternalLink className="h-3 w-3" />
+            </a>
+          </div>
         </CardContent>
       </Card>
 
@@ -244,7 +292,7 @@ export default function APITokensPage() {
             Tokens are like passwords - keep them secret and revoke them if compromised
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           <div className="flex gap-4 items-end">
             <div className="flex-1">
               <Label htmlFor="tokenName">Token Name</Label>
@@ -271,9 +319,91 @@ export default function APITokensPage() {
                 </SelectContent>
               </Select>
             </div>
+          </div>
+
+          {/* Canvas Access Control */}
+          <div className="p-4 bg-gray-50 rounded-lg border">
+            <Label className="text-sm font-medium">Canvas Access</Label>
+            <p className="text-xs text-gray-500 mb-3">
+              Limit which canvases this token can access
+            </p>
+            <div className="flex gap-4 mb-3">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="canvasAccess"
+                  value="all"
+                  checked={canvasAccess === "all"}
+                  onChange={(e) => setCanvasAccess(e.target.value)}
+                  className="w-4 h-4 text-[#ff6b6b]"
+                />
+                <span className="text-sm">All canvases</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="canvasAccess"
+                  value="specific"
+                  checked={canvasAccess === "specific"}
+                  onChange={(e) => setCanvasAccess(e.target.value)}
+                  className="w-4 h-4 text-[#ff6b6b]"
+                />
+                <span className="text-sm">Specific canvases only</span>
+              </label>
+            </div>
+
+            {canvasAccess === "specific" && (
+              <div className="space-y-2">
+                {canvases.length === 0 ? (
+                  <p className="text-xs text-gray-500">No canvases found. Create a canvas first.</p>
+                ) : (
+                  <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
+                    {canvases.map((canvas) => (
+                      <label
+                        key={canvas.id}
+                        className="flex items-center gap-2 p-2 border rounded hover:bg-white cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedCanvasIds.includes(canvas.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedCanvasIds([...selectedCanvasIds, canvas.id]);
+                            } else {
+                              setSelectedCanvasIds(selectedCanvasIds.filter(id => id !== canvas.id));
+                            }
+                          }}
+                          className="w-4 h-4 rounded text-[#ff6b6b]"
+                        />
+                        <span className="text-sm truncate">{canvas.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+                {canvasAccess === "specific" && selectedCanvasIds.length === 0 && (
+                  <p className="text-xs text-amber-600">Select at least one canvas</p>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Rate Limit Info */}
+          <Alert className="border-gray-200 bg-gray-50">
+            <Shield className="h-4 w-4" />
+            <AlertDescription className="text-xs text-gray-600">
+              <strong>Rate limits:</strong> 60 requests/minute, 500 requests/hour per token.
+              Tokens have canvas-only scopes by default for security.
+            </AlertDescription>
+          </Alert>
+
+          <div className="flex justify-end">
             <Button
               onClick={createToken}
-              disabled={!tokenName.trim() || isCreating}
+              disabled={
+                !tokenName.trim() ||
+                isCreating ||
+                (canvasAccess === "specific" && selectedCanvasIds.length === 0)
+              }
               className="bg-[#ff6b6b] hover:bg-[#ff5252]"
             >
               <Plus className="h-4 w-4 mr-2" />
@@ -282,7 +412,7 @@ export default function APITokensPage() {
           </div>
 
           {error && (
-            <Alert variant="destructive" className="mt-4">
+            <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>{error}</AlertDescription>
             </Alert>
@@ -325,11 +455,35 @@ export default function APITokensPage() {
               </div>
             </div>
 
+            {/* Prerequisites */}
+            <div>
+              <Label className="text-sm font-medium">1. Install Dependencies</Label>
+              <p className="text-xs text-gray-500 mb-1">
+                Make sure you have Python 3.10+ and these packages:
+              </p>
+              <div className="mt-1 flex gap-2">
+                <pre className="flex-1 p-3 bg-gray-100 rounded-md text-xs overflow-x-auto">
+                  pip install mcp httpx
+                </pre>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => copyToClipboard("pip install mcp httpx", "pip")}
+                >
+                  {copied === "pip" ? (
+                    <Check className="h-4 w-4 text-green-600" />
+                  ) : (
+                    <Copy className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+            </div>
+
             {/* Claude Code Setup */}
             <div>
-              <Label className="text-sm font-medium">Claude Code Setup</Label>
+              <Label className="text-sm font-medium">2. Claude Code Setup</Label>
               <p className="text-xs text-gray-500 mb-1">
-                Run this command in your terminal:
+                Run this command in the folder where you saved mcp_server_api.py:
               </p>
               <div className="mt-1 flex gap-2">
                 <pre className="flex-1 p-3 bg-gray-100 rounded-md text-xs overflow-x-auto whitespace-pre-wrap">
@@ -351,7 +505,7 @@ export default function APITokensPage() {
 
             {/* Claude Desktop Setup */}
             <div>
-              <Label className="text-sm font-medium">Claude Desktop Setup</Label>
+              <Label className="text-sm font-medium">3. Claude Desktop Setup (Alternative)</Label>
               <p className="text-xs text-gray-500 mb-1">
                 Add to ~/Library/Application Support/Claude/claude_desktop_config.json:
               </p>
@@ -374,11 +528,20 @@ export default function APITokensPage() {
             </div>
 
             <Alert>
-              <Shield className="h-4 w-4" />
+              <Download className="h-4 w-4" />
               <AlertTitle>Download the MCP Server</AlertTitle>
-              <AlertDescription>
-                You&apos;ll need the <code className="text-xs bg-gray-100 px-1 rounded">mcp_server_api.py</code> file.
-                Get it from your Typequest installation or contact support.
+              <AlertDescription className="flex items-center justify-between">
+                <span>
+                  You&apos;ll need the <code className="text-xs bg-gray-100 px-1 rounded">mcp_server_api.py</code> file to connect Claude.
+                </span>
+                <a
+                  href="/mcp_server_api.py"
+                  download="mcp_server_api.py"
+                  className="ml-4 inline-flex items-center gap-1 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-md hover:bg-gray-800 transition-colors"
+                >
+                  <Download className="h-3 w-3" />
+                  Download
+                </a>
               </AlertDescription>
             </Alert>
           </div>
@@ -427,10 +590,15 @@ export default function APITokensPage() {
                       />
                     </div>
                     <div>
-                      <div className="font-medium text-gray-900">
+                      <div className="font-medium text-gray-900 flex items-center gap-2">
                         {token.name}
+                        {token.allowed_canvas_ids && (
+                          <span className="text-xs px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded">
+                            {token.allowed_canvas_ids.length} canvas{token.allowed_canvas_ids.length !== 1 ? "es" : ""}
+                          </span>
+                        )}
                       </div>
-                      <div className="text-sm text-gray-500 flex items-center gap-3">
+                      <div className="text-sm text-gray-500 flex items-center gap-3 flex-wrap">
                         <code className="bg-gray-100 px-1 rounded text-xs">
                           {token.token_prefix}...
                         </code>
@@ -443,6 +611,9 @@ export default function APITokensPage() {
                         {token.use_count > 0 && (
                           <span>{token.use_count} requests</span>
                         )}
+                        <span className="text-xs text-gray-400">
+                          {token.scopes.length} scopes
+                        </span>
                       </div>
                     </div>
                   </div>

@@ -97,6 +97,8 @@ interface CanvasFloatingToolbarProps {
   onDelete?: () => void;
   // AI Assistant
   onOpenAssistant?: () => void;
+  // MCP Setup
+  onOpenMCPSetup?: () => void;
   // Auto Layout
   onAutoLayout?: () => void;
   onUndoLayout?: () => void;
@@ -178,6 +180,7 @@ export function CanvasFloatingToolbar({
   onDuplicate,
   onDelete,
   onOpenAssistant,
+  onOpenMCPSetup,
   onAutoLayout,
   onUndoLayout,
   canUndoLayout = false,
@@ -475,6 +478,25 @@ export function CanvasFloatingToolbar({
 
       {/* Top Right - Actions */}
       <div className="fixed top-4 right-4 z-50 flex items-center gap-2">
+        {/* MCP Setup Button */}
+        {onOpenMCPSetup && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-10 w-10 rounded-xl bg-gradient-to-r from-purple-500/10 to-indigo-500/10 border-purple-500/30 hover:from-purple-500/20 hover:to-indigo-500/20"
+                onClick={onOpenMCPSetup}
+              >
+                <Server className="h-4 w-4 text-purple-600" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              <span className="text-xs">Connect Claude via MCP</span>
+            </TooltipContent>
+          </Tooltip>
+        )}
+
         {/* AI Assistant Button */}
         {onOpenAssistant && (
           <Button
