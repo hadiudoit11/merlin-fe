@@ -93,6 +93,9 @@ export default function APITokensPage() {
   const [canvasAccess, setCanvasAccess] = useState<string>("all"); // "all" or "specific"
   const [selectedCanvasIds, setSelectedCanvasIds] = useState<number[]>([]);
 
+  // For MCP instructions, always use production URL (Claude connects from outside)
+  const mcpApiUrl = "https://merlin-j5sk.onrender.com";
+  // For API calls from this page, use the configured backend
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
   useEffect(() => {
@@ -220,7 +223,7 @@ export default function APITokensPage() {
 
   const claudeCodeCommand = newToken
     ? `claude mcp add typequest \\
-  --env TYPEQUEST_API_URL=${backendUrl} \\
+  --env TYPEQUEST_API_URL=${mcpApiUrl} \\
   --env TYPEQUEST_API_TOKEN=${newToken.token} \\
   -- python mcp_server_api.py`
     : "";
@@ -232,7 +235,7 @@ export default function APITokensPage() {
       "command": "python",
       "args": ["path/to/mcp_server_api.py"],
       "env": {
-        "TYPEQUEST_API_URL": "${backendUrl}",
+        "TYPEQUEST_API_URL": "${mcpApiUrl}",
         "TYPEQUEST_API_TOKEN": "${newToken.token}"
       }
     }
@@ -243,21 +246,21 @@ export default function APITokensPage() {
   return (
     <div className="p-8 max-w-4xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-2xl font-semibold text-gray-900">API Tokens</h1>
-        <p className="text-gray-600 mt-1">
+        <h1 className="text-2xl font-semibold">API Tokens</h1>
+        <p className="text-muted-foreground mt-1">
           Create tokens to connect Claude or other tools to your Typequest account
         </p>
       </div>
 
       {/* MCP Info Card */}
-      <Card className="mb-6 border-blue-200 bg-blue-50">
+      <Card className="mb-6 border-primary/20 bg-primary/5">
         <CardHeader className="pb-3">
-          <CardTitle className="text-lg flex items-center gap-2 text-blue-900">
-            <Terminal className="h-5 w-5" />
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Terminal className="h-5 w-5 text-primary" />
             Connect Claude to Typequest
           </CardTitle>
         </CardHeader>
-        <CardContent className="text-sm text-blue-800">
+        <CardContent className="text-sm text-muted-foreground">
           <p className="mb-3">
             Use the Model Context Protocol (MCP) to let Claude manage your canvases,
             nodes, and tasks directly. Create a token below to get started.
@@ -266,7 +269,7 @@ export default function APITokensPage() {
             <a
               href="/mcp_server_api.py"
               download="mcp_server_api.py"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground text-sm rounded-md hover:bg-primary/90 transition-colors"
             >
               <Download className="h-4 w-4" />
               Download MCP Server
@@ -275,7 +278,7 @@ export default function APITokensPage() {
               href="https://docs.anthropic.com/en/docs/claude-code"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-blue-600 hover:underline"
+              className="inline-flex items-center gap-1 text-primary hover:underline"
             >
               Learn more about MCP
               <ExternalLink className="h-3 w-3" />
@@ -322,9 +325,9 @@ export default function APITokensPage() {
           </div>
 
           {/* Canvas Access Control */}
-          <div className="p-4 bg-gray-50 rounded-lg border">
+          <div className="p-4 bg-muted/50 rounded-lg border">
             <Label className="text-sm font-medium">Canvas Access</Label>
-            <p className="text-xs text-gray-500 mb-3">
+            <p className="text-xs text-muted-foreground mb-3">
               Limit which canvases this token can access
             </p>
             <div className="flex gap-4 mb-3">
@@ -335,7 +338,7 @@ export default function APITokensPage() {
                   value="all"
                   checked={canvasAccess === "all"}
                   onChange={(e) => setCanvasAccess(e.target.value)}
-                  className="w-4 h-4 text-[#ff6b6b]"
+                  className="w-4 h-4 accent-primary"
                 />
                 <span className="text-sm">All canvases</span>
               </label>
@@ -346,7 +349,7 @@ export default function APITokensPage() {
                   value="specific"
                   checked={canvasAccess === "specific"}
                   onChange={(e) => setCanvasAccess(e.target.value)}
-                  className="w-4 h-4 text-[#ff6b6b]"
+                  className="w-4 h-4 accent-primary"
                 />
                 <span className="text-sm">Specific canvases only</span>
               </label>
@@ -355,13 +358,13 @@ export default function APITokensPage() {
             {canvasAccess === "specific" && (
               <div className="space-y-2">
                 {canvases.length === 0 ? (
-                  <p className="text-xs text-gray-500">No canvases found. Create a canvas first.</p>
+                  <p className="text-xs text-muted-foreground">No canvases found. Create a canvas first.</p>
                 ) : (
                   <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
                     {canvases.map((canvas) => (
                       <label
                         key={canvas.id}
-                        className="flex items-center gap-2 p-2 border rounded hover:bg-white cursor-pointer"
+                        className="flex items-center gap-2 p-2 border rounded bg-background hover:bg-accent cursor-pointer"
                       >
                         <input
                           type="checkbox"
@@ -373,7 +376,7 @@ export default function APITokensPage() {
                               setSelectedCanvasIds(selectedCanvasIds.filter(id => id !== canvas.id));
                             }
                           }}
-                          className="w-4 h-4 rounded text-[#ff6b6b]"
+                          className="w-4 h-4 rounded accent-primary"
                         />
                         <span className="text-sm truncate">{canvas.name}</span>
                       </label>
@@ -381,16 +384,16 @@ export default function APITokensPage() {
                   </div>
                 )}
                 {canvasAccess === "specific" && selectedCanvasIds.length === 0 && (
-                  <p className="text-xs text-amber-600">Select at least one canvas</p>
+                  <p className="text-xs text-destructive">Select at least one canvas</p>
                 )}
               </div>
             )}
           </div>
 
           {/* Rate Limit Info */}
-          <Alert className="border-gray-200 bg-gray-50">
+          <Alert>
             <Shield className="h-4 w-4" />
-            <AlertDescription className="text-xs text-gray-600">
+            <AlertDescription className="text-xs">
               <strong>Rate limits:</strong> 60 requests/minute, 500 requests/hour per token.
               Tokens have canvas-only scopes by default for security.
             </AlertDescription>
@@ -438,7 +441,7 @@ export default function APITokensPage() {
             <div>
               <Label className="text-sm font-medium">Your API Token</Label>
               <div className="mt-1 flex gap-2">
-                <code className="flex-1 p-3 bg-gray-900 text-green-400 rounded-md text-sm font-mono overflow-x-auto">
+                <code className="flex-1 p-3 bg-zinc-900 text-emerald-400 rounded-md text-sm font-mono overflow-x-auto">
                   {newToken?.token}
                 </code>
                 <Button
@@ -447,7 +450,7 @@ export default function APITokensPage() {
                   onClick={() => copyToClipboard(newToken?.token || "", "token")}
                 >
                   {copied === "token" ? (
-                    <Check className="h-4 w-4 text-green-600" />
+                    <Check className="h-4 w-4 text-emerald-500" />
                   ) : (
                     <Copy className="h-4 w-4" />
                   )}
@@ -458,11 +461,11 @@ export default function APITokensPage() {
             {/* Prerequisites */}
             <div>
               <Label className="text-sm font-medium">1. Install Dependencies</Label>
-              <p className="text-xs text-gray-500 mb-1">
+              <p className="text-xs text-muted-foreground mb-1">
                 Make sure you have Python 3.10+ and these packages:
               </p>
               <div className="mt-1 flex gap-2">
-                <pre className="flex-1 p-3 bg-gray-100 rounded-md text-xs overflow-x-auto">
+                <pre className="flex-1 p-3 bg-muted rounded-md text-xs overflow-x-auto">
                   pip install mcp httpx
                 </pre>
                 <Button
@@ -471,7 +474,7 @@ export default function APITokensPage() {
                   onClick={() => copyToClipboard("pip install mcp httpx", "pip")}
                 >
                   {copied === "pip" ? (
-                    <Check className="h-4 w-4 text-green-600" />
+                    <Check className="h-4 w-4 text-emerald-500" />
                   ) : (
                     <Copy className="h-4 w-4" />
                   )}
@@ -482,11 +485,11 @@ export default function APITokensPage() {
             {/* Claude Code Setup */}
             <div>
               <Label className="text-sm font-medium">2. Claude Code Setup</Label>
-              <p className="text-xs text-gray-500 mb-1">
+              <p className="text-xs text-muted-foreground mb-1">
                 Run this command in the folder where you saved mcp_server_api.py:
               </p>
               <div className="mt-1 flex gap-2">
-                <pre className="flex-1 p-3 bg-gray-100 rounded-md text-xs overflow-x-auto whitespace-pre-wrap">
+                <pre className="flex-1 p-3 bg-muted rounded-md text-xs overflow-x-auto whitespace-pre-wrap">
                   {claudeCodeCommand}
                 </pre>
                 <Button
@@ -495,7 +498,7 @@ export default function APITokensPage() {
                   onClick={() => copyToClipboard(claudeCodeCommand, "claude-code")}
                 >
                   {copied === "claude-code" ? (
-                    <Check className="h-4 w-4 text-green-600" />
+                    <Check className="h-4 w-4 text-emerald-500" />
                   ) : (
                     <Copy className="h-4 w-4" />
                   )}
@@ -506,11 +509,11 @@ export default function APITokensPage() {
             {/* Claude Desktop Setup */}
             <div>
               <Label className="text-sm font-medium">3. Claude Desktop Setup (Alternative)</Label>
-              <p className="text-xs text-gray-500 mb-1">
+              <p className="text-xs text-muted-foreground mb-1">
                 Add to ~/Library/Application Support/Claude/claude_desktop_config.json:
               </p>
               <div className="mt-1 flex gap-2">
-                <pre className="flex-1 p-3 bg-gray-100 rounded-md text-xs overflow-x-auto">
+                <pre className="flex-1 p-3 bg-muted rounded-md text-xs overflow-x-auto">
                   {claudeDesktopConfig}
                 </pre>
                 <Button
@@ -519,7 +522,7 @@ export default function APITokensPage() {
                   onClick={() => copyToClipboard(claudeDesktopConfig, "claude-desktop")}
                 >
                   {copied === "claude-desktop" ? (
-                    <Check className="h-4 w-4 text-green-600" />
+                    <Check className="h-4 w-4 text-emerald-500" />
                   ) : (
                     <Copy className="h-4 w-4" />
                   )}
@@ -532,12 +535,12 @@ export default function APITokensPage() {
               <AlertTitle>Download the MCP Server</AlertTitle>
               <AlertDescription className="flex items-center justify-between">
                 <span>
-                  You&apos;ll need the <code className="text-xs bg-gray-100 px-1 rounded">mcp_server_api.py</code> file to connect Claude.
+                  You&apos;ll need the <code className="text-xs bg-muted px-1 rounded">mcp_server_api.py</code> file to connect Claude.
                 </span>
                 <a
                   href="/mcp_server_api.py"
                   download="mcp_server_api.py"
-                  className="ml-4 inline-flex items-center gap-1 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-md hover:bg-gray-800 transition-colors"
+                  className="ml-4 inline-flex items-center gap-1 px-3 py-1.5 bg-primary text-primary-foreground text-xs rounded-md hover:bg-primary/90 transition-colors"
                 >
                   <Download className="h-3 w-3" />
                   Download
@@ -562,9 +565,9 @@ export default function APITokensPage() {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="text-center py-8 text-gray-500">Loading...</div>
+            <div className="text-center py-8 text-muted-foreground">Loading...</div>
           ) : tokens.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-muted-foreground">
               <Key className="h-12 w-12 mx-auto mb-3 opacity-30" />
               <p>No tokens yet. Create one above to get started.</p>
             </div>
@@ -575,31 +578,31 @@ export default function APITokensPage() {
                   key={token.id}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
+                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50"
                 >
                   <div className="flex items-center gap-4">
                     <div
                       className={`p-2 rounded-full ${
-                        token.is_active ? "bg-green-100" : "bg-gray-100"
+                        token.is_active ? "bg-emerald-500/10" : "bg-muted"
                       }`}
                     >
                       <Key
                         className={`h-4 w-4 ${
-                          token.is_active ? "text-green-600" : "text-gray-400"
+                          token.is_active ? "text-emerald-500" : "text-muted-foreground"
                         }`}
                       />
                     </div>
                     <div>
-                      <div className="font-medium text-gray-900 flex items-center gap-2">
+                      <div className="font-medium flex items-center gap-2">
                         {token.name}
                         {token.allowed_canvas_ids && (
-                          <span className="text-xs px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded">
+                          <span className="text-xs px-1.5 py-0.5 bg-primary/10 text-primary rounded">
                             {token.allowed_canvas_ids.length} canvas{token.allowed_canvas_ids.length !== 1 ? "es" : ""}
                           </span>
                         )}
                       </div>
-                      <div className="text-sm text-gray-500 flex items-center gap-3 flex-wrap">
-                        <code className="bg-gray-100 px-1 rounded text-xs">
+                      <div className="text-sm text-muted-foreground flex items-center gap-3 flex-wrap">
+                        <code className="bg-muted px-1 rounded text-xs">
                           {token.token_prefix}...
                         </code>
                         <span className="flex items-center gap-1">
@@ -611,7 +614,7 @@ export default function APITokensPage() {
                         {token.use_count > 0 && (
                           <span>{token.use_count} requests</span>
                         )}
-                        <span className="text-xs text-gray-400">
+                        <span className="text-xs opacity-60">
                           {token.scopes.length} scopes
                         </span>
                       </div>
@@ -619,14 +622,14 @@ export default function APITokensPage() {
                   </div>
                   <div className="flex items-center gap-3">
                     {token.expires_at && (
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-muted-foreground">
                         Expires {formatDate(token.expires_at)}
                       </span>
                     )}
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
                       onClick={() => {
                         if (confirm(`Revoke token "${token.name}"? This cannot be undone.`)) {
                           revokeToken(token.id);

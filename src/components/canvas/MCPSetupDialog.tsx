@@ -30,7 +30,8 @@ interface MCPSetupDialogProps {
 export function MCPSetupDialog({ isOpen, onClose, canvasId }: MCPSetupDialogProps) {
   const { data: session } = useSession();
   const [copied, setCopied] = useState<string | null>(null);
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://api.typequest.io';
+  // For MCP instructions, always use production URL (Claude connects from outside)
+  const mcpApiUrl = 'https://merlin-j5sk.onrender.com';
 
   const copyToClipboard = async (text: string, id: string) => {
     await navigator.clipboard.writeText(text);
@@ -41,7 +42,7 @@ export function MCPSetupDialog({ isOpen, onClose, canvasId }: MCPSetupDialogProp
   const pipCommand = 'pip install mcp httpx';
 
   const claudeCodeCommand = `claude mcp add typequest \\
-  --env TYPEQUEST_API_URL=${backendUrl} \\
+  --env TYPEQUEST_API_URL=${mcpApiUrl} \\
   --env TYPEQUEST_API_TOKEN=YOUR_TOKEN_HERE \\
   -- python mcp_server_api.py`;
 
@@ -51,7 +52,7 @@ export function MCPSetupDialog({ isOpen, onClose, canvasId }: MCPSetupDialogProp
       "command": "python",
       "args": ["path/to/mcp_server_api.py"],
       "env": {
-        "TYPEQUEST_API_URL": "${backendUrl}",
+        "TYPEQUEST_API_URL": "${mcpApiUrl}",
         "TYPEQUEST_API_TOKEN": "YOUR_TOKEN_HERE"
       }
     }
@@ -63,7 +64,7 @@ export function MCPSetupDialog({ isOpen, onClose, canvasId }: MCPSetupDialogProp
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Terminal className="h-5 w-5 text-purple-600" />
+            <Terminal className="h-5 w-5 text-primary" />
             Connect Claude to This Canvas
           </DialogTitle>
           <DialogDescription>
@@ -73,16 +74,16 @@ export function MCPSetupDialog({ isOpen, onClose, canvasId }: MCPSetupDialogProp
 
         <div className="space-y-5 py-4">
           {/* Step 0: Get API Token */}
-          <Alert className="border-amber-200 bg-amber-50">
-            <Key className="h-4 w-4 text-amber-600" />
-            <AlertTitle className="text-amber-900">First, get an API Token</AlertTitle>
-            <AlertDescription className="text-amber-800">
+          <Alert className="border-primary/30 bg-primary/5">
+            <Key className="h-4 w-4" />
+            <AlertTitle>First, get an API Token</AlertTitle>
+            <AlertDescription>
               <p className="mb-2">
                 You need an API token to authenticate Claude with your account.
               </p>
               <a
                 href="/settings/api-tokens"
-                className="inline-flex items-center gap-1 text-amber-700 font-medium hover:underline"
+                className="inline-flex items-center gap-1 text-primary font-medium hover:underline"
               >
                 Go to API Tokens page
                 <ExternalLink className="h-3 w-3" />
@@ -99,7 +100,7 @@ export function MCPSetupDialog({ isOpen, onClose, canvasId }: MCPSetupDialogProp
             <a
               href="/mcp_server_api.py"
               download="mcp_server_api.py"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-gray-900 text-white text-sm rounded-md hover:bg-gray-800 transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground text-sm rounded-md hover:bg-primary/90 transition-colors"
             >
               <Download className="h-4 w-4" />
               Download mcp_server_api.py
@@ -113,7 +114,7 @@ export function MCPSetupDialog({ isOpen, onClose, canvasId }: MCPSetupDialogProp
               Run this in your terminal (requires Python 3.10+)
             </p>
             <div className="flex gap-2">
-              <pre className="flex-1 p-3 bg-gray-100 rounded-md text-xs overflow-x-auto">
+              <pre className="flex-1 p-3 bg-muted rounded-md text-xs overflow-x-auto">
                 {pipCommand}
               </pre>
               <Button
@@ -122,7 +123,7 @@ export function MCPSetupDialog({ isOpen, onClose, canvasId }: MCPSetupDialogProp
                 onClick={() => copyToClipboard(pipCommand, 'pip')}
               >
                 {copied === 'pip' ? (
-                  <Check className="h-4 w-4 text-green-600" />
+                  <Check className="h-4 w-4 text-emerald-500" />
                 ) : (
                   <Copy className="h-4 w-4" />
                 )}
@@ -137,7 +138,7 @@ export function MCPSetupDialog({ isOpen, onClose, canvasId }: MCPSetupDialogProp
               Run this in the folder where you saved mcp_server_api.py (replace YOUR_TOKEN_HERE)
             </p>
             <div className="flex gap-2">
-              <pre className="flex-1 p-3 bg-gray-100 rounded-md text-xs overflow-x-auto whitespace-pre-wrap">
+              <pre className="flex-1 p-3 bg-muted rounded-md text-xs overflow-x-auto whitespace-pre-wrap">
                 {claudeCodeCommand}
               </pre>
               <Button
@@ -146,7 +147,7 @@ export function MCPSetupDialog({ isOpen, onClose, canvasId }: MCPSetupDialogProp
                 onClick={() => copyToClipboard(claudeCodeCommand, 'claude-code')}
               >
                 {copied === 'claude-code' ? (
-                  <Check className="h-4 w-4 text-green-600" />
+                  <Check className="h-4 w-4 text-emerald-500" />
                 ) : (
                   <Copy className="h-4 w-4" />
                 )}
@@ -161,7 +162,7 @@ export function MCPSetupDialog({ isOpen, onClose, canvasId }: MCPSetupDialogProp
               Add to ~/Library/Application Support/Claude/claude_desktop_config.json
             </p>
             <div className="flex gap-2">
-              <pre className="flex-1 p-3 bg-gray-100 rounded-md text-xs overflow-x-auto">
+              <pre className="flex-1 p-3 bg-muted rounded-md text-xs overflow-x-auto">
                 {claudeDesktopConfig}
               </pre>
               <Button
@@ -170,7 +171,7 @@ export function MCPSetupDialog({ isOpen, onClose, canvasId }: MCPSetupDialogProp
                 onClick={() => copyToClipboard(claudeDesktopConfig, 'claude-desktop')}
               >
                 {copied === 'claude-desktop' ? (
-                  <Check className="h-4 w-4 text-green-600" />
+                  <Check className="h-4 w-4 text-emerald-500" />
                 ) : (
                   <Copy className="h-4 w-4" />
                 )}
@@ -179,9 +180,9 @@ export function MCPSetupDialog({ isOpen, onClose, canvasId }: MCPSetupDialogProp
           </div>
 
           {/* What Claude Can Do */}
-          <div className="p-4 bg-purple-50 border border-purple-100 rounded-lg">
-            <h4 className="font-medium text-purple-900 mb-2">What Claude can do with MCP:</h4>
-            <ul className="text-sm text-purple-800 space-y-1">
+          <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg">
+            <h4 className="font-medium mb-2">What Claude can do with MCP:</h4>
+            <ul className="text-sm text-muted-foreground space-y-1">
               <li>Create and manage canvases</li>
               <li>Add nodes (docs, objectives, key results, metrics)</li>
               <li>Connect nodes to build OKR hierarchies</li>
