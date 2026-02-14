@@ -1,23 +1,35 @@
 :root {
-  /* Primary brand colors */
-  --brand-primary: #3498db;
-  --brand-secondary: #2ecc71;
-  --brand-accent: #f39c12;
+  /* ═══════════════════════════════════════════════════════════ */
+  /* Typequest Brand Colors */
+  /* ═══════════════════════════════════════════════════════════ */
   
-  /* Background colors */
-  --background-main: #f5f5f5;
-  --background-card: #ffffff;
-  --background-dark: #282828;
+  --brand-primary: #ff6b6b;       /* Coral */
+  --brand-secondary: #4ecdc4;     /* Teal */
+  --brand-accent: #ffe66d;        /* Yellow */
   
-  /* Text colors */
-  --text-primary: #333333;
-  --text-secondary: #666666;
-  --text-light: #ffffff;
+  /* ═══════════════════════════════════════════════════════════ */
+  /* Background Colors */
+  /* ═══════════════════════════════════════════════════════════ */
   
-  /* Status colors */
-  --status-todo: #3498db;
-  --status-in-progress: #f39c12;
-  --status-on-hold: #9b59b6;
-  --status-done: #2ecc71;
-  --status-cancelled: #e74c3c;
+  --background-main: #fafafa;     /* Off-white */
+  --background-card: #ffffff;     /* Pure white */
+  --background-dark: #2d2d2d;     /* Charcoal */
+  
+  /* ═══════════════════════════════════════════════════════════ */
+  /* Text Colors */
+  /* ═══════════════════════════════════════════════════════════ */
+  
+  --text-primary: #2d2d2d;        /* Charcoal */
+  --text-secondary: #4a4a4a;      /* Gray 700 */
+  --text-light: #ffffff;          /* White */
+  
+  /* ═══════════════════════════════════════════════════════════ */
+  /* Status Colors (Task states) */
+  /* ═══════════════════════════════════════════════════════════ */
+  
+  --status-todo: #5dade2;         /* Blue - To Do */
+  --status-in-progress: #ffe66d;  /* Yellow - In Progress */
+  --status-on-hold: #a3a3a3;      /* Gray - On Hold */
+  --status-done: #4ecdc4;         /* Teal - Done */
+  --status-cancelled: #e85555;    /* Red-coral - Cancelled */
 }

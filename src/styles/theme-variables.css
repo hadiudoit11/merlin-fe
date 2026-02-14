@@ -1,42 +1,56 @@
 :root {
-  /* Brand Colors */
-  --brand-primary: #3498db;
-  --brand-secondary: #2ecc71;
-  --brand-accent: #f39c12;
+  /* ═══════════════════════════════════════════════════════════ */
+  /* Typequest Brand Colors */
+  /* ═══════════════════════════════════════════════════════════ */
   
+  --brand-primary: #ff6b6b;       /* Coral */
+  --brand-secondary: #4ecdc4;     /* Teal */
+  --brand-accent: #ffe66d;        /* Yellow */
+  
+  /* ═══════════════════════════════════════════════════════════ */
   /* Background Colors */
-  --background-main: #f5f5f5;
-  --background-card: #ffffff;
-  --background-dark: #282828;
+  /* ═══════════════════════════════════════════════════════════ */
   
+  --background-main: #fafafa;     /* Off-white */
+  --background-card: #ffffff;     /* Pure white */
+  --background-dark: #2d2d2d;     /* Charcoal */
+  
+  /* ═══════════════════════════════════════════════════════════ */
   /* Text Colors */
-  --text-primary: #333333;
-  --text-secondary: #666666;
-  --text-light: #ffffff;
+  /* ═══════════════════════════════════════════════════════════ */
   
+  --text-primary: #2d2d2d;        /* Charcoal */
+  --text-secondary: #4a4a4a;      /* Gray 700 */
+  --text-light: #ffffff;          /* White */
+  
+  /* ═══════════════════════════════════════════════════════════ */
   /* Status Colors */
-  --status-success: #2ecc71;
-  --status-warning: #f39c12;
-  --status-error: #e74c3c;
-  --status-info: #3498db;
-}
-
-/* Dark mode overrides when using class="dark" */
-.dark {
-  /* Background colors in dark mode */
-  --background-main: #1a1a1a;
-  --background-card: #2a2a2a;
-  --background-dark: #121212;
+  /* ═══════════════════════════════════════════════════════════ */
   
-  /* Text colors in dark mode */
-  --text-primary: #f5f5f5;
-  --text-secondary: #cccccc;
+  --status-success: #4ecdc4;      /* Teal */
+  --status-warning: #ffe66d;      /* Yellow */
+  --status-error: #ff6b6b;        /* Coral */
+  --status-info: #5dade2;         /* Blue */
 }
 
-/*
- * These utility classes use theme variables so they adapt to both
- * dark mode and custom themes
- */
+/* ═══════════════════════════════════════════════════════════ */
+/* Dark mode overrides */
+/* ═══════════════════════════════════════════════════════════ */
+
+.dark {
+  --background-main: #1a1a1a;     /* Near black */
+  --background-card: #2a2a2a;     /* Dark gray */
+  --background-dark: #121212;     /* Very dark */
+  
+  --text-primary: #f5f5f5;        /* Off-white */
+  --text-secondary: #cccccc;      /* Light gray */
+  
+  /* Brand colors stay the same in dark mode */
+}
+
+/* ═══════════════════════════════════════════════════════════ */
+/* Utility Classes (Theme-aware) */
+/* ═══════════════════════════════════════════════════════════ */
 
 /* Background colors */
 .bg-brand-primary {
@@ -114,4 +128,4 @@
 }
 .text-status-info {
   color: var(--status-info);
-} 
+}

@@ -1,133 +1,243 @@
 /**
- * Application Colors
+ * Typequest Brand Colors
  * 
  * This is the ONLY place to define colors for the entire application.
- * Change these values to instantly update the app's color scheme.
+ * Aligned with typequest-brand-guidelines.jsx
+ * 
+ * Brand Identity:
+ * - Primary: Coral (#ff6b6b) - CTAs, highlights, brand accent
+ * - Secondary: Teal (#4ecdc4) - Success, progress, navigation
+ * - Accent: Yellow (#ffe66d) - Warnings, achievements, highlights
+ * - Neutral: Charcoal/Grays - Text, borders, backgrounds
+ * - Backgrounds: Off-white, Cream - Warm, inviting surfaces
  */
 
 export const colors = {
-  // Brand Colors
-  primary: '#effcaa',     // Light greenish yellow
-  secondary: '#1d2e28',   // Dark green
-  tertiary: '#FFFFFF',    // Dark green (same as secondary for now)
-  accent: '#94bc20',      // Bright lime green
+  // ═══════════════════════════════════════════════════════════
+  // Brand Colors (Typequest Identity)
+  // ═══════════════════════════════════════════════════════════
   
+  // Primary - Coral (Brand heart)
+  primary: '#ff6b6b',           // Main brand color
+  primaryDark: '#e85555',       // Hover states, emphasis
+  primaryLight: '#ff8e8e',      // Backgrounds, accents
+  
+  // Secondary - Teal (Success & Progress)
+  secondary: '#4ecdc4',         // Success states, progress indicators
+  secondaryDark: '#3db5ad',     // Active states
+  secondaryLight: '#7dd9d3',    // Subtle backgrounds
+  
+  // Accent - Yellow (Achievements & Warnings)
+  accent: '#ffe66d',            // Highlights, achievements
+  accentDark: '#f4d747',        // Darker variant
+  accentLight: '#fff29a',       // Backgrounds
+  
+  // Tertiary - Mint (Subtle accents)
+  tertiary: '#95e1d3',          // Soft backgrounds, calm accents
+  
+  // ═══════════════════════════════════════════════════════════
+  // Neutral Colors
+  // ═══════════════════════════════════════════════════════════
+  
+  charcoal: '#2d2d2d',          // Primary text, dark backgrounds
+  
+  // Grays
+  gray700: '#4a4a4a',           // Secondary elements
+  gray500: '#888888',           // Muted text, borders
+  gray200: '#e0e0e0',           // Borders, dividers
+  
+  // Background neutrals
+  offWhite: '#fafafa',          // Main background
+  cream: '#fef9f3',             // Warm backgrounds
+  white: '#ffffff',             // Pure white
+  
+  // ═══════════════════════════════════════════════════════════
   // Background Colors
-  bgMain: '#1d2e28',      // Near black
-  bgActionCard: '#0b3a29',
-  bgNavbar: '#0b3a29',
-  bgCard: '#f8fdd9',      // White
-  bgDark: '#282828',      // Dark gray
-  bgForm: '#0f0f0f',      // Slightly lighter than secondary for form backgrounds
+  // ═══════════════════════════════════════════════════════════
   
+  bgMain: '#fafafa',            // Off-white primary background
+  bgCard: '#ffffff',            // Card backgrounds
+  bgDark: '#2d2d2d',            // Dark mode / terminal backgrounds
+  bgForm: '#ffffff',            // Form backgrounds
+  bgActionCard: '#fff5f5',      // Coral-tinted card background
+  bgNavbar: '#ffffff',          // Navbar background
+  bgCream: '#fef9f3',           // Warm background variant
+  
+  // ═══════════════════════════════════════════════════════════
   // Border Colors
-  borderAccent: '#94bc20', // Slightly darker accent color for borders
+  // ═══════════════════════════════════════════════════════════
   
-  // Effect Colors
+  border: '#e0e0e0',            // Default borders
+  borderAccent: '#ff6b6b',      // Brand accent borders
+  borderLight: '#f5f5f5',       // Very subtle borders
+  
+  // ═══════════════════════════════════════════════════════════
+  // Text Colors
+  // ═══════════════════════════════════════════════════════════
+  
+  textPrimary: '#2d2d2d',       // Charcoal - main text
+  textSecondary: '#4a4a4a',     // Gray 700 - secondary text
+  textTertiary: '#888888',      // Gray 500 - muted text
+  textLight: '#ffffff',         // White text on dark backgrounds
+  textOnBrand: '#ffffff',       // White text on coral/teal/yellow
+  
+  // ═══════════════════════════════════════════════════════════
+  // Status Colors
+  // ═══════════════════════════════════════════════════════════
+  
+  success: '#4ecdc4',           // Teal - success states
+  warning: '#ffe66d',           // Yellow - warnings
+  error: '#ff6b6b',             // Coral - errors (softer than typical red)
+  info: '#5dade2',              // Blue - informational
+  
+  // ═══════════════════════════════════════════════════════════
+  // Effect Colors (Radial blurs, glows, shadows)
+  // ═══════════════════════════════════════════════════════════
+  
   radialBlur: {
-    primary: 'rgba(239, 252, 170, 0.35)',  // primary with opacity
-    accent: 'rgba(177, 224, 44, 0.4)',     // accent with opacity
-    secondary: 'rgba(11, 58, 41, 0.5)',    // secondary with opacity
+    primary: 'rgba(255, 107, 107, 0.15)',   // Coral glow
+    secondary: 'rgba(78, 205, 196, 0.15)',  // Teal glow
+    accent: 'rgba(255, 230, 109, 0.2)',     // Yellow glow
   },
   
-  // Text Colors
-  textPrimary: '#effcaa', // White
-  textSecondary: '#0b3a29',
-  textTertiary: '#1d2e28', // Light gray
-  textLight: '#effcaa',   // Black (for light backgrounds)
+  shadowAccent: 'rgba(255, 107, 107, 0.3)', // Coral shadow
+  shadowSoft: 'rgba(0, 0, 0, 0.05)',        // Soft shadow for cards
+  shadowMedium: 'rgba(0, 0, 0, 0.1)',       // Medium shadow
   
-  // Status Colors
-  success: '#2ecc71',     // Green
-  warning: '#f39c12',     // Orange
-  error: '#e74c3c',       // Red
-  info: '#3498db',        // Blue
+  // ═══════════════════════════════════════════════════════════
+  // Gray Scale (Extended for fine control)
+  // ═══════════════════════════════════════════════════════════
   
-  // Shadow Colors
-  shadowAccent:  'rgba(201, 255, 50, 0.7)',
-  
-  // Gray Scale
   gray50: '#fafafa',
   gray100: '#f5f5f5',
-  gray200: '#eeeeee',
-  gray300: '#e0e0e0',
-  gray400: '#bdbdbd',
-  gray500: '#9e9e9e',
-  gray600: '#757575',
-  gray700: '#616161',
-  gray800: '#424242',
-  gray900: '#212121',
+  gray200: '#e0e0e0',
+  gray300: '#d4d4d4',
+  gray400: '#a3a3a3',
+  gray500: '#888888',
+  gray600: '#737373',
+  gray700: '#4a4a4a',
+  gray800: '#3a3a3a',
+  gray900: '#2d2d2d',
   
-  // Black/White
   black: '#000000',
-  white: '#ffffff',
-
-  // Node Type Colors (brand-aligned)
+  
+  // ═══════════════════════════════════════════════════════════
+  // Node Type Colors (Canvas nodes)
+  // ═══════════════════════════════════════════════════════════
+  
   node: {
-    // Problem - uses error/warning tones (needs attention)
+    // Problem - Red-coral (urgent, needs attention)
     problem: {
-      border: '#e74c3c',
-      bg: 'rgba(231, 76, 60, 0.15)',
-      text: '#e74c3c',
+      border: '#e85555',
+      bg: 'rgba(232, 85, 85, 0.08)',
+      text: '#e85555',
+      icon: '❗',
     },
-    // Objective - uses accent (goal-oriented, prominent)
+    
+    // Objective - Coral (primary goal)
     objective: {
-      border: '#94bc20',
-      bg: 'rgba(148, 188, 32, 0.15)',
-      text: '#94bc20',
+      border: '#ff6b6b',
+      bg: 'rgba(255, 107, 107, 0.05)',
+      text: '#ff6b6b',
+      icon: '🎯',
     },
-    // Key Result - uses primary (measurable outcomes)
+    
+    // Key Result - Teal (measurable progress)
     keyresult: {
-      border: '#7fa31a',
-      bg: 'rgba(127, 163, 26, 0.15)',
-      text: '#7fa31a',
+      border: '#4ecdc4',
+      bg: 'rgba(78, 205, 196, 0.08)',
+      text: '#3db5ad',
+      icon: '📊',
     },
-    // Metric - uses info blue (data-driven)
+    
+    // Metric - Blue-teal (data-driven)
     metric: {
-      border: '#3498db',
-      bg: 'rgba(52, 152, 219, 0.15)',
-      text: '#3498db',
+      border: '#5dade2',
+      bg: 'rgba(93, 173, 226, 0.08)',
+      text: '#5dade2',
+      icon: '📈',
     },
-    // Doc - neutral/muted (content container)
+    
+    // Doc - Neutral gray (content container)
     doc: {
-      border: '#6b7280',
-      bg: 'rgba(107, 114, 128, 0.1)',
-      text: '#6b7280',
+      border: '#888888',
+      bg: 'rgba(136, 136, 136, 0.05)',
+      text: '#4a4a4a',
+      icon: '📄',
     },
-    // Agent - uses accent variant (AI-powered)
+    
+    // Agent - Yellow (AI-powered, magic)
     agent: {
-      border: '#94bc20',
-      bg: 'rgba(148, 188, 32, 0.15)',
-      text: '#94bc20',
+      border: '#ffe66d',
+      bg: 'rgba(255, 230, 109, 0.1)',
+      text: '#d4b13f',
+      icon: '✨',
     },
-    // API - uses secondary green
+    
+    // API - Charcoal (technical)
     api: {
-      border: '#0b3a29',
-      bg: 'rgba(11, 58, 41, 0.15)',
-      text: '#0b3a29',
+      border: '#4a4a4a',
+      bg: 'rgba(74, 74, 74, 0.05)',
+      text: '#2d2d2d',
+      icon: '🔌',
     },
-    // Webhook - uses warning orange
+    
+    // Webhook - Mint (integration connector)
     webhook: {
-      border: '#f39c12',
-      bg: 'rgba(243, 156, 18, 0.15)',
-      text: '#f39c12',
+      border: '#95e1d3',
+      bg: 'rgba(149, 225, 211, 0.1)',
+      text: '#6bb5a7',
+      icon: '🪝',
     },
-    // MCP - uses primary light
+    
+    // MCP - Teal variant (protocol)
     mcp: {
-      border: '#effcaa',
-      bg: 'rgba(239, 252, 170, 0.15)',
-      text: '#c9e866',
+      border: '#7dd9d3',
+      bg: 'rgba(125, 217, 211, 0.1)',
+      text: '#4ecdc4',
+      icon: '🤖',
     },
-    // Integration - uses secondary variant
+    
+    // Integration - Mixed (external service)
     integration: {
-      border: '#1d4d3a',
-      bg: 'rgba(29, 77, 58, 0.15)',
-      text: '#1d4d3a',
+      border: '#95e1d3',
+      bg: 'rgba(149, 225, 211, 0.08)',
+      text: '#6bb5a7',
+      icon: '🔗',
     },
-    // Custom - neutral
+    
+    // Custom - Neutral light gray
     custom: {
-      border: '#9ca3af',
-      bg: 'rgba(156, 163, 175, 0.1)',
-      text: '#9ca3af',
+      border: '#a3a3a3',
+      bg: 'rgba(163, 163, 163, 0.05)',
+      text: '#737373',
+      icon: '⚙️',
     },
   },
-} 
+  
+  // ═══════════════════════════════════════════════════════════
+  // Integration Status Colors
+  // ═══════════════════════════════════════════════════════════
+  
+  integration: {
+    connected: '#4ecdc4',      // Teal - connected
+    syncing: '#ffe66d',        // Yellow - syncing
+    warning: '#f4d747',        // Darker yellow - issues
+    error: '#ff6b6b',          // Coral - disconnected
+  },
+  
+  // ═══════════════════════════════════════════════════════════
+  // Task Source Colors (for badges - keep brand-specific)
+  // ═══════════════════════════════════════════════════════════
+  
+  taskSource: {
+    manual: '#888888',         // Gray - manual
+    zoom: '#5865f2',           // Zoom blue
+    slack: '#e01e5a',          // Slack magenta
+    jira: '#0052cc',           // Jira blue
+    ai: '#ffe66d',             // Yellow - AI-extracted
+    linear: '#5e6ad2',         // Linear purple
+    email: '#ea4335',          // Gmail red
+    calendar: '#34a853',       // Calendar green
+  },
+}
