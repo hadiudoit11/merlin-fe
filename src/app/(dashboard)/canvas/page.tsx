@@ -147,12 +147,12 @@ export default function CanvasListPage() {
   );
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen p-4 md:p-6">
       {/* Hero Section */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-700 p-8 mb-8"
+        className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary via-primary/90 to-secondary p-8 mb-8"
       >
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute -top-20 -right-20 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
@@ -177,7 +177,7 @@ export default function CanvasListPage() {
 
               <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button className="bg-white text-violet-700 hover:bg-white/90 shadow-lg">
+                  <Button className="bg-white text-primary hover:bg-white/90 shadow-lg">
                     <Plus className="h-4 w-4 mr-2" />
                     New Canvas
                   </Button>
@@ -218,7 +218,7 @@ export default function CanvasListPage() {
                     <Button
                       onClick={handleCreateCanvas}
                       disabled={isCreating || !newCanvasName.trim()}
-                      className="bg-gradient-to-r from-violet-600 to-purple-600"
+                      className="bg-gradient-to-r from-primary to-secondary"
                     >
                       {isCreating ? 'Creating...' : 'Create Canvas'}
                     </Button>
@@ -312,8 +312,8 @@ export default function CanvasListPage() {
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}>
           <Card className="border-dashed border-2">
             <CardContent className="flex flex-col items-center justify-center py-16">
-              <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-violet-100 to-purple-100 flex items-center justify-center mb-4">
-                <FolderOpen className="h-8 w-8 text-violet-600" />
+              <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center mb-4">
+                <FolderOpen className="h-8 w-8 text-primary" />
               </div>
               <h3 className="text-xl font-semibold mb-2">
                 {searchQuery ? 'No matching canvases' : 'No canvases yet'}
@@ -367,7 +367,7 @@ export default function CanvasListPage() {
                 exit={{ opacity: 0, scale: 0.9 }}
               >
                 <Card
-                  className={`group cursor-pointer transition-all duration-300 hover:shadow-xl hover:shadow-violet-500/10 hover:border-violet-200 ${
+                  className={`group cursor-pointer transition-all duration-300 hover:shadow-xl hover:shadow-primary/10 hover:border-primary/30 ${
                     viewMode === 'list' ? 'flex flex-row items-center' : ''
                   }`}
                   onClick={() => handleOpenCanvas(canvas.id)}
@@ -377,8 +377,8 @@ export default function CanvasListPage() {
                   >
                     {viewMode === 'grid' && (
                       <div className="flex items-start justify-between">
-                        <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-violet-100 to-purple-100 flex items-center justify-center group-hover:from-violet-200 group-hover:to-purple-200 transition-colors">
-                          <LayoutGrid className="h-5 w-5 text-violet-600" />
+                        <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center group-hover:from-primary/30 group-hover:to-secondary/30 transition-colors">
+                          <LayoutGrid className="h-5 w-5 text-primary" />
                         </div>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
@@ -407,8 +407,8 @@ export default function CanvasListPage() {
                     )}
 
                     {viewMode === 'list' && (
-                      <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-violet-100 to-purple-100 flex items-center justify-center shrink-0">
-                        <LayoutGrid className="h-5 w-5 text-violet-600" />
+                      <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center shrink-0">
+                        <LayoutGrid className="h-5 w-5 text-primary" />
                       </div>
                     )}
 

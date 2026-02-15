@@ -79,6 +79,8 @@ async def api_request(
                 return {"error": "Permission denied for this operation."}
             elif response.status_code >= 400:
                 return {"error": f"API error {response.status_code}: {response.text}"}
+            elif response.status_code == 204:
+                return {"success": True, "message": "Operation completed successfully"}
 
             return response.json()
 
@@ -87,7 +89,7 @@ async def api_request(
         except httpx.RequestError as e:
             return {"error": f"API request failed: {str(e)}"}
         except json.JSONDecodeError:
-            return {"error": "Invalid JSON response from API"}
+            return {"error": f"Invalid JSON (status {response.status_code}): {response.text[:500]}"}
 
 
 # ============ Tool Definitions ============
@@ -291,7 +293,7 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
     handlers = {
         # Canvas
         "list_canvases": lambda args: api_request("GET", "/canvases/", params={"limit": args.get("limit", 20)}),
-        "get_canvas": lambda args: api_request("GET", f"/canvases/{args['canvas_id']}/"),
+        "get_canvas": lambda args: api_request("GET", f"/canvases/{args['canvas_id']}"),
         "create_canvas": lambda args: api_request("POST", "/canvases/", json_body={
             "name": args["name"],
             "description": args.get("description", ""),
@@ -306,11 +308,12 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
             "position_x": args.get("position_x", 0),
             "position_y": args.get("position_y", 0),
         }),
-        "update_node": lambda args: api_request("PUT", f"/nodes/{args['node_id']}/", json_body={
+        "update_node": lambda args: api_request("PUT", f"/nodes/{args['node_id']}", json_body={
             k: v for k, v in args.items() if k != "node_id" and v is not None
         }),
-        "delete_node": lambda args: api_request("DELETE", f"/nodes/{args['node_id']}/"),
-        "connect_nodes": lambda args: api_request("POST", f"/nodes/{args['source_node_id']}/connect/", json_body={
+        "delete_node": lambda args: api_request("DELETE", f"/nodes/{args['node_id']}"),
+        "connect_nodes": lambda args: api_request("POST", "/nodes/connections", json_body={
+            "source_node_id": args["source_node_id"],
             "target_node_id": args["target_node_id"],
         }),
 
@@ -322,7 +325,7 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
             k: v for k, v in args.items() if v is not None
         }),
         "create_task": lambda args: api_request("POST", "/tasks/", json_body=args),
-        "update_task": lambda args: api_request("PUT", f"/tasks/{args['task_id']}/", json_body={
+        "update_task": lambda args: api_request("PUT", f"/tasks/{args['task_id']}", json_body={
             k: v for k, v in args.items() if k != "task_id" and v is not None
         }),
         "get_task_stats": lambda args: api_request("GET", "/tasks/stats", params={

@@ -80,7 +80,9 @@ export function ConfluenceIntegration({ space, onUpdate }: ConfluenceIntegration
         setSpaceIntegration(spaceInt);
       }
     } catch (err) {
-      console.error('Failed to load integration:', err);
+      // Backend may not be running - show disconnected state
+      console.warn('Failed to load integration (backend may be offline):', err);
+      setIntegration(null);
     } finally {
       setIsLoading(false);
     }
@@ -352,9 +354,14 @@ function ConnectConfluenceDialog({
 
       // Redirect to Atlassian OAuth
       window.location.href = authUrl;
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Failed to initiate OAuth:', err);
-      setError('Failed to connect to Confluence. Please try again.');
+      const axiosError = err as { response?: { status?: number } };
+      if (axiosError.response?.status === 404 || axiosError.response?.status === 501) {
+        setError('Confluence integration is not configured on the server. Contact your administrator.');
+      } else {
+        setError('Failed to connect to Confluence. Please ensure the backend is running.');
+      }
       setIsConnecting(false);
     }
   };

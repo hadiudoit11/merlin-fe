@@ -148,7 +148,7 @@ export function CanvasContextMenu({
   return (
     <div
       ref={menuRef}
-      className="fixed z-50 min-w-[220px] bg-popover text-popover-foreground border rounded-lg shadow-lg overflow-hidden"
+      className="absolute z-50 min-w-[220px] bg-popover text-popover-foreground border rounded-lg shadow-lg overflow-hidden"
       style={{ left: x, top: y }}
     >
       <div className="px-3 py-2 border-b">

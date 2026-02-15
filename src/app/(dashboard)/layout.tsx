@@ -40,12 +40,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         <ToastProvider>
           <SidebarProvider>
             <AppSidebar variant="inset" />
-            <SidebarInset>
+            <SidebarInset className="flex flex-col min-h-screen">
               <SiteHeader />
-              <div className="flex flex-1 flex-col">
-                <div className="@container/main p-4 md:p-6">
-                  {children}
-                </div>
+              <div className="flex-1 min-h-0 overflow-auto relative">
+                {children}
               </div>
             </SidebarInset>
           </SidebarProvider>

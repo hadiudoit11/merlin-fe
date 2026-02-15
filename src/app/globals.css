@@ -8,20 +8,29 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Your existing variables and styles */
+/* Theme-aware form colors */
 :root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
-  --form-font-color: #333333; 
+  --form-font-color: #2d2d2d;
+  --editor-text: #2d2d2d;
+  --editor-link: #4ecdc4;
+  --editor-link-hover: #3dbdb4;
+  --editor-blockquote-border: #ff6b6b;
+  --editor-blockquote-text: #888888;
+  --editor-highlight: #ffe66d;
+  --editor-checkbox: #4ecdc4;
+  --editor-placeholder: #9ca3af;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
-  }
+.dark {
+  --form-font-color: #fafafa;
+  --editor-text: #fafafa;
+  --editor-link: #4ecdc4;
+  --editor-link-hover: #5fdfd6;
+  --editor-blockquote-border: #ff8e8e;
+  --editor-blockquote-text: #aaaaaa;
+  --editor-highlight: #ffe66d;
+  --editor-checkbox: #4ecdc4;
+  --editor-placeholder: #6b7280;
 }
 
 /* Body styles are defined in @layer base below */
@@ -45,7 +54,7 @@ textarea {
 }
 
 .input-text-color {
-  color: #333333 !important;
+  color: var(--form-font-color) !important;
 }
 
 .custom-focus-ring:focus {
@@ -56,9 +65,9 @@ textarea {
   position: relative;
   background-image: repeating-linear-gradient(
     to right,
-    #63dffa,
-    #6c47ff,
-    #63dffa
+    #ff6b6b,
+    #4ecdc4,
+    #ff6b6b
   );
   z-index: 1;
   background-position-x: 0%;
@@ -146,7 +155,7 @@ textarea {
 /* Set the marker color for list items */
 .ProseMirror ul li::marker,
 .ProseMirror ol li::marker {
-  color: var(--text-color, #333333); /* Or your desired text color */
+  color: var(--editor-text);
 }
 
 /* Remove any unwanted margins or padding */
@@ -192,15 +201,15 @@ textarea {
   cursor: pointer;
   width: 1rem;
   height: 1rem;
-  accent-color: #8b5cf6;
+  accent-color: var(--editor-checkbox);
 }
 
 /* Blockquote styles */
 .ProseMirror blockquote {
-  border-left: 3px solid #8b5cf6;
+  border-left: 3px solid var(--editor-blockquote-border);
   padding-left: 1rem;
   margin-left: 0;
-  color: #6b7280;
+  color: var(--editor-blockquote-text);
   font-style: italic;
 }
 
@@ -228,18 +237,18 @@ textarea {
 
 /* Link styles */
 .ProseMirror a {
-  color: #8b5cf6;
+  color: var(--editor-link);
   text-decoration: underline;
   cursor: pointer;
 }
 
 .ProseMirror a:hover {
-  color: #7c3aed;
+  color: var(--editor-link-hover);
 }
 
 /* Highlight styles */
 .ProseMirror mark {
-  background-color: #fef08a;
+  background-color: var(--editor-highlight);
   padding: 0.125rem 0.25rem;
   border-radius: 0.125rem;
 }
@@ -248,81 +257,83 @@ textarea {
 .ProseMirror p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
   float: left;
-  color: #9ca3af;
+  color: var(--editor-placeholder);
   pointer-events: none;
   height: 0;
 }
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
+    /* Light Mode - Typequest Brand Colors */
+    --background: 0 0% 98%;           /* Off White #fafafa */
+    --foreground: 0 0% 18%;           /* Charcoal #2d2d2d */
+    --card: 0 0% 100%;                /* White */
+    --card-foreground: 0 0% 18%;      /* Charcoal */
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
-    --primary: 0 0% 9%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 96.1%;
-    --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
-    --accent: 0 0% 96.1%;
-    --accent-foreground: 0 0% 9%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 0 0% 3.9%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-    --radius: 0.5rem;
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%; 
+    --popover-foreground: 0 0% 18%;
+    --primary: 0 100% 71%;            /* Coral #ff6b6b */
+    --primary-foreground: 0 0% 100%;  /* White text on coral */
+    --secondary: 174 57% 55%;         /* Teal #4ecdc4 */
+    --secondary-foreground: 0 0% 100%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 53%;     /* Gray 500 #888888 */
+    --accent: 49 100% 72%;            /* Yellow #ffe66d */
+    --accent-foreground: 0 0% 18%;
+    --destructive: 0 100% 71%;        /* Coral (same as primary) */
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 88%;               /* Gray 200 #e0e0e0 */
+    --input: 0 0% 88%;
+    --ring: 0 100% 71%;               /* Coral for focus rings */
+    --chart-1: 0 100% 71%;            /* Coral */
+    --chart-2: 174 57% 55%;           /* Teal */
+    --chart-3: 49 100% 72%;           /* Yellow */
+    --chart-4: 168 66% 73%;           /* Mint #95e1d3 */
+    --chart-5: 0 100% 63%;            /* Coral Dark */
+    --radius: 1rem;                   /* Rounded corners per brand */
+    --sidebar-background: 0 0% 18%;   /* Charcoal */
+    --sidebar-foreground: 0 0% 98%;   /* Off White */
+    --sidebar-primary: 0 100% 71%;    /* Coral */
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 24%;       /* Slightly lighter charcoal */
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 0 0% 29%;       /* Gray 700 #4a4a4a */
+    --sidebar-ring: 0 100% 71%;       /* Coral */
   }
   .dark {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
+    /* Dark Mode - Typequest Brand Colors */
+    --background: 0 0% 18%;           /* Charcoal #2d2d2d */
+    --foreground: 0 0% 98%;           /* Off White */
+    --card: 0 0% 24%;                 /* Slightly lighter #3d3d3d */
     --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
+    --popover: 0 0% 24%;
     --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    --primary: 0 100% 71%;            /* Coral (same in both modes) */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 174 57% 55%;         /* Teal */
+    --secondary-foreground: 0 0% 100%;
+    --muted: 0 0% 24%;
+    --muted-foreground: 0 0% 67%;     /* Lighter gray for dark mode */
+    --accent: 49 100% 72%;            /* Yellow */
+    --accent-foreground: 0 0% 18%;
+    --destructive: 0 100% 71%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 29%;               /* Gray 700 */
+    --input: 0 0% 29%;
+    --ring: 0 100% 71%;               /* Coral */
+    --chart-1: 0 100% 71%;
+    --chart-2: 174 57% 55%;
+    --chart-3: 49 100% 72%;
+    --chart-4: 168 66% 73%;
+    --chart-5: 0 100% 63%;
+    --sidebar-background: 0 0% 10%;   /* Darker */
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 0 100% 71%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%; 
-  } 
+    --sidebar-accent: 0 0% 16%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 0 0% 16%;
+    --sidebar-ring: 0 100% 71%;
+  }
 }
 
 @layer base {

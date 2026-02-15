@@ -222,7 +222,7 @@ export function CanvasFloatingToolbar({
       {/* Slide-out Menu Panel */}
       <div
         className={cn(
-          'fixed top-0 left-0 h-full w-64 bg-background border-r shadow-xl z-[60] transition-transform duration-200 ease-out',
+          'absolute top-0 left-0 h-full w-64 bg-background border-r shadow-xl z-[60] transition-transform duration-200 ease-out',
           isMenuOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
@@ -370,13 +370,13 @@ export function CanvasFloatingToolbar({
       {/* Overlay when menu is open */}
       {isMenuOpen && (
         <div
-          className="fixed inset-0 bg-black/20 z-[55]"
+          className="absolute inset-0 bg-black/20 z-[55]"
           onClick={closeMenu}
         />
       )}
 
       {/* Top Left - Hamburger Menu and Canvas Name */}
-      <div className="fixed top-4 left-4 z-50 flex items-center gap-2">
+      <div className="absolute top-4 left-4 z-50 flex items-center gap-2">
         <Button
           variant="ghost"
           size="icon"
@@ -397,7 +397,7 @@ export function CanvasFloatingToolbar({
       </div>
 
       {/* Top Center - Main Toolbar */}
-      <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50">
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50">
         <div className="flex items-center gap-1 px-2 py-1.5 bg-background/80 backdrop-blur-sm border rounded-xl shadow-lg">
           {/* Selection Tools */}
           <ToolbarButton
@@ -477,7 +477,7 @@ export function CanvasFloatingToolbar({
       </div>
 
       {/* Top Right - Actions */}
-      <div className="fixed top-4 right-4 z-50 flex items-center gap-2">
+      <div className="absolute top-4 right-4 z-50 flex items-center gap-2">
         {/* MCP Setup Button */}
         {onOpenMCPSetup && (
           <Tooltip>
@@ -530,7 +530,7 @@ export function CanvasFloatingToolbar({
       </div>
 
       {/* Bottom Left - Zoom Controls */}
-      <div className="fixed bottom-4 left-4 z-50">
+      <div className="absolute bottom-4 left-4 z-50">
         <div className="flex items-center gap-1 px-2 py-1.5 bg-background/80 backdrop-blur-sm border rounded-xl shadow-sm">
           <ToolbarButton tooltip="Zoom out" onClick={onZoomOut}>
             <ZoomOut className="h-4 w-4" />
@@ -552,7 +552,7 @@ export function CanvasFloatingToolbar({
       </div>
 
       {/* Bottom Right - Help */}
-      <div className="fixed bottom-4 right-4 z-50">
+      <div className="absolute bottom-4 right-4 z-50">
         <div className="flex items-center gap-1 px-2 py-1.5 bg-background/80 backdrop-blur-sm border rounded-xl shadow-sm">
           <ToolbarButton tooltip="Help">
             <HelpCircle className="h-4 w-4" />

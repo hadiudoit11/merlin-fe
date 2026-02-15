@@ -1,88 +1,76 @@
-/* 
- * Typequest Brand Colors - CSS Custom Properties
- * Aligned with colors.ts
+/*
+ * Application Colors and Typography as CSS Variables
+ * Based on Typequest Brand Guidelines v1.0
  */
 
 :root {
-  /* ═══════════════════════════════════════════════════════════ */
-  /* Brand Colors */
-  /* ═══════════════════════════════════════════════════════════ */
-  
-  /* Primary - Coral */
+  /* Primary Brand Colors (Coral) */
   --color-primary: #ff6b6b;
   --color-primary-dark: #e85555;
   --color-primary-light: #ff8e8e;
-  
-  /* Secondary - Teal */
-  --color-secondary: #4ecdc4;
-  --color-secondary-dark: #3db5ad;
-  --color-secondary-light: #7dd9d3;
-  
-  /* Accent - Yellow */
-  --color-accent: #ffe66d;
-  --color-accent-dark: #f4d747;
-  --color-accent-light: #fff29a;
-  
-  /* Tertiary - Mint */
-  --color-tertiary: #95e1d3;
-  
-  /* ═══════════════════════════════════════════════════════════ */
-  /* Background Colors */
-  /* ═══════════════════════════════════════════════════════════ */
-  
+
+  /* Secondary Brand Colors */
+  --color-secondary: #2d2d2d;
+  --color-accent: #4ecdc4;
+
+  /* Additional Brand Colors */
+  --color-teal: #4ecdc4;
+  --color-yellow: #ffe66d;
+  --color-mint: #95e1d3;
+
+  /* Background Colors - Light Mode */
   --color-bg-main: #fafafa;
-  --color-bg-action-card: #fff5f5;
-  --color-bg-navbar: #ffffff;
   --color-bg-card: #ffffff;
   --color-bg-dark: #2d2d2d;
-  --color-bg-form: #ffffff;
   --color-bg-cream: #fef9f3;
-  
-  /* ═══════════════════════════════════════════════════════════ */
+  --color-bg-action-card: #fff5f5;
+  --color-bg-navbar: #2d2d2d;
+  --color-bg-form: #ffffff;
+
   /* Border Colors */
-  /* ═══════════════════════════════════════════════════════════ */
-  
-  --color-border: #e0e0e0;
   --color-border-accent: #ff6b6b;
-  --color-border-light: #f5f5f5;
-  
-  /* ═══════════════════════════════════════════════════════════ */
+  --color-border-default: #e0e0e0;
+
   /* Text Colors */
-  /* ═══════════════════════════════════════════════════════════ */
-  
   --color-text-primary: #2d2d2d;
   --color-text-secondary: #4a4a4a;
   --color-text-tertiary: #888888;
   --color-text-light: #ffffff;
-  
-  /* ═══════════════════════════════════════════════════════════ */
+
   /* Status Colors */
-  /* ═══════════════════════════════════════════════════════════ */
-  
   --color-success: #4ecdc4;
   --color-warning: #ffe66d;
   --color-error: #ff6b6b;
-  --color-info: #5dade2;
-  
-  /* ═══════════════════════════════════════════════════════════ */
-  /* Grays */
-  /* ═══════════════════════════════════════════════════════════ */
-  
+  --color-info: #4ecdc4;
+
+  /* Grays (from brand guidelines) */
   --color-gray-50: #fafafa;
   --color-gray-100: #f5f5f5;
   --color-gray-200: #e0e0e0;
-  --color-gray-300: #d4d4d4;
-  --color-gray-400: #a3a3a3;
+  --color-gray-300: #cccccc;
+  --color-gray-400: #aaaaaa;
   --color-gray-500: #888888;
-  --color-gray-600: #737373;
+  --color-gray-600: #666666;
   --color-gray-700: #4a4a4a;
-  --color-gray-800: #3a3a3a;
+  --color-gray-800: #3d3d3d;
   --color-gray-900: #2d2d2d;
-  
-  /* ═══════════════════════════════════════════════════════════ */
-  /* Font Families */
-  /* ═══════════════════════════════════════════════════════════ */
-  
-  --font-primary: var(--font-cal-sans);
-  --font-secondary: var(--font-open-sans);
+
+  /* Font Families (from brand guidelines) */
+  --font-primary: 'Fraunces', Georgia, serif;
+  --font-secondary: 'Space Grotesk', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+/* Dark mode overrides */
+.dark {
+  --color-bg-main: #2d2d2d;
+  --color-bg-card: #3d3d3d;
+  --color-bg-form: #3d3d3d;
+  --color-bg-action-card: #4a4a4a;
+
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #e0e0e0;
+  --color-text-tertiary: #aaaaaa;
+
+  --color-border-default: #4a4a4a;
 }

@@ -310,7 +310,7 @@ export function CanvasAgentPanel({
       {/* Overlay */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/20 z-[80]"
+          className="absolute inset-0 bg-black/20 z-[80]"
           onClick={onClose}
         />
       )}
@@ -318,7 +318,7 @@ export function CanvasAgentPanel({
       {/* Panel */}
       <div
         className={cn(
-          'fixed top-0 right-0 h-full w-[400px] bg-background border-l shadow-xl z-[85] transition-transform duration-200 ease-out flex flex-col',
+          'absolute top-0 right-0 h-full w-[400px] bg-background border-l shadow-xl z-[85] transition-transform duration-200 ease-out flex flex-col',
           isOpen ? 'translate-x-0' : 'translate-x-full'
         )}
       >

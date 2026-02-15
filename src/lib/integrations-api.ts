@@ -15,6 +15,13 @@ import {
   ConfluencePage,
   PageSyncStatus,
   SyncResult,
+  JiraConnectionStatus,
+  JiraProject,
+  JiraIssue,
+  JiraImportRequest,
+  JiraImportResult,
+  JiraPushRequest,
+  JiraPushResult,
 } from '@/types/integrations';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -153,6 +160,106 @@ class IntegrationsApiService {
     } catch {
       return false;
     }
+  }
+
+  // ============ Jira OAuth & Connection ============
+
+  async connectJira(scope: 'organization' | 'personal' = 'organization'): Promise<{ authUrl: string }> {
+    const response = await this.client.get<{ authorization_url: string }>('/jira/connect', {
+      params: { scope },
+    });
+    return {
+      authUrl: response.data.authorization_url,
+    };
+  }
+
+  async getJiraStatus(): Promise<JiraConnectionStatus> {
+    const response = await this.client.get<{
+      connected: boolean;
+      active_scope?: 'organization' | 'personal';
+      organization?: {
+        connected: boolean;
+        site_name?: string;
+        cloud_id?: string;
+        connected_at?: string;
+        connected_by_id?: number;
+      };
+      personal?: {
+        connected: boolean;
+        site_name?: string;
+        cloud_id?: string;
+        connected_at?: string;
+        connected_by_id?: number;
+      };
+      site_name?: string;
+      cloud_id?: string;
+      connected_at?: string;
+    }>('/jira/status');
+
+    return {
+      connected: response.data.connected,
+      activeScope: response.data.active_scope,
+      organization: response.data.organization ? {
+        connected: response.data.organization.connected,
+        siteName: response.data.organization.site_name,
+        cloudId: response.data.organization.cloud_id,
+        connectedAt: response.data.organization.connected_at,
+        connectedById: response.data.organization.connected_by_id,
+      } : undefined,
+      personal: response.data.personal ? {
+        connected: response.data.personal.connected,
+        siteName: response.data.personal.site_name,
+        cloudId: response.data.personal.cloud_id,
+        connectedAt: response.data.personal.connected_at,
+        connectedById: response.data.personal.connected_by_id,
+      } : undefined,
+      siteName: response.data.site_name,
+      cloudId: response.data.cloud_id,
+      connectedAt: response.data.connected_at,
+    };
+  }
+
+  async disconnectJira(scope: 'organization' | 'personal' = 'organization'): Promise<boolean> {
+    try {
+      await this.client.delete('/jira/disconnect', {
+        params: { scope },
+      });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  async importFromJira(request: JiraImportRequest): Promise<JiraImportResult> {
+    const response = await this.client.post<{
+      status: string;
+      message: string;
+      imported: number;
+      updated: number;
+    }>('/jira/import', {
+      jql: request.jql,
+      canvas_id: request.canvasId,
+    });
+    return response.data;
+  }
+
+  async pushToJira(request: JiraPushRequest): Promise<JiraPushResult> {
+    const response = await this.client.post<{
+      status: string;
+      message: string;
+      issue_key?: string;
+      issue_url?: string;
+    }>('/jira/push', {
+      task_id: request.taskId,
+      project_key: request.projectKey,
+      issue_type: request.issueType || 'Task',
+    });
+    return {
+      status: response.data.status,
+      message: response.data.message,
+      issueKey: response.data.issue_key,
+      issueUrl: response.data.issue_url,
+    };
   }
 
   // ============ Confluence OAuth ============

@@ -12,16 +12,37 @@ const config: Config = {
   theme: {
   	extend: {
   		fontFamily: {
+  			// Typequest Brand Fonts
   			primary: [
-  				"Cal Sans",
+  				"Fraunces",
+  				"Georgia",
+  				"serif"
+  			],
+  			secondary: [
+  				"Space Grotesk",
   				"system-ui",
   				"sans-serif"
   			],
-  			secondary: [
-  				"var(--font-open-sans)",
+  			mono: [
+  				"JetBrains Mono",
+  				"monospace"
+  			],
+  			// Aliases for brand usage
+  			headline: [
+  				"Fraunces",
+  				"Georgia",
+  				"serif"
+  			],
+  			body: [
+  				"Space Grotesk",
   				"system-ui",
   				"sans-serif"
-  			]
+  			],
+  			nav: [
+  				"Plus Jakarta Sans",
+  				"system-ui",
+  				"sans-serif"
+  			],
   		},
   		colors: {
   			primary: {

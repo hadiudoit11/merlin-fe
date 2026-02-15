@@ -1,4 +1,36 @@
-/* Import Cal Sans font */
+/*
+ * Typequest Brand Fonts
+ * From Brand Guidelines v1.0
+ */
+
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/*
+ * Font Usage Guide:
+ *
+ * Fraunces (serif) - Headlines, logo wordmark, emphasis
+ *   - font-family: 'Fraunces', Georgia, serif
+ *   - Weights: 400 (Regular), 600 (Semibold)
+ *   - Use for: Display text, H1-H3, brand headlines
+ *
+ * Space Grotesk (sans-serif) - Body text, UI elements, buttons
+ *   - font-family: 'Space Grotesk', system-ui, sans-serif
+ *   - Weights: 400 (Regular), 500 (Medium), 600 (Semibold), 700 (Bold)
+ *   - Use for: Body copy, buttons, form labels
+ *
+ * Plus Jakarta Sans (sans-serif) - Navigation, sidebar labels
+ *   - font-family: 'Plus Jakarta Sans', system-ui, sans-serif
+ *   - Weights: 400 (Regular), 500 (Medium), 600 (Semibold), 700 (Bold)
+ *   - Use for: Navigation items, sidebar labels, section headers
+ *
+ * JetBrains Mono (monospace) - Code, terminal, technical elements
+ *   - font-family: 'JetBrains Mono', monospace
+ *   - Weights: 400 (Regular), 500 (Medium)
+ *   - Use for: Code snippets, technical data, metrics
+ */
+
+/* Legacy Cal Sans - keeping for backwards compatibility */
 @font-face {
   font-family: 'Cal Sans';
   src: url('https://cdn.jsdelivr.net/gh/calcom/font@latest/fonts/CalSans-SemiBold.woff2') format('woff2'),
@@ -7,5 +39,3 @@
   font-style: normal;
   font-display: swap;
 }
-
-/* Open Sans is loaded from Google Fonts in the layout.tsx file */ 

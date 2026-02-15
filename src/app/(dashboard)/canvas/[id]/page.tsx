@@ -426,10 +426,12 @@ export default function CanvasPage() {
 
   if (isLoading) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          <span className="text-sm text-muted-foreground">Loading canvas...</span>
+      <div className="relative w-full h-full">
+        <div className="absolute inset-0 flex items-center justify-center bg-background">
+          <div className="flex flex-col items-center gap-3">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">Loading canvas...</span>
+          </div>
         </div>
       </div>
     );
@@ -437,22 +439,26 @@ export default function CanvasPage() {
 
   if (error) {
     return (
-      <div className="fixed inset-0 flex flex-col items-center justify-center bg-background gap-4">
-        <div className="text-destructive">{error}</div>
-        <Button variant="outline" onClick={handleHome}>
-          Back to Canvases
-        </Button>
+      <div className="relative w-full h-full">
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-background gap-4">
+          <div className="text-destructive">{error}</div>
+          <Button variant="outline" onClick={handleHome}>
+            Back to Canvases
+          </Button>
+        </div>
       </div>
     );
   }
 
   if (!canvas) {
     return (
-      <div className="fixed inset-0 flex flex-col items-center justify-center bg-background gap-4">
-        <div className="text-muted-foreground">Canvas not found</div>
-        <Button variant="outline" onClick={handleHome}>
-          Back to Canvases
-        </Button>
+      <div className="relative w-full h-full">
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-background gap-4">
+          <div className="text-muted-foreground">Canvas not found</div>
+          <Button variant="outline" onClick={handleHome}>
+            Back to Canvases
+          </Button>
+        </div>
       </div>
     );
   }
@@ -462,7 +468,8 @@ export default function CanvasPage() {
 
   // Canvas content (with or without collaboration wrapper)
   const canvasContent = (
-    <div ref={canvasContainerRef} className="fixed inset-0 bg-background">
+    <div className="relative w-full h-full">
+      <div ref={canvasContainerRef} className="absolute inset-0 bg-background">
       {/* Full-screen Canvas */}
       <Canvas
         nodes={nodes}
@@ -523,7 +530,7 @@ export default function CanvasPage() {
 
       {/* Collaboration: Show who's online */}
       {isCollaborationEnabled && !expandedNodeId && (
-        <div className="fixed top-4 right-48 z-50">
+        <div className="absolute top-4 right-48 z-50">
           <Collaborators maxDisplay={4} />
         </div>
       )}
@@ -575,6 +582,7 @@ export default function CanvasPage() {
         onClose={() => setIsMCPDialogOpen(false)}
         canvasId={canvasId}
       />
+      </div>
     </div>
   );
 

@@ -442,7 +442,7 @@ export function DocEditor({
   }, [editor]);
 
   return (
-    <div className="fixed inset-0 z-[100] bg-background flex flex-col">
+    <div className="absolute inset-0 z-[100] bg-background flex flex-col">
       {/* Header */}
       <header className="flex items-center justify-between px-4 py-2 border-b bg-background">
         <div className="flex items-center gap-4 flex-1">
