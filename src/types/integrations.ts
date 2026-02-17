@@ -157,9 +157,9 @@ export interface JiraConnectionInfo {
 
 export interface JiraConnectionStatus {
   connected: boolean;
-  activeScope?: 'organization' | 'personal';
+  activeScope?: 'individual' | 'organization' | 'personal';
   organization?: JiraConnectionInfo;
-  personal?: JiraConnectionInfo;
+  personal?: JiraConnectionInfo;  // Also used for individual connections (backwards compat)
   // Legacy fields for backwards compatibility
   siteName?: string;
   cloudId?: string;

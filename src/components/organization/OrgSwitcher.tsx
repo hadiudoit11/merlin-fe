@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { ChevronDown, Building2, User, Plus, Settings, Check } from 'lucide-react';
 import {
   DropdownMenu,
@@ -14,9 +14,11 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { useRouter } from 'next/navigation';
+import { CreateOrganizationDialog } from './CreateOrganizationDialog';
 
 export function OrgSwitcher() {
   const router = useRouter();
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
   const {
     currentOrganization,
     setCurrentOrganization,
@@ -115,7 +117,7 @@ export function OrgSwitcher() {
 
         {/* Create New Org */}
         <DropdownMenuItem
-          onClick={() => router.push('/organizations/new')}
+          onClick={() => setShowCreateDialog(true)}
           className="flex items-center gap-2 cursor-pointer"
         >
           <Plus className="h-4 w-4" />
@@ -133,6 +135,11 @@ export function OrgSwitcher() {
           </DropdownMenuItem>
         )}
       </DropdownMenuContent>
+
+      <CreateOrganizationDialog
+        open={showCreateDialog}
+        onOpenChange={setShowCreateDialog}
+      />
     </DropdownMenu>
   );
 }

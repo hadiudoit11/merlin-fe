@@ -1,15 +1,34 @@
 // src/pages/api/auth/[...nextauth].ts
 
 import NextAuth, { NextAuthOptions, Session, Account } from 'next-auth';
+import type { Provider } from 'next-auth/providers/index';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import Auth0Provider from 'next-auth/providers/auth0';
+import GoogleProvider from 'next-auth/providers/google';
+import DiscordProvider from 'next-auth/providers/discord';
+import GitHubProvider from 'next-auth/providers/github';
 import { JWT } from 'next-auth/jwt';
 
-// Check if Auth0 is configured
+// Check provider configurations
 const isAuth0Configured = !!(
   process.env.AUTH0_CLIENT_ID &&
   process.env.AUTH0_CLIENT_SECRET &&
   process.env.AUTH0_ISSUER
+);
+
+const isGoogleConfigured = !!(
+  process.env.GOOGLE_CLIENT_ID &&
+  process.env.GOOGLE_CLIENT_SECRET
+);
+
+const isDiscordConfigured = !!(
+  process.env.DISCORD_CLIENT_ID &&
+  process.env.DISCORD_CLIENT_SECRET
+);
+
+const isGitHubConfigured = !!(
+  process.env.GITHUB_CLIENT_ID &&
+  process.env.GITHUB_CLIENT_SECRET
 );
 
 export async function refreshAccessToken(token: JWT): Promise<JWT> {
@@ -46,10 +65,45 @@ export async function refreshAccessToken(token: JWT): Promise<JWT> {
   }
 }
 
-// Build providers list
-const providers = [];
+// Build providers list - Social providers first (primary), then SSO, then legacy
+const providers: Provider[] = [];
 
-// Add Auth0 provider if configured (primary auth method)
+// Social Providers (Primary auth methods for individual users)
+if (isGoogleConfigured) {
+  providers.push(
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      authorization: {
+        params: {
+          prompt: 'consent',
+          access_type: 'offline',
+          response_type: 'code',
+        },
+      },
+    })
+  );
+}
+
+if (isDiscordConfigured) {
+  providers.push(
+    DiscordProvider({
+      clientId: process.env.DISCORD_CLIENT_ID!,
+      clientSecret: process.env.DISCORD_CLIENT_SECRET!,
+    })
+  );
+}
+
+if (isGitHubConfigured) {
+  providers.push(
+    GitHubProvider({
+      clientId: process.env.GITHUB_CLIENT_ID!,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+    })
+  );
+}
+
+// Auth0 provider for SSO/Enterprise (secondary - for org members)
 if (isAuth0Configured) {
   providers.push(
     Auth0Provider({
@@ -66,7 +120,7 @@ if (isAuth0Configured) {
   );
 }
 
-// Add credentials provider for legacy/fallback auth
+// Credentials provider for legacy/fallback auth (hidden from main UI)
 providers.push(
   CredentialsProvider({
     name: 'Credentials',
@@ -104,8 +158,20 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user, account }: { token: JWT; user?: any; account?: Account | null }): Promise<JWT> {
       // Initial sign in
       if (account && user) {
-        // Auth0 login
-        if (account.provider === 'auth0') {
+        // Social providers (Google, Discord, GitHub)
+        if (['google', 'discord', 'github'].includes(account.provider)) {
+          token.accessToken = account.access_token;
+          token.idToken = account.id_token;
+          token.refreshToken = account.refresh_token;
+          token.accessTokenExpires = account.expires_at ? account.expires_at * 1000 : undefined;
+          token.provider = account.provider;
+          token.email = user.email;
+          token.name = user.name;
+          token.picture = user.image || user.picture;
+          token.sub = account.providerAccountId;
+        }
+        // Auth0 login (SSO/Enterprise)
+        else if (account.provider === 'auth0') {
           token.accessToken = account.access_token;
           token.idToken = account.id_token;
           token.refreshToken = account.refresh_token;
@@ -114,7 +180,7 @@ export const authOptions: NextAuthOptions = {
           token.email = user.email;
           token.name = user.name;
           token.picture = user.picture;
-          token.sub = account.providerAccountId; // Auth0 user ID
+          token.sub = account.providerAccountId;
         }
         // Credentials login (legacy)
         else if (account.provider === 'credentials') {
@@ -144,7 +210,7 @@ export const authOptions: NextAuthOptions = {
         return token;
       }
 
-      // For Auth0, the token is managed by Auth0 - no refresh needed here
+      // For OAuth providers, tokens are managed by the provider
       return token;
     },
     async session({ session, token }: { session: Session; token: JWT }): Promise<Session> {

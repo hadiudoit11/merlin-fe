@@ -101,6 +101,14 @@ class OrganizationApiService {
     return response.data;
   }
 
+  async createBatchInvitations(
+    orgId: number,
+    invitations: Array<{ email: string; role: 'admin' | 'member' }>
+  ): Promise<{ sent: number; failed: number; results: Array<{ email: string; success: boolean; error?: string }> }> {
+    const response = await this.client.post(`/${orgId}/invitations/batch`, { invitations });
+    return response.data;
+  }
+
   async revokeInvitation(orgId: number, invitationId: number): Promise<void> {
     await this.client.delete(`/${orgId}/invitations/${invitationId}`);
   }
@@ -114,6 +122,50 @@ class OrganizationApiService {
 
   async getMyMemberships(): Promise<MyMembership[]> {
     const response = await this.client.get<MyMembership[]>('/me/memberships');
+    return response.data;
+  }
+
+  // ============ Domain-Based Membership ============
+
+  async checkDomainOrganization(): Promise<{
+    hasMatchingOrg: boolean;
+    organization?: OrganizationBrief;
+    requireSso: boolean;
+    autoJoin: boolean;
+    isMember: boolean;
+    ssoUrl?: string;
+  }> {
+    const response = await this.client.get<{
+      has_matching_org: boolean;
+      organization?: OrganizationBrief;
+      require_sso: boolean;
+      auto_join: boolean;
+      is_member: boolean;
+      sso_url?: string;
+    }>('/domain/check');
+
+    return {
+      hasMatchingOrg: response.data.has_matching_org,
+      organization: response.data.organization,
+      requireSso: response.data.require_sso,
+      autoJoin: response.data.auto_join,
+      isMember: response.data.is_member,
+      ssoUrl: response.data.sso_url,
+    };
+  }
+
+  async joinOrganizationByDomain(organizationId: number): Promise<{
+    success: boolean;
+    message: string;
+    organization?: OrganizationBrief;
+    role?: string;
+  }> {
+    const response = await this.client.post<{
+      success: boolean;
+      message: string;
+      organization?: OrganizationBrief;
+      role?: string;
+    }>('/domain/join', { organization_id: organizationId });
     return response.data;
   }
 }

@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Badge } from '@/components/ui/badge';
 import {
   X,
   Send,
@@ -14,6 +15,8 @@ import {
   Sparkles,
   AlertCircle,
   CheckCircle2,
+  FolderOpen,
+  Bell,
 } from 'lucide-react';
 import { NodeType } from '@/types/canvas';
 import { api } from '@/lib/api';
@@ -46,12 +49,16 @@ interface CanvasAgentPanelProps {
   onUpdateNode: (nodeId: number, data: { name?: string; content?: string }) => Promise<void>;
   onDeleteNode: (nodeId: number) => Promise<void>;
   getCanvasState: () => { nodes: Array<{ id: number; name: string; type: NodeType; content?: string }>; connections: Array<{ sourceId: number; targetId: number }> };
+  /** Number of projects on this canvas */
+  projectCount?: number;
+  /** Number of pending change proposals across all projects */
+  pendingProposalsCount?: number;
 }
 
 const DEFAULT_WELCOME_MESSAGE: AgentMessage = {
   id: '1',
   role: 'assistant',
-  content: "Hi! I'm your canvas assistant. I can help you create and organize nodes on your canvas. Try saying things like:\n\n- \"Create a problem statement about user retention\"\n- \"Add an objective to improve onboarding\"\n- \"Connect the problem to the objective\"\n- \"What's on my canvas?\"",
+  content: "Hi! I'm Merlin, your product lifecycle assistant. I can help you:\n\n- **Create and organize nodes** — problems, objectives, KRs, metrics, docs\n- **Draft artifacts** — PRDs, tech specs, timelines\n- **Manage projects** — move through workflow stages\n- **Review change proposals** — \"Show me pending Jira proposals\"\n\nTry: \"Add a tech spec for the authentication feature\" or \"What's on my canvas?\"",
   timestamp: new Date(),
 };
 
@@ -70,6 +77,8 @@ export function CanvasAgentPanel({
   onUpdateNode,
   onDeleteNode,
   getCanvasState,
+  projectCount = 0,
+  pendingProposalsCount = 0,
 }: CanvasAgentPanelProps) {
   const [messages, setMessages] = useState<AgentMessage[]>([DEFAULT_WELCOME_MESSAGE]);
   const [input, setInput] = useState('');
@@ -329,14 +338,36 @@ export function CanvasAgentPanel({
               <Sparkles className="h-4 w-4 text-white" />
             </div>
             <div>
-              <span className="font-semibold">Canvas Assistant</span>
-              <p className="text-xs text-muted-foreground">AI-powered canvas helper</p>
+              <span className="font-semibold">Merlin</span>
+              <p className="text-xs text-muted-foreground">Product lifecycle assistant</p>
             </div>
           </div>
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onClose}>
             <X className="h-4 w-4" />
           </Button>
         </div>
+
+        {/* Project context banner */}
+        {(projectCount > 0 || pendingProposalsCount > 0) && (
+          <div className="flex items-center gap-3 px-4 py-2 border-b bg-muted/40 text-xs">
+            {projectCount > 0 && (
+              <div className="flex items-center gap-1 text-muted-foreground">
+                <FolderOpen className="h-3 w-3" />
+                <span>{projectCount} project{projectCount !== 1 ? 's' : ''}</span>
+              </div>
+            )}
+            {pendingProposalsCount > 0 && (
+              <Badge
+                variant="destructive"
+                className="flex items-center gap-1 text-[10px] h-5 px-1.5 cursor-pointer"
+                title="Pending change proposals need review"
+              >
+                <Bell className="h-2.5 w-2.5" />
+                {pendingProposalsCount} proposal{pendingProposalsCount !== 1 ? 's' : ''} pending
+              </Badge>
+            )}
+          </div>
+        )}
 
         {/* Messages */}
         <ScrollArea className="flex-1 p-4" ref={scrollRef}>

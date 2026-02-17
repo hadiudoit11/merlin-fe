@@ -164,7 +164,7 @@ class IntegrationsApiService {
 
   // ============ Jira OAuth & Connection ============
 
-  async connectJira(scope: 'organization' | 'personal' = 'organization'): Promise<{ authUrl: string }> {
+  async connectJira(scope: 'individual' | 'organization' | 'personal' = 'individual'): Promise<{ authUrl: string }> {
     const response = await this.client.get<{ authorization_url: string }>('/jira/connect', {
       params: { scope },
     });
@@ -219,7 +219,7 @@ class IntegrationsApiService {
     };
   }
 
-  async disconnectJira(scope: 'organization' | 'personal' = 'organization'): Promise<boolean> {
+  async disconnectJira(scope: 'individual' | 'organization' | 'personal' = 'individual'): Promise<boolean> {
     try {
       await this.client.delete('/jira/disconnect', {
         params: { scope },
@@ -433,6 +433,74 @@ class IntegrationsApiService {
       }
       throw error;
     }
+  }
+
+  // ============ Jira Strategic Context ============
+
+  /**
+   * Index Jira issues on a canvas for strategic context discovery
+   */
+  async indexJiraIssuesForCanvas(canvasId: number): Promise<{ indexed: number; status: string; message: string }> {
+    const response = await this.client.post(`/integrations/jira/index/${canvasId}`);
+    return response.data;
+  }
+
+  /**
+   * Search for Jira issues related to a query for strategic PM context
+   */
+  async searchJiraContext(request: {
+    query: string;
+    canvasId?: number;
+    topK?: number;
+  }): Promise<{
+    issues: Array<{
+      score: number;
+      issue_key: string;
+      title: string;
+      description?: string;
+      status: string;
+      priority: string;
+      source_url?: string;
+      task_id: number;
+      context?: string;
+      assignee_name?: string;
+    }>;
+    formatted_context: string;
+  }> {
+    const response = await this.client.post('/integrations/jira/search-context', {
+      query: request.query,
+      canvas_id: request.canvasId,
+      top_k: request.topK || 5,
+    });
+    return response.data;
+  }
+
+  /**
+   * Auto-link relevant Jira issues to a node
+   */
+  async autoLinkJiraIssuesToNode(
+    nodeId: number,
+    canvasId: number,
+    nodeContent: string,
+    options: {
+      threshold?: number;
+      maxLinks?: number;
+    } = {}
+  ): Promise<{
+    status: string;
+    linked_count: number;
+    linked_task_ids: number[];
+    message: string;
+  }> {
+    const response = await this.client.post(`/integrations/jira/auto-link/${nodeId}`, null, {
+      params: {
+        canvas_id: canvasId,
+        node_content: nodeContent,
+        threshold: options.threshold || 0.75,
+        max_links: options.maxLinks || 3,
+      },
+    });
+    return response.data;
   }
 
   // ============ Mappers ============

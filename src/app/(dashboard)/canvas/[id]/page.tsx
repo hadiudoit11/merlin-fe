@@ -10,6 +10,7 @@ import { AgentWizard } from '@/components/canvas/AgentWizard';
 import { CanvasFloatingToolbar } from '@/components/canvas/CanvasFloatingToolbar';
 import { NodeSettingsPanel } from '@/components/canvas/NodeSettingsPanel';
 import { CanvasAgentPanel } from '@/components/canvas/CanvasAgentPanel';
+import { WorkflowTrackerPanel } from '@/components/canvas/WorkflowTrackerPanel';
 import { MCPSetupDialog } from '@/components/canvas/MCPSetupDialog';
 import { isLiveblocksEnabled } from '@/lib/liveblocks.config';
 import { useSession } from 'next-auth/react';
@@ -84,6 +85,9 @@ export default function CanvasPage() {
 
   // AI Assistant panel state
   const [isAgentPanelOpen, setIsAgentPanelOpen] = useState(false);
+
+  // Workflow tracker panel state
+  const [isWorkflowPanelOpen, setIsWorkflowPanelOpen] = useState(false);
 
   // MCP Setup dialog state
   const [isMCPDialogOpen, setIsMCPDialogOpen] = useState(false);
@@ -363,6 +367,11 @@ export default function CanvasPage() {
     setIsAgentPanelOpen(true);
   }, []);
 
+  // Workflow tracker handler
+  const handleOpenWorkflow = useCallback(() => {
+    setIsWorkflowPanelOpen(true);
+  }, []);
+
   // MCP Setup handler
   const handleOpenMCPSetup = useCallback(() => {
     setIsMCPDialogOpen(true);
@@ -522,6 +531,7 @@ export default function CanvasPage() {
           onDelete={handleDeleteCanvas}
           onOpenAssistant={handleOpenAssistant}
           onOpenMCPSetup={handleOpenMCPSetup}
+          onOpenWorkflow={handleOpenWorkflow}
           onAutoLayout={handleAutoLayout}
           onUndoLayout={handleUndoLayout}
           canUndoLayout={canUndoLayout}
@@ -561,6 +571,13 @@ export default function CanvasPage() {
         isOpen={isAgentWizardOpen}
         onClose={handleAgentWizardClose}
         onComplete={handleAgentWizardComplete}
+      />
+
+      {/* Workflow Tracker Panel */}
+      <WorkflowTrackerPanel
+        isOpen={isWorkflowPanelOpen}
+        onClose={() => setIsWorkflowPanelOpen(false)}
+        canvasId={canvasId}
       />
 
       {/* AI Canvas Assistant - Sessions are private per user */}

@@ -40,6 +40,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Separator } from '@/components/ui/separator';
 import { integrationsApi } from '@/lib/integrations-api';
 import { JiraConnectionStatus, JiraImportResult, JiraConnectionInfo } from '@/types/integrations';
+import { useOrganization } from '@/hooks/useAuth';
+import { useToast } from '@/components/ui/use-toast';
 
 interface JiraIntegrationProps {
   onUpdate?: () => void;
@@ -57,7 +59,7 @@ const JiraLogo = () => (
   </svg>
 );
 
-// Connection row component for org/personal connections
+// Connection row component for org/personal/individual connections
 function ConnectionRow({
   type,
   connection,
@@ -66,7 +68,7 @@ function ConnectionRow({
   onDisconnect,
   isConnecting,
 }: {
-  type: 'organization' | 'personal';
+  type: 'organization' | 'personal' | 'individual';
   connection?: JiraConnectionInfo;
   isActive: boolean;
   onConnect: () => void;
@@ -75,10 +77,23 @@ function ConnectionRow({
 }) {
   const isConnected = connection?.connected;
   const Icon = type === 'organization' ? Building2 : User;
-  const label = type === 'organization' ? 'Organization' : 'Personal';
-  const description = type === 'organization'
-    ? 'Shared connection for all team members'
-    : 'Your personal Jira account (overrides org)';
+
+  const labels: Record<typeof type, { label: string; description: string }> = {
+    organization: {
+      label: 'Organization',
+      description: 'Shared connection for all team members',
+    },
+    personal: {
+      label: 'Personal',
+      description: 'Your personal Jira account (overrides org)',
+    },
+    individual: {
+      label: 'My Jira',
+      description: 'Connect your personal Jira account',
+    },
+  };
+
+  const { label, description } = labels[type];
 
   return (
     <div className={`p-3 rounded-lg border ${isActive ? 'border-emerald-500 bg-emerald-50/50 dark:bg-emerald-900/10' : 'bg-muted/30'}`}>
@@ -147,8 +162,13 @@ export function JiraIntegration({ onUpdate }: JiraIntegrationProps) {
   const [status, setStatus] = useState<JiraConnectionStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showImportDialog, setShowImportDialog] = useState(false);
-  const [connectingScope, setConnectingScope] = useState<'organization' | 'personal' | null>(null);
+  const [connectingScope, setConnectingScope] = useState<'organization' | 'personal' | 'individual' | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Check if user has organization membership
+  const { hasOrganization, isLoading: orgLoading } = useOrganization();
+  const isIndividualUser = !hasOrganization;
+  const { toast } = useToast();
 
   const loadStatus = useCallback(async () => {
     setIsLoading(true);
@@ -169,13 +189,32 @@ export function JiraIntegration({ onUpdate }: JiraIntegrationProps) {
 
     // Check for OAuth callback result
     const params = new URLSearchParams(window.location.search);
-    if (params.get('jira') === 'connected') {
+    const jiraStatus = params.get('jira');
+    const scopeParam = params.get('scope');
+
+    if (jiraStatus === 'connected') {
+      // Show success toast
+      const scopeLabel = scopeParam === 'organization' ? 'Organization' : scopeParam === 'personal' ? 'Personal' : 'Individual';
+      toast({
+        title: 'JIRA Connected!',
+        description: `Successfully connected your ${scopeLabel} JIRA account.`,
+        variant: 'default',
+      });
       loadStatus();
       window.history.replaceState({}, '', window.location.pathname);
+    } else if (jiraStatus === 'error') {
+      // Show error toast
+      const errorMessage = params.get('message') || 'Failed to connect to JIRA';
+      toast({
+        title: 'Connection Failed',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+      window.history.replaceState({}, '', window.location.pathname);
     }
-  }, [loadStatus]);
+  }, [loadStatus, toast]);
 
-  const handleConnect = async (scope: 'organization' | 'personal') => {
+  const handleConnect = async (scope: 'organization' | 'personal' | 'individual') => {
     setConnectingScope(scope);
     setError(null);
     try {
@@ -193,20 +232,34 @@ export function JiraIntegration({ onUpdate }: JiraIntegrationProps) {
     }
   };
 
-  const handleDisconnect = async (scope: 'organization' | 'personal') => {
-    const label = scope === 'organization' ? 'organization' : 'personal';
-    if (!confirm(`Disconnect ${label} Jira connection?`)) return;
+  const handleDisconnect = async (scope: 'organization' | 'personal' | 'individual') => {
+    const labels: Record<typeof scope, string> = {
+      organization: 'organization',
+      personal: 'personal',
+      individual: 'Jira',
+    };
+    if (!confirm(`Disconnect ${labels[scope]} connection?`)) return;
 
     try {
       await integrationsApi.disconnectJira(scope);
+      toast({
+        title: 'Disconnected',
+        description: `Successfully disconnected your ${labels[scope]} JIRA connection.`,
+        variant: 'default',
+      });
       await loadStatus();
       onUpdate?.();
     } catch (err) {
       console.error('Failed to disconnect Jira:', err);
+      toast({
+        title: 'Disconnect Failed',
+        description: 'Failed to disconnect JIRA. Please try again.',
+        variant: 'destructive',
+      });
     }
   };
 
-  if (isLoading) {
+  if (isLoading || orgLoading) {
     return (
       <Card>
         <CardContent className="flex items-center justify-center py-8">
@@ -216,7 +269,11 @@ export function JiraIntegration({ onUpdate }: JiraIntegrationProps) {
     );
   }
 
-  const hasAnyConnection = status?.organization?.connected || status?.personal?.connected;
+  // For individual users, check personal connection (used for individual scope)
+  // For org users, check both organization and personal connections
+  const hasAnyConnection = isIndividualUser
+    ? status?.personal?.connected
+    : status?.organization?.connected || status?.personal?.connected;
 
   // No connections at all - show simple connect UI
   if (!hasAnyConnection) {
@@ -248,22 +305,37 @@ export function JiraIntegration({ onUpdate }: JiraIntegrationProps) {
           )}
 
           <div className="space-y-3">
-            <ConnectionRow
-              type="organization"
-              connection={status?.organization}
-              isActive={false}
-              onConnect={() => handleConnect('organization')}
-              onDisconnect={() => handleDisconnect('organization')}
-              isConnecting={connectingScope === 'organization'}
-            />
-            <ConnectionRow
-              type="personal"
-              connection={status?.personal}
-              isActive={false}
-              onConnect={() => handleConnect('personal')}
-              onDisconnect={() => handleDisconnect('personal')}
-              isConnecting={connectingScope === 'personal'}
-            />
+            {isIndividualUser ? (
+              // Individual user - single connect option
+              <ConnectionRow
+                type="individual"
+                connection={status?.personal}
+                isActive={false}
+                onConnect={() => handleConnect('individual')}
+                onDisconnect={() => handleDisconnect('individual')}
+                isConnecting={connectingScope === 'individual'}
+              />
+            ) : (
+              // Organization member - org and personal options
+              <>
+                <ConnectionRow
+                  type="organization"
+                  connection={status?.organization}
+                  isActive={false}
+                  onConnect={() => handleConnect('organization')}
+                  onDisconnect={() => handleDisconnect('organization')}
+                  isConnecting={connectingScope === 'organization'}
+                />
+                <ConnectionRow
+                  type="personal"
+                  connection={status?.personal}
+                  isActive={false}
+                  onConnect={() => handleConnect('personal')}
+                  onDisconnect={() => handleDisconnect('personal')}
+                  isConnecting={connectingScope === 'personal'}
+                />
+              </>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -271,9 +343,11 @@ export function JiraIntegration({ onUpdate }: JiraIntegrationProps) {
   }
 
   // At least one connection exists - show full management UI
-  const activeSite = status?.activeScope === 'personal'
+  const activeSite = isIndividualUser
     ? status?.personal?.siteName
-    : status?.organization?.siteName;
+    : status?.activeScope === 'personal'
+      ? status?.personal?.siteName
+      : status?.organization?.siteName;
 
   return (
     <Card>
@@ -287,7 +361,7 @@ export function JiraIntegration({ onUpdate }: JiraIntegrationProps) {
               <CardTitle className="text-base">Jira</CardTitle>
               <CardDescription className="flex items-center gap-2">
                 Connected to <span className="font-medium">{activeSite}</span>
-                {status?.activeScope && (
+                {!isIndividualUser && status?.activeScope && (
                   <Badge variant="secondary" className="text-xs">
                     {status.activeScope === 'personal' ? 'Personal' : 'Org'}
                   </Badge>
@@ -305,28 +379,43 @@ export function JiraIntegration({ onUpdate }: JiraIntegrationProps) {
         {/* Connection Management */}
         <div className="space-y-3">
           <Label className="text-xs text-muted-foreground uppercase tracking-wider">
-            Connections
+            {isIndividualUser ? 'Connection' : 'Connections'}
           </Label>
-          <ConnectionRow
-            type="organization"
-            connection={status?.organization}
-            isActive={status?.activeScope === 'organization'}
-            onConnect={() => handleConnect('organization')}
-            onDisconnect={() => handleDisconnect('organization')}
-            isConnecting={connectingScope === 'organization'}
-          />
-          <ConnectionRow
-            type="personal"
-            connection={status?.personal}
-            isActive={status?.activeScope === 'personal'}
-            onConnect={() => handleConnect('personal')}
-            onDisconnect={() => handleDisconnect('personal')}
-            isConnecting={connectingScope === 'personal'}
-          />
-          {status?.personal?.connected && status?.organization?.connected && (
-            <p className="text-xs text-muted-foreground bg-amber-50 dark:bg-amber-900/20 p-2 rounded border border-amber-200 dark:border-amber-800">
-              Personal connection is active and overrides the organization connection.
-            </p>
+          {isIndividualUser ? (
+            // Individual user - single connection row
+            <ConnectionRow
+              type="individual"
+              connection={status?.personal}
+              isActive={true}
+              onConnect={() => handleConnect('individual')}
+              onDisconnect={() => handleDisconnect('individual')}
+              isConnecting={connectingScope === 'individual'}
+            />
+          ) : (
+            // Organization member - org and personal options
+            <>
+              <ConnectionRow
+                type="organization"
+                connection={status?.organization}
+                isActive={status?.activeScope === 'organization'}
+                onConnect={() => handleConnect('organization')}
+                onDisconnect={() => handleDisconnect('organization')}
+                isConnecting={connectingScope === 'organization'}
+              />
+              <ConnectionRow
+                type="personal"
+                connection={status?.personal}
+                isActive={status?.activeScope === 'personal'}
+                onConnect={() => handleConnect('personal')}
+                onDisconnect={() => handleDisconnect('personal')}
+                isConnecting={connectingScope === 'personal'}
+              />
+              {status?.personal?.connected && status?.organization?.connected && (
+                <p className="text-xs text-muted-foreground bg-amber-50 dark:bg-amber-900/20 p-2 rounded border border-amber-200 dark:border-amber-800">
+                  Personal connection is active and overrides the organization connection.
+                </p>
+              )}
+            </>
           )}
         </div>
 

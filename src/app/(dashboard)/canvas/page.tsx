@@ -16,6 +16,8 @@ import {
   Grid3X3,
   List,
 } from 'lucide-react';
+import { GlobalChatInput } from '@/components/agent/GlobalChatInput';
+import { CreationPanel } from '@/components/agent/CreationPanel';
 import { Badge } from '@/components/ui/badge';
 import { mockCanvasApi } from '@/lib/canvas-mock';
 import { Button } from '@/components/ui/button';
@@ -88,6 +90,11 @@ export default function CanvasListPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
+  // Agent creation panel
+  const [creationPanelOpen, setCreationPanelOpen] = useState(false);
+  const [creationMessage, setCreationMessage] = useState('');
+  const [creationSessionId, setCreationSessionId] = useState<string | null>(null);
+
   useEffect(() => {
     loadCanvases();
   }, []);
@@ -140,6 +147,19 @@ export default function CanvasListPage() {
     router.push(`/canvas/${canvasId}`);
   };
 
+  const handleChatStart = (message: string, _files: File[]) => {
+    // TODO: upload _files to session before opening panel
+    setCreationMessage(message);
+    setCreationSessionId(null);
+    setCreationPanelOpen(true);
+  };
+
+  const handleCreationComplete = (canvasId: number, sid: string) => {
+    // Refresh canvas list in background; panel stays open with "Open Canvas" CTA
+    setCreationSessionId(sid);
+    loadCanvases();
+  };
+
   const filteredCanvases = canvases.filter(
     (canvas) =>
       canvas.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -148,6 +168,16 @@ export default function CanvasListPage() {
 
   return (
     <div className="min-h-screen p-4 md:p-6">
+      {/* Creation panel overlay */}
+      {creationPanelOpen && (
+        <CreationPanel
+          message={creationMessage}
+          sessionId={creationSessionId}
+          onComplete={handleCreationComplete}
+          onCancel={() => setCreationPanelOpen(false)}
+        />
+      )}
+
       {/* Hero Section */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -251,6 +281,22 @@ export default function CanvasListPage() {
             </div>
           </div>
         </div>
+      </motion.div>
+
+      {/* AI Chat Bar */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.05 }}
+        className="mb-6"
+      >
+        <p className="text-xs text-muted-foreground mb-2 font-medium tracking-wide uppercase">
+          Build something new
+        </p>
+        <GlobalChatInput
+          onStart={handleChatStart}
+          placeholder="Describe what you want to build — Merlin will set up your canvas, project, and a draft PRD…"
+        />
       </motion.div>
 
       {/* Search and Filters */}

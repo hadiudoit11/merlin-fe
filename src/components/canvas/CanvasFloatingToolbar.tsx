@@ -65,6 +65,7 @@ import {
   AlertCircle,
   Sparkles,
   LayoutGrid,
+  GitBranch,
 } from 'lucide-react';
 import { NodeType } from '@/types/canvas';
 import { colors } from '@/styles/colors';
@@ -99,6 +100,9 @@ interface CanvasFloatingToolbarProps {
   onOpenAssistant?: () => void;
   // MCP Setup
   onOpenMCPSetup?: () => void;
+  // Workflow tracker
+  onOpenWorkflow?: () => void;
+  workflowProjectCount?: number;
   // Auto Layout
   onAutoLayout?: () => void;
   onUndoLayout?: () => void;
@@ -181,6 +185,8 @@ export function CanvasFloatingToolbar({
   onDelete,
   onOpenAssistant,
   onOpenMCPSetup,
+  onOpenWorkflow,
+  workflowProjectCount = 0,
   onAutoLayout,
   onUndoLayout,
   canUndoLayout = false,
@@ -478,6 +484,31 @@ export function CanvasFloatingToolbar({
 
       {/* Top Right - Actions */}
       <div className="absolute top-4 right-4 z-50 flex items-center gap-2">
+        {/* Workflow Tracker Button */}
+        {onOpenWorkflow && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="relative h-10 px-3 rounded-xl bg-gradient-to-r from-teal-500/10 to-cyan-500/10 border-teal-500/30 hover:from-teal-500/20 hover:to-cyan-500/20 gap-2"
+                onClick={onOpenWorkflow}
+              >
+                <GitBranch className="h-4 w-4 text-teal-600" />
+                <span className="text-sm font-medium">Workflow</span>
+                {workflowProjectCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 h-4 w-4 rounded-full bg-primary text-[10px] text-white flex items-center justify-center font-bold">
+                    {workflowProjectCount}
+                  </span>
+                )}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              <span className="text-xs">View workflow stages</span>
+            </TooltipContent>
+          </Tooltip>
+        )}
+
         {/* MCP Setup Button */}
         {onOpenMCPSetup && (
           <Tooltip>
