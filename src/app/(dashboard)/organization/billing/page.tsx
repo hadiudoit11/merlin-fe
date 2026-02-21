@@ -76,7 +76,7 @@ const PLANS: BillingPlan[] = [
     features: [
       'Unlimited everything',
       'Unlimited users',
-      'Custom integrations',
+      'Custom skills',
       'SSO / SAML',
       'Dedicated support',
       'SLA guarantee',

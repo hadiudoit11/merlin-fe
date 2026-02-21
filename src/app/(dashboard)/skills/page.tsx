@@ -20,10 +20,10 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { JiraIntegration } from '@/components/integrations/JiraIntegration';
-import { ConfluenceIntegration } from '@/components/docs/ConfluenceIntegration';
-import { integrationsApi } from '@/lib/integrations-api';
-import { Integration, INTEGRATION_PROVIDERS, IntegrationProvider } from '@/types/integrations';
+import { JiraSkill } from '@/components/skills/JiraSkill';
+import { ConfluenceSkill } from '@/components/docs/ConfluenceSkill';
+import { skillsApi } from '@/lib/skills-api';
+import { Skill, SKILL_PROVIDERS, SkillProvider } from '@/types/skills';
 
 // Mock space for Confluence component (in real app, this would come from context)
 const mockSpace = {
@@ -39,7 +39,7 @@ const mockSpace = {
   rootFolderId: 'root',
 };
 
-// Integration categories
+// Skill categories
 const categories = [
   { id: 'all', label: 'All', icon: Plug },
   { id: 'tasks', label: 'Tasks', icon: Check },
@@ -48,9 +48,9 @@ const categories = [
   { id: 'development', label: 'Development', icon: Github },
 ];
 
-// Available integrations with their status
-interface IntegrationCard {
-  provider: IntegrationProvider;
+// Available skills with their status
+interface SkillCard {
+  provider: SkillProvider;
   name: string;
   description: string;
   icon: React.ReactNode;
@@ -60,38 +60,38 @@ interface IntegrationCard {
   comingSoon?: boolean;
 }
 
-export default function IntegrationsPage() {
-  const [connectedIntegrations, setConnectedIntegrations] = useState<Integration[]>([]);
+export default function SkillsPage() {
+  const [connectedSkills, setConnectedSkills] = useState<Skill[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
-  const [expandedIntegration, setExpandedIntegration] = useState<IntegrationProvider | null>(null);
+  const [expandedSkill, setExpandedSkill] = useState<SkillProvider | null>(null);
 
   useEffect(() => {
-    loadIntegrations();
+    loadSkills();
 
     // Check for OAuth callback
     const params = new URLSearchParams(window.location.search);
     if (params.get('connected') || params.get('jira')) {
-      loadIntegrations();
+      loadSkills();
       window.history.replaceState({}, '', window.location.pathname);
     }
   }, []);
 
-  const loadIntegrations = async () => {
+  const loadSkills = async () => {
     try {
-      const integrations = await integrationsApi.listIntegrations();
-      setConnectedIntegrations(integrations);
+      const skills = await skillsApi.listSkills();
+      setConnectedSkills(skills);
     } catch (err) {
       // Backend may not be running - that's OK, we'll show the UI anyway
-      console.warn('Failed to load integrations (backend may be offline):', err);
-      setConnectedIntegrations([]);
+      console.warn('Failed to load skills (backend may be offline):', err);
+      setConnectedSkills([]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const integrationCards: IntegrationCard[] = [
+  const skillCards: SkillCard[] = [
     {
       provider: 'jira',
       name: 'Jira',
@@ -199,19 +199,19 @@ export default function IntegrationsPage() {
     },
   ];
 
-  // Filter integrations
-  const filteredIntegrations = integrationCards.filter((int) => {
+  // Filter skills
+  const filteredSkills = skillCards.filter((item) => {
     const matchesSearch =
-      int.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      int.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = activeCategory === 'all' || int.category === activeCategory;
+      item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.description.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = activeCategory === 'all' || item.category === activeCategory;
     return matchesSearch && matchesCategory;
   });
 
-  // Check if integration is connected
-  const isConnected = (provider: IntegrationProvider) => {
-    return connectedIntegrations.some(
-      (int) => int.provider === provider && int.status === 'connected'
+  // Check if skill is connected
+  const isConnected = (provider: SkillProvider) => {
+    return connectedSkills.some(
+      (item) => item.provider === provider && item.status === 'connected'
     );
   };
 
@@ -231,29 +231,29 @@ export default function IntegrationsPage() {
           <div className="p-2 bg-primary/10 rounded-lg">
             <Plug className="h-6 w-6 text-primary" />
           </div>
-          <h1 className="text-2xl font-bold">Integrations</h1>
+          <h1 className="text-2xl font-bold">Skills</h1>
         </div>
         <p className="text-muted-foreground">
           Connect your product stack. Sync data bidirectionally with your favorite tools.
         </p>
       </div>
 
-      {/* Connected Integrations Summary */}
-      {connectedIntegrations.length > 0 && (
+      {/* Connected Skills Summary */}
+      {connectedSkills.length > 0 && (
         <div className="mb-8 p-4 rounded-lg border bg-card">
           <div className="flex items-center gap-2 mb-3">
             <Check className="h-5 w-5 text-emerald-500" />
             <span className="font-medium">
-              {connectedIntegrations.length} Connected Integration
-              {connectedIntegrations.length !== 1 ? 's' : ''}
+              {connectedSkills.length} Connected Skill
+              {connectedSkills.length !== 1 ? 's' : ''}
             </span>
           </div>
           <div className="flex flex-wrap gap-2">
-            {connectedIntegrations.map((int) => {
-              const provider = INTEGRATION_PROVIDERS[int.provider];
+            {connectedSkills.map((item) => {
+              const provider = SKILL_PROVIDERS[item.provider];
               return (
-                <Badge key={int.id} variant="secondary" className="px-3 py-1">
-                  {provider?.icon} {provider?.name || int.provider}
+                <Badge key={item.id} variant="secondary" className="px-3 py-1">
+                  {provider?.icon} {provider?.name || item.provider}
                 </Badge>
               );
             })}
@@ -266,7 +266,7 @@ export default function IntegrationsPage() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search integrations..."
+            placeholder="Search skills..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10"
@@ -284,52 +284,52 @@ export default function IntegrationsPage() {
         </Tabs>
       </div>
 
-      {/* Integration Cards */}
+      {/* Skill Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {filteredIntegrations.map((integration) => {
-          const connected = isConnected(integration.provider);
-          const isExpanded = expandedIntegration === integration.provider;
+        {filteredSkills.map((skill) => {
+          const connected = isConnected(skill.provider);
+          const isExpanded = expandedSkill === skill.provider;
 
           return (
             <Card
-              key={integration.provider}
+              key={skill.provider}
               className={`transition-all ${
                 connected ? 'border-emerald-200 dark:border-emerald-800' : ''
-              } ${integration.comingSoon ? 'opacity-60' : ''}`}
+              } ${skill.comingSoon ? 'opacity-60' : ''}`}
             >
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="flex-shrink-0">{integration.icon}</div>
+                    <div className="flex-shrink-0">{skill.icon}</div>
                     <div>
                       <CardTitle className="text-base flex items-center gap-2">
-                        {integration.name}
+                        {skill.name}
                         {connected && (
                           <Badge variant="outline" className="text-emerald-600 text-xs">
                             <Check className="h-3 w-3 mr-1" />
                             Connected
                           </Badge>
                         )}
-                        {integration.comingSoon && (
+                        {skill.comingSoon && (
                           <Badge variant="secondary" className="text-xs">
                             Coming Soon
                           </Badge>
                         )}
                       </CardTitle>
                       <CardDescription className="text-sm mt-1">
-                        {integration.description}
+                        {skill.description}
                       </CardDescription>
                     </div>
                   </div>
                 </div>
               </CardHeader>
               <CardContent>
-                {integration.isAvailable ? (
+                {skill.isAvailable ? (
                   <Button
                     variant={isExpanded ? 'secondary' : 'outline'}
                     className="w-full"
                     onClick={() =>
-                      setExpandedIntegration(isExpanded ? null : integration.provider)
+                      setExpandedSkill(isExpanded ? null : skill.provider)
                     }
                   >
                     {connected ? 'Manage' : 'Connect'}
@@ -340,22 +340,22 @@ export default function IntegrationsPage() {
                   </Button>
                 )}
 
-                {/* Expanded Integration Panel */}
+                {/* Expanded Skill Panel */}
                 {isExpanded && (
                   <div className="mt-4 pt-4 border-t">
-                    {integration.provider === 'jira' && (
-                      <JiraIntegration onUpdate={loadIntegrations} />
+                    {skill.provider === 'jira' && (
+                      <JiraSkill onUpdate={loadSkills} />
                     )}
-                    {integration.provider === 'confluence' && (
-                      <ConfluenceIntegration
+                    {skill.provider === 'confluence' && (
+                      <ConfluenceSkill
                         space={mockSpace}
-                        onUpdate={loadIntegrations}
+                        onUpdate={loadSkills}
                       />
                     )}
-                    {integration.provider === 'slack' && (
+                    {skill.provider === 'slack' && (
                       <div className="text-center py-4 text-muted-foreground">
                         <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                        <p className="text-sm">Slack integration panel coming soon</p>
+                        <p className="text-sm">Slack skill panel coming soon</p>
                       </div>
                     )}
                   </div>
@@ -366,10 +366,10 @@ export default function IntegrationsPage() {
         })}
       </div>
 
-      {filteredIntegrations.length === 0 && (
+      {filteredSkills.length === 0 && (
         <div className="text-center py-12">
           <Plug className="h-12 w-12 mx-auto text-muted-foreground/30 mb-4" />
-          <p className="text-muted-foreground">No integrations found matching your search.</p>
+          <p className="text-muted-foreground">No skills found matching your search.</p>
         </div>
       )}
     </div>

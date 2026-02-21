@@ -408,7 +408,7 @@ class MockCanvasApi {
       position_y: 100,
       width: 400,
       height: 300,
-      content: '<h2>Our Vision</h2><p>Build the best product management platform that teams love to use.</p><ul><li>User-centric design</li><li>Powerful integrations</li><li>Real-time collaboration</li></ul>',
+      content: '<h2>Our Vision</h2><p>Build the best product management platform that teams love to use.</p><ul><li>User-centric design</li><li>Powerful skills</li><li>Real-time collaboration</li></ul>',
     });
 
     await this.createNode({
@@ -433,8 +433,8 @@ class MockCanvasApi {
     });
 
     await this.createNode({
-      name: 'Slack Integration',
-      node_type: 'integration',
+      name: 'Slack Skill',
+      node_type: 'skill',
       canvas_id: canvas.id,
       position_x: 550,
       position_y: 300,

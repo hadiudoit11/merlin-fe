@@ -32,7 +32,7 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { AgentNodeConfig, IntegrationType } from '@/types/canvas';
+import { AgentNodeConfig, SkillType } from '@/types/canvas';
 import { colors } from '@/styles/colors';
 import {
   DropdownMenu,
@@ -80,7 +80,7 @@ const NODE_ICONS: Record<NodeType, React.ComponentType<{ className?: string }>> 
   objective: Target,
   keyresult: BarChart3,
   metric: BarChart3,
-  integration: Puzzle,
+  skill: Puzzle,
   custom: Puzzle,
 };
 
@@ -95,7 +95,7 @@ const NODE_BORDER_COLORS: Record<NodeType, string> = {
   objective: colors.node.objective.border,
   keyresult: colors.node.keyresult.border,
   metric: colors.node.metric.border,
-  integration: colors.node.integration.border,
+  skill: colors.node.skill.border,
   custom: colors.node.custom.border,
 };
 
@@ -110,7 +110,7 @@ const NODE_BADGE_STYLES: Record<NodeType, { bg: string; text: string }> = {
   objective: { bg: colors.node.objective.bg, text: colors.node.objective.text },
   keyresult: { bg: colors.node.keyresult.bg, text: colors.node.keyresult.text },
   metric: { bg: colors.node.metric.bg, text: colors.node.metric.text },
-  integration: { bg: colors.node.integration.bg, text: colors.node.integration.text },
+  skill: { bg: colors.node.skill.bg, text: colors.node.skill.text },
   custom: { bg: colors.node.custom.bg, text: colors.node.custom.text },
 };
 
@@ -496,8 +496,8 @@ function NodeContent({
     case 'mcp':
       return <McpNodeContent node={node} />;
 
-    case 'integration':
-      return <IntegrationNodeContent node={node} />;
+    case 'skill':
+      return <SkillNodeContent node={node} />;
 
     default:
       return (
@@ -685,7 +685,7 @@ function McpNodeContent({ node }: { node: CanvasNodeType }) {
   );
 }
 
-function IntegrationNodeContent({ node }: { node: CanvasNodeType }) {
+function SkillNodeContent({ node }: { node: CanvasNodeType }) {
   const config = node.config as { service?: string; connected?: boolean };
   return (
     <div className="space-y-2 text-sm">
@@ -703,7 +703,7 @@ function IntegrationNodeContent({ node }: { node: CanvasNodeType }) {
 function AgentNodeContent({ node }: { node: CanvasNodeType }) {
   const config = node.config as AgentNodeConfig | undefined;
 
-  const getIntegrationIcon = (type: IntegrationType) => {
+  const getSkillIcon = (type: SkillType) => {
     switch (type) {
       case 'slack':
         return <Slack className="h-3 w-3" />;
@@ -738,16 +738,16 @@ function AgentNodeContent({ node }: { node: CanvasNodeType }) {
           </div>
         )}
 
-        {config?.contextType === 'integrations' && config.integrations && config.integrations.length > 0 && (
+        {config?.contextType === 'skills' && config.skills && config.skills.length > 0 && (
           <div className="flex flex-wrap gap-1">
-            {config.integrations.map((integration) => (
+            {config.skills.map((skill) => (
               <Badge
-                key={integration.type}
+                key={skill.type}
                 variant="secondary"
                 className="text-[10px] px-1.5 py-0 h-5 gap-1"
               >
-                {getIntegrationIcon(integration.type)}
-                {integration.name}
+                {getSkillIcon(skill.type)}
+                {skill.name}
               </Badge>
             ))}
           </div>

@@ -129,8 +129,8 @@ export const colors = {
       bg: 'rgba(255, 142, 142, 0.15)',
       text: '#e85555',
     },
-    // Integration - uses teal variant
-    integration: {
+    // Skill - uses teal variant
+    skill: {
       border: '#95e1d3',
       bg: 'rgba(149, 225, 211, 0.15)',
       text: '#3dbdb4',

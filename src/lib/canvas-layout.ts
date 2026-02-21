@@ -101,7 +101,7 @@ export function autoLayoutByHierarchy(
     // Sub-problems below metrics
     doc: 5,
     agent: 6,
-    integration: 7,
+    skill: 7,
     webhook: 8,
     api: 9,
     mcp: 10,

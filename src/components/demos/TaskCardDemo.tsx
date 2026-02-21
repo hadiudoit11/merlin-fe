@@ -23,7 +23,7 @@ const exampleTasks = [
   },
   {
     id: "task-3",
-    title: "API integration",
+    title: "API skill",
     content: "Connect frontend with backend services",
     status: "review",
     index: 2

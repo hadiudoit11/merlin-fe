@@ -27,7 +27,7 @@ import {
   Loader2,
   X,
 } from 'lucide-react';
-import { integrationsApi } from '@/lib/integrations-api';
+import { skillsApi } from '@/lib/skills-api';
 import { api } from '@/lib/api';
 
 interface StrategicContextPanelProps {
@@ -83,7 +83,7 @@ export function StrategicContextPanel({
     queryFn: async () => {
       if (!effectiveQuery || effectiveQuery.length < 3) return null;
 
-      return await integrationsApi.searchJiraContext({
+      return await skillsApi.searchJiraContext({
         query: effectiveQuery,
         canvasId,
         topK: 15, // Get more for strategic overview

@@ -86,7 +86,7 @@ export default function Register() {
   const benefits = [
     "Unlimited canvases and nodes",
     "Team collaboration tools",
-    "Integration with 50+ apps",
+    "Skill connections with 50+ apps",
     "Priority support",
   ];
 

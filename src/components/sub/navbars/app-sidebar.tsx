@@ -133,8 +133,8 @@ const toolsNavItems = [
     description: "AI agents",
   },
   {
-    title: "Integrations",
-    url: "/integrations",
+    title: "Skills",
+    url: "/skills",
     icon: Plug,
     description: "Connected apps",
   },

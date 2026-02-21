@@ -30,7 +30,7 @@ import {
   BookOpen,
   AlertCircle,
 } from 'lucide-react';
-import { AgentNodeConfig, AgentIntegration, AgentDocument, IntegrationType } from '@/types/canvas';
+import { AgentNodeConfig, AgentSkill, AgentDocument, SkillType } from '@/types/canvas';
 
 interface AgentWizardProps {
   isOpen: boolean;
@@ -38,9 +38,9 @@ interface AgentWizardProps {
   onComplete: (name: string, description: string, config: AgentNodeConfig) => void;
 }
 
-type WizardStep = 'basics' | 'context-type' | 'documents' | 'integrations' | 'review';
+type WizardStep = 'basics' | 'context-type' | 'documents' | 'skills' | 'review';
 
-const AVAILABLE_INTEGRATIONS: AgentIntegration[] = [
+const AVAILABLE_SKILLS: AgentSkill[] = [
   {
     type: 'slack',
     name: 'Slack',
@@ -64,7 +64,7 @@ const AVAILABLE_INTEGRATIONS: AgentIntegration[] = [
   },
 ];
 
-function IntegrationIcon({ type, className }: { type: IntegrationType; className?: string }) {
+function SkillIcon({ type, className }: { type: SkillType; className?: string }) {
   switch (type) {
     case 'slack':
       return <Slack className={className} />;
@@ -82,10 +82,10 @@ export function AgentWizard({ isOpen, onClose, onComplete }: AgentWizardProps) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [instructions, setInstructions] = useState('');
-  const [contextType, setContextType] = useState<'documents' | 'integrations' | null>(null);
+  const [contextType, setContextType] = useState<'documents' | 'skills' | null>(null);
   const [documents, setDocuments] = useState<AgentDocument[]>([]);
-  const [selectedIntegrations, setSelectedIntegrations] = useState<IntegrationType[]>([]);
-  const [integrationConfigs, setIntegrationConfigs] = useState<Record<string, Record<string, unknown>>>({});
+  const [selectedSkills, setSelectedSkills] = useState<SkillType[]>([]);
+  const [skillConfigs, setSkillConfigs] = useState<Record<string, Record<string, unknown>>>({});
 
   const resetWizard = useCallback(() => {
     setStep('basics');
@@ -94,8 +94,8 @@ export function AgentWizard({ isOpen, onClose, onComplete }: AgentWizardProps) {
     setInstructions('');
     setContextType(null);
     setDocuments([]);
-    setSelectedIntegrations([]);
-    setIntegrationConfigs({});
+    setSelectedSkills([]);
+    setSkillConfigs({});
   }, []);
 
   const handleClose = useCallback(() => {
@@ -109,10 +109,10 @@ export function AgentWizard({ isOpen, onClose, onComplete }: AgentWizardProps) {
         setStep('context-type');
         break;
       case 'context-type':
-        setStep(contextType === 'documents' ? 'documents' : 'integrations');
+        setStep(contextType === 'documents' ? 'documents' : 'skills');
         break;
       case 'documents':
-      case 'integrations':
+      case 'skills':
         setStep('review');
         break;
     }
@@ -124,11 +124,11 @@ export function AgentWizard({ isOpen, onClose, onComplete }: AgentWizardProps) {
         setStep('basics');
         break;
       case 'documents':
-      case 'integrations':
+      case 'skills':
         setStep('context-type');
         break;
       case 'review':
-        setStep(contextType === 'documents' ? 'documents' : 'integrations');
+        setStep(contextType === 'documents' ? 'documents' : 'skills');
         break;
     }
   }, [step, contextType]);
@@ -138,16 +138,16 @@ export function AgentWizard({ isOpen, onClose, onComplete }: AgentWizardProps) {
       instructions,
       contextType: contextType || 'documents',
       documents: contextType === 'documents' ? documents : undefined,
-      integrations: contextType === 'integrations'
-        ? AVAILABLE_INTEGRATIONS
-            .filter((i) => selectedIntegrations.includes(i.type))
-            .map((i) => ({ ...i, connected: true, config: integrationConfigs[i.type] }))
+      skills: contextType === 'skills'
+        ? AVAILABLE_SKILLS
+            .filter((i) => selectedSkills.includes(i.type))
+            .map((i) => ({ ...i, connected: true, config: skillConfigs[i.type] }))
         : undefined,
     };
 
     onComplete(name, description, config);
     handleClose();
-  }, [name, description, instructions, contextType, documents, selectedIntegrations, integrationConfigs, onComplete, handleClose]);
+  }, [name, description, instructions, contextType, documents, selectedSkills, skillConfigs, onComplete, handleClose]);
 
   const handleFileUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -168,8 +168,8 @@ export function AgentWizard({ isOpen, onClose, onComplete }: AgentWizardProps) {
     setDocuments((prev) => prev.filter((d) => d.id !== docId));
   }, []);
 
-  const toggleIntegration = useCallback((type: IntegrationType) => {
-    setSelectedIntegrations((prev) =>
+  const toggleSkill = useCallback((type: SkillType) => {
+    setSelectedSkills((prev) =>
       prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
     );
   }, []);
@@ -182,17 +182,17 @@ export function AgentWizard({ isOpen, onClose, onComplete }: AgentWizardProps) {
         return contextType !== null;
       case 'documents':
         return documents.length > 0;
-      case 'integrations':
-        return selectedIntegrations.length > 0;
+      case 'skills':
+        return selectedSkills.length > 0;
       case 'review':
         return true;
       default:
         return false;
     }
-  }, [step, name, instructions, contextType, documents, selectedIntegrations]);
+  }, [step, name, instructions, contextType, documents, selectedSkills]);
 
   const getStepNumber = () => {
-    const steps: WizardStep[] = ['basics', 'context-type', contextType === 'documents' ? 'documents' : 'integrations', 'review'];
+    const steps: WizardStep[] = ['basics', 'context-type', contextType === 'documents' ? 'documents' : 'skills', 'review'];
     return steps.indexOf(step) + 1;
   };
 
@@ -208,7 +208,7 @@ export function AgentWizard({ isOpen, onClose, onComplete }: AgentWizardProps) {
             Step {getStepNumber()} of 4 - {step === 'basics' && 'Basic Information'}
             {step === 'context-type' && 'Choose Context Source'}
             {step === 'documents' && 'Upload Documents'}
-            {step === 'integrations' && 'Connect Integrations'}
+            {step === 'skills' && 'Connect Skills'}
             {step === 'review' && 'Review & Create'}
           </DialogDescription>
         </DialogHeader>
@@ -295,15 +295,15 @@ export function AgentWizard({ isOpen, onClose, onComplete }: AgentWizardProps) {
                 <Card
                   className={cn(
                     'cursor-pointer transition-all hover:border-primary/50',
-                    contextType === 'integrations' && 'border-primary ring-2 ring-primary/20'
+                    contextType === 'skills' && 'border-primary ring-2 ring-primary/20'
                   )}
-                  onClick={() => setContextType('integrations')}
+                  onClick={() => setContextType('skills')}
                 >
                   <CardContent className="pt-6 text-center">
                     <div className="mx-auto w-12 h-12 bg-purple-500/10 rounded-lg flex items-center justify-center mb-4">
                       <Plug className="h-6 w-6 text-purple-500" />
                     </div>
-                    <h3 className="font-semibold mb-2">Connect Integrations</h3>
+                    <h3 className="font-semibold mb-2">Connect Skills</h3>
                     <p className="text-sm text-muted-foreground">
                       Connect to Slack, Jira, Confluence via MCP servers
                     </p>
@@ -376,23 +376,23 @@ export function AgentWizard({ isOpen, onClose, onComplete }: AgentWizardProps) {
             </div>
           )}
 
-          {/* Step 3b: Integrations */}
-          {step === 'integrations' && (
+          {/* Step 3b: Skills */}
+          {step === 'skills' && (
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground mb-4">
-                Select the integrations your agent should have access to:
+                Select the skills your agent should have access to:
               </p>
 
               <div className="space-y-3">
-                {AVAILABLE_INTEGRATIONS.map((integration) => (
+                {AVAILABLE_SKILLS.map((skill) => (
                   <Card
-                    key={integration.type}
+                    key={skill.type}
                     className={cn(
                       'cursor-pointer transition-all hover:border-primary/50',
-                      selectedIntegrations.includes(integration.type) &&
+                      selectedSkills.includes(skill.type) &&
                         'border-primary ring-2 ring-primary/20'
                     )}
-                    onClick={() => toggleIntegration(integration.type)}
+                    onClick={() => toggleSkill(skill.type)}
                   >
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
@@ -400,46 +400,46 @@ export function AgentWizard({ isOpen, onClose, onComplete }: AgentWizardProps) {
                           <div
                             className={cn(
                               'w-10 h-10 rounded-lg flex items-center justify-center',
-                              integration.type === 'slack' && 'bg-[#4A154B]/10',
-                              integration.type === 'jira' && 'bg-[#0052CC]/10',
-                              integration.type === 'confluence' && 'bg-[#172B4D]/10'
+                              skill.type === 'slack' && 'bg-[#4A154B]/10',
+                              skill.type === 'jira' && 'bg-[#0052CC]/10',
+                              skill.type === 'confluence' && 'bg-[#172B4D]/10'
                             )}
                           >
-                            <IntegrationIcon
-                              type={integration.type}
+                            <SkillIcon
+                              type={skill.type}
                               className={cn(
                                 'h-5 w-5',
-                                integration.type === 'slack' && 'text-[#4A154B]',
-                                integration.type === 'jira' && 'text-[#0052CC]',
-                                integration.type === 'confluence' && 'text-[#172B4D]'
+                                skill.type === 'slack' && 'text-[#4A154B]',
+                                skill.type === 'jira' && 'text-[#0052CC]',
+                                skill.type === 'confluence' && 'text-[#172B4D]'
                               )}
                             />
                           </div>
                           <div>
-                            <h4 className="font-medium">{integration.name}</h4>
+                            <h4 className="font-medium">{skill.name}</h4>
                             <p className="text-sm text-muted-foreground">
-                              {integration.description}
+                              {skill.description}
                             </p>
                           </div>
                         </div>
                         <div
                           className={cn(
                             'w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors',
-                            selectedIntegrations.includes(integration.type)
+                            selectedSkills.includes(skill.type)
                               ? 'bg-primary border-primary'
                               : 'border-muted-foreground/30'
                           )}
                         >
-                          {selectedIntegrations.includes(integration.type) && (
+                          {selectedSkills.includes(skill.type) && (
                             <Check className="h-4 w-4 text-primary-foreground" />
                           )}
                         </div>
                       </div>
 
-                      {/* Integration config (shown when selected) */}
-                      {selectedIntegrations.includes(integration.type) && (
+                      {/* Skill config (shown when selected) */}
+                      {selectedSkills.includes(skill.type) && (
                         <div className="mt-4 pt-4 border-t space-y-3">
-                          {integration.type === 'slack' && (
+                          {skill.type === 'slack' && (
                             <div className="space-y-2">
                               <Label className="text-xs">Slack Workspace</Label>
                               <Input
@@ -447,7 +447,7 @@ export function AgentWizard({ isOpen, onClose, onComplete }: AgentWizardProps) {
                                 className="h-8 text-sm"
                                 onClick={(e) => e.stopPropagation()}
                                 onChange={(e) =>
-                                  setIntegrationConfigs((prev) => ({
+                                  setSkillConfigs((prev) => ({
                                     ...prev,
                                     slack: { ...prev.slack, workspace: e.target.value },
                                   }))
@@ -455,7 +455,7 @@ export function AgentWizard({ isOpen, onClose, onComplete }: AgentWizardProps) {
                               />
                             </div>
                           )}
-                          {integration.type === 'jira' && (
+                          {skill.type === 'jira' && (
                             <div className="space-y-2">
                               <Label className="text-xs">Jira Instance URL</Label>
                               <Input
@@ -463,7 +463,7 @@ export function AgentWizard({ isOpen, onClose, onComplete }: AgentWizardProps) {
                                 className="h-8 text-sm"
                                 onClick={(e) => e.stopPropagation()}
                                 onChange={(e) =>
-                                  setIntegrationConfigs((prev) => ({
+                                  setSkillConfigs((prev) => ({
                                     ...prev,
                                     jira: { ...prev.jira, instanceUrl: e.target.value },
                                   }))
@@ -471,7 +471,7 @@ export function AgentWizard({ isOpen, onClose, onComplete }: AgentWizardProps) {
                               />
                             </div>
                           )}
-                          {integration.type === 'confluence' && (
+                          {skill.type === 'confluence' && (
                             <div className="space-y-2">
                               <Label className="text-xs">Confluence URL</Label>
                               <Input
@@ -479,7 +479,7 @@ export function AgentWizard({ isOpen, onClose, onComplete }: AgentWizardProps) {
                                 className="h-8 text-sm"
                                 onClick={(e) => e.stopPropagation()}
                                 onChange={(e) =>
-                                  setIntegrationConfigs((prev) => ({
+                                  setSkillConfigs((prev) => ({
                                     ...prev,
                                     confluence: { ...prev.confluence, url: e.target.value },
                                   }))
@@ -497,10 +497,10 @@ export function AgentWizard({ isOpen, onClose, onComplete }: AgentWizardProps) {
                 ))}
               </div>
 
-              {selectedIntegrations.length === 0 && (
+              {selectedSkills.length === 0 && (
                 <div className="flex items-center gap-2 p-3 bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-lg">
                   <AlertCircle className="h-4 w-4" />
-                  <p className="text-sm">Select at least one integration to continue</p>
+                  <p className="text-sm">Select at least one skill to continue</p>
                 </div>
               )}
             </div>
@@ -540,7 +540,7 @@ export function AgentWizard({ isOpen, onClose, onComplete }: AgentWizardProps) {
                     ) : (
                       <>
                         <Plug className="h-4 w-4 text-purple-500" />
-                        <span>{selectedIntegrations.length} integration(s) connected</span>
+                        <span>{selectedSkills.length} skill(s) connected</span>
                       </>
                     )}
                   </div>
@@ -559,16 +559,16 @@ export function AgentWizard({ isOpen, onClose, onComplete }: AgentWizardProps) {
                   </div>
                 )}
 
-                {contextType === 'integrations' && selectedIntegrations.length > 0 && (
+                {contextType === 'skills' && selectedSkills.length > 0 && (
                   <div>
-                    <Label className="text-muted-foreground text-xs">INTEGRATIONS</Label>
+                    <Label className="text-muted-foreground text-xs">SKILLS</Label>
                     <div className="flex flex-wrap gap-2 mt-1">
-                      {selectedIntegrations.map((type) => {
-                        const integration = AVAILABLE_INTEGRATIONS.find((i) => i.type === type);
+                      {selectedSkills.map((type) => {
+                        const skill = AVAILABLE_SKILLS.find((i) => i.type === type);
                         return (
                           <Badge key={type} variant="secondary" className="gap-1">
-                            <IntegrationIcon type={type} className="h-3 w-3" />
-                            {integration?.name}
+                            <SkillIcon type={type} className="h-3 w-3" />
+                            {skill?.name}
                           </Badge>
                         );
                       })}

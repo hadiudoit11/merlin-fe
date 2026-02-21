@@ -1,6 +1,6 @@
-// Integration Types
+// Skill Types
 
-export type IntegrationProvider =
+export type SkillProvider =
   | 'confluence'
   | 'notion'
   | 'google-docs'
@@ -9,19 +9,19 @@ export type IntegrationProvider =
   | 'github'
   | 'linear';
 
-export interface Integration {
+export interface Skill {
   id: string;
-  provider: IntegrationProvider;
+  provider: SkillProvider;
   name: string;
   status: 'connected' | 'disconnected' | 'error';
-  config: IntegrationConfig;
+  config: SkillConfig;
   createdAt: string;
   updatedAt: string;
   lastSyncAt?: string;
   error?: string;
 }
 
-export interface IntegrationConfig {
+export interface SkillConfig {
   // OAuth tokens
   accessToken?: string;
   refreshToken?: string;
@@ -68,11 +68,11 @@ export interface ConfluencePage {
   children?: ConfluencePage[];
 }
 
-export interface SpaceIntegration {
+export interface SpaceSkill {
   id: string;
   spaceId: string;          // Merlin space ID
-  integrationId: string;     // Integration connection ID
-  provider: IntegrationProvider;
+  skillId: string;           // Skill connection ID
+  provider: SkillProvider;
 
   // Confluence mapping
   confluenceSpaceKey?: string;
@@ -97,7 +97,7 @@ export interface PageSyncStatus {
   pageId: string;
   externalId?: string;
   externalUrl?: string;
-  provider: IntegrationProvider;
+  provider: SkillProvider;
   syncStatus: 'synced' | 'pending' | 'conflict' | 'error';
   lastSyncAt?: string;
   localVersion: number;
@@ -192,7 +192,7 @@ export interface JiraPushResult {
 }
 
 // Provider metadata
-export const INTEGRATION_PROVIDERS: Record<IntegrationProvider, {
+export const SKILL_PROVIDERS: Record<SkillProvider, {
   name: string;
   icon: string;
   description: string;

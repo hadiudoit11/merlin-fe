@@ -38,12 +38,12 @@ import {
 } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { integrationsApi } from '@/lib/integrations-api';
-import { JiraConnectionStatus, JiraImportResult, JiraConnectionInfo } from '@/types/integrations';
+import { skillsApi } from '@/lib/skills-api';
+import { JiraConnectionStatus, JiraImportResult, JiraConnectionInfo } from '@/types/skills';
 import { useOrganization } from '@/hooks/useAuth';
 import { useToast } from '@/components/ui/use-toast';
 
-interface JiraIntegrationProps {
+interface JiraSkillProps {
   onUpdate?: () => void;
 }
 
@@ -158,7 +158,7 @@ function ConnectionRow({
   );
 }
 
-export function JiraIntegration({ onUpdate }: JiraIntegrationProps) {
+export function JiraSkill({ onUpdate }: JiraSkillProps) {
   const [status, setStatus] = useState<JiraConnectionStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showImportDialog, setShowImportDialog] = useState(false);
@@ -173,7 +173,7 @@ export function JiraIntegration({ onUpdate }: JiraIntegrationProps) {
   const loadStatus = useCallback(async () => {
     setIsLoading(true);
     try {
-      const jiraStatus = await integrationsApi.getJiraStatus();
+      const jiraStatus = await skillsApi.getJiraStatus();
       setStatus(jiraStatus);
       setError(null);
     } catch (err) {
@@ -218,13 +218,13 @@ export function JiraIntegration({ onUpdate }: JiraIntegrationProps) {
     setConnectingScope(scope);
     setError(null);
     try {
-      const { authUrl } = await integrationsApi.connectJira(scope);
+      const { authUrl } = await skillsApi.connectJira(scope);
       window.location.href = authUrl;
     } catch (err: unknown) {
       console.error('Failed to initiate Jira OAuth:', err);
       const axiosError = err as { response?: { status?: number } };
       if (axiosError.response?.status === 404 || axiosError.response?.status === 503) {
-        setError('Jira integration is not configured on the server. Contact your administrator.');
+        setError('Jira skill is not configured on the server. Contact your administrator.');
       } else {
         setError('Failed to connect to Jira. Please ensure the backend is running.');
       }
@@ -241,7 +241,7 @@ export function JiraIntegration({ onUpdate }: JiraIntegrationProps) {
     if (!confirm(`Disconnect ${labels[scope]} connection?`)) return;
 
     try {
-      await integrationsApi.disconnectJira(scope);
+      await skillsApi.disconnectJira(scope);
       toast({
         title: 'Disconnected',
         description: `Successfully disconnected your ${labels[scope]} JIRA connection.`,
@@ -531,7 +531,7 @@ function JiraImportDialog({
     setResult(null);
 
     try {
-      const importResult = await integrationsApi.importFromJira({ jql: jql.trim() });
+      const importResult = await skillsApi.importFromJira({ jql: jql.trim() });
       setResult(importResult);
 
       if (importResult.imported > 0) {

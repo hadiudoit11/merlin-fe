@@ -23,7 +23,7 @@ export default function TasksPage() {
         <div>
           <h1 className="text-2xl font-semibold">Tasks</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Manage action items from meetings, integrations, and manual entries
+            Manage action items from meetings, skills, and manual entries
           </p>
         </div>
         <div className="flex items-center gap-3">

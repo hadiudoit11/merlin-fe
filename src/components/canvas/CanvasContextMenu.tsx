@@ -81,8 +81,8 @@ const MENU_ITEMS: MenuItemData[] = [
     description: 'Model Context Protocol connection',
   },
   {
-    type: 'integration',
-    label: 'Integration',
+    type: 'skill',
+    label: 'Skill',
     icon: Puzzle,
     description: 'Connect to external service',
   },

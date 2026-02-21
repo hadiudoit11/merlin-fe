@@ -118,7 +118,7 @@ const NODE_TYPES: Array<{ type: NodeType; label: string; icon: React.ComponentTy
   { type: 'api', label: 'API Call', icon: Globe, color: 'text-green-500' },
   { type: 'webhook', label: 'Webhook', icon: Webhook, color: 'text-orange-500' },
   { type: 'mcp', label: 'MCP Server', icon: Server, color: 'text-purple-500' },
-  { type: 'integration', label: 'Integration', icon: Puzzle, color: 'text-pink-500' },
+  { type: 'skill', label: 'Skill', icon: Puzzle, color: 'text-pink-500' },
 ];
 
 function ToolbarButton({

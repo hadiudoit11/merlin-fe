@@ -1,6 +1,24 @@
 # CLAUDE.md - Merlin Frontend
 
-Miro-style infinite canvas for product management with draggable nodes, rich-text documents, and integration connectors.
+## Session Context & Task Log Instructions
+
+**Purpose**: This file serves as persistent context across terminal/session restarts. Claude should always read this file at the start of a session to understand the current state of work.
+
+### Rules for Claude
+1. **Task Logging**: Maintain a running log in `TASK_LOG.md` at the project root. For each task, record:
+   - What the task is
+   - Why it's being done (reasoning/motivation)
+   - Current status (pending, in-progress, completed, blocked)
+   - Any decisions made and their rationale
+2. **Update on completion**: When a task is finished, mark it as completed in `TASK_LOG.md` with a brief summary of what was done.
+3. **Context preservation**: Before ending a session or when wrapping up work, update `TASK_LOG.md` so the next session has full context.
+4. **Decision log**: Record architectural decisions, trade-offs, and rationale in `TASK_LOG.md`.
+5. **Blockers & open questions**: Note anything blocked or needing user input in `TASK_LOG.md`.
+6. **Always read `TASK_LOG.md` at the start of a session** to understand current state of work.
+
+---
+
+Miro-style infinite canvas for product management with draggable nodes, rich-text documents, and skill connectors.
 
 ## Tech Stack
 
@@ -77,7 +95,7 @@ src/
 ### Nodes
 Draggable elements on the canvas. Types include:
 - **Doc Node**: Rich-text editor (Tiptap) - scrollable content within node
-- **Integration Node**: Connect external services
+- **Skill Node**: Connect external services
 - **Webhook Node**: HTTP webhook endpoints
 - **API Node**: REST/GraphQL API calls
 - **MCP Node**: Model Context Protocol server connections

@@ -3,7 +3,7 @@
 export type NodeType =
   | 'doc'
   | 'agent'
-  | 'integration'
+  | 'skill'
   | 'webhook'
   | 'api'
   | 'mcp'
@@ -16,13 +16,13 @@ export type NodeType =
 // Connection rules - defines what each node type can connect TO
 // Empty array = no restrictions (can connect to anything)
 export const CONNECTION_RULES: Record<NodeType, NodeType[]> = {
-  problem: ['doc', 'agent', 'integration', 'webhook', 'api', 'mcp', 'problem', 'keyresult', 'custom'], // Everything except objective and metric
+  problem: ['doc', 'agent', 'skill', 'webhook', 'api', 'mcp', 'problem', 'keyresult', 'custom'], // Everything except objective and metric
   objective: ['keyresult'],           // Objective can only connect to Key Results
   keyresult: ['metric'],              // Key Result can only connect to Metrics
   metric: [],                         // Metrics can connect to anything
   doc: [],                            // Docs can connect to anything
   agent: [],                          // Agents can connect to anything
-  integration: [],                    // Integrations can connect to anything
+  skill: [],                          // Skills can connect to anything
   webhook: [],                        // Webhooks can connect to anything
   api: [],                            // APIs can connect to anything
   mcp: [],                            // MCP can connect to anything
@@ -37,18 +37,18 @@ export const CONTEXTUAL_ADD_OPTIONS: Record<NodeType, NodeType[]> = {
   metric: [],                         // Metrics don't have add options
   doc: ['doc'],
   agent: [],
-  integration: [],
+  skill: [],
   webhook: [],
   api: [],
   mcp: [],
   custom: [],
 };
 
-// Integration types for agent connections
-export type IntegrationType = 'slack' | 'jira' | 'confluence' | 'github' | 'notion' | 'linear';
+// Skill types for agent connections
+export type SkillType = 'slack' | 'jira' | 'confluence' | 'github' | 'notion' | 'linear';
 
-export interface AgentIntegration {
-  type: IntegrationType;
+export interface AgentSkill {
+  type: SkillType;
   name: string;
   description: string;
   icon: string;
@@ -255,7 +255,7 @@ export interface Metric {
   description?: string;
   value: number;
   unit?: string;
-  source_type: 'manual' | 'api' | 'integration';
+  source_type: 'manual' | 'api' | 'skill';
   source_config: Record<string, unknown>;
   refresh_interval: number;
   display_format: string;
@@ -287,7 +287,7 @@ export interface DocNodeConfig {
   saveInterval?: number;
 }
 
-export interface IntegrationNodeConfig {
+export interface SkillNodeConfig {
   service: string;
   credentials?: Record<string, unknown>;
   endpoints?: string[];
@@ -317,9 +317,9 @@ export interface McpNodeConfig {
 
 export interface AgentNodeConfig {
   instructions: string;
-  contextType: 'documents' | 'integrations' | 'both';
+  contextType: 'documents' | 'skills' | 'both';
   documents?: AgentDocument[];
-  integrations?: AgentIntegration[];
+  skills?: AgentSkill[];
   model?: string;
   temperature?: number;
   maxTokens?: number;
@@ -353,6 +353,6 @@ export interface MetricNodeConfig {
   unit: string;
   format: 'number' | 'percentage' | 'currency';
   trend: 'up' | 'down' | 'stable';
-  source: 'manual' | 'api' | 'integration';
+  source: 'manual' | 'api' | 'skill';
   refreshInterval?: number;
 }

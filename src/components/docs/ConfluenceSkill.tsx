@@ -41,61 +41,61 @@ import {
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { integrationsApi } from '@/lib/integrations-api';
+import { skillsApi } from '@/lib/skills-api';
 import {
-  Integration,
-  SpaceIntegration,
+  Skill,
+  SpaceSkill,
   ConfluenceSpace,
   ConfluencePage,
-  INTEGRATION_PROVIDERS,
-} from '@/types/integrations';
+  SKILL_PROVIDERS,
+} from '@/types/skills';
 import { Space } from '@/types/document';
 
-interface ConfluenceIntegrationProps {
+interface ConfluenceSkillProps {
   space: Space;
   onUpdate?: () => void;
 }
 
-export function ConfluenceIntegration({ space, onUpdate }: ConfluenceIntegrationProps) {
-  const [integration, setIntegration] = useState<Integration | null>(null);
-  const [spaceIntegration, setSpaceIntegration] = useState<SpaceIntegration | null>(null);
+export function ConfluenceSkill({ space, onUpdate }: ConfluenceSkillProps) {
+  const [skill, setSkill] = useState<Skill | null>(null);
+  const [spaceSkill, setSpaceSkill] = useState<SpaceSkill | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showConnectDialog, setShowConnectDialog] = useState(false);
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
 
   useEffect(() => {
-    loadIntegration();
+    loadSkill();
   }, [space.id]);
 
-  const loadIntegration = async () => {
+  const loadSkill = async () => {
     setIsLoading(true);
     try {
-      const integrations = await integrationsApi.listIntegrations();
-      const confluenceInt = integrations.find(i => i.provider === 'confluence');
-      setIntegration(confluenceInt || null);
+      const skills = await skillsApi.listSkills();
+      const confluenceSkill = skills.find(i => i.provider === 'confluence');
+      setSkill(confluenceSkill || null);
 
-      if (confluenceInt) {
-        const spaceInt = await integrationsApi.getSpaceIntegration(space.id, 'confluence');
-        setSpaceIntegration(spaceInt);
+      if (confluenceSkill) {
+        const spaceSkillData = await skillsApi.getSpaceSkill(space.id, 'confluence');
+        setSpaceSkill(spaceSkillData);
       }
     } catch (err) {
       // Backend may not be running - show disconnected state
-      console.warn('Failed to load integration (backend may be offline):', err);
-      setIntegration(null);
+      console.warn('Failed to load skill (backend may be offline):', err);
+      setSkill(null);
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleDisconnect = async () => {
-    if (!spaceIntegration) return;
+    if (!spaceSkill) return;
     if (!confirm('Disconnect from Confluence? This will not delete any pages.')) return;
 
     try {
-      // Pass space.id since the backend expects the space ID, not the integration ID
-      await integrationsApi.disconnectSpaceIntegration(space.id);
-      setSpaceIntegration(null);
+      // Pass space.id since the backend expects the space ID, not the skill ID
+      await skillsApi.disconnectSpaceSkill(space.id);
+      setSpaceSkill(null);
       onUpdate?.();
     } catch (err) {
       console.error('Failed to disconnect:', err);
@@ -113,7 +113,7 @@ export function ConfluenceIntegration({ space, onUpdate }: ConfluenceIntegration
   }
 
   // Not connected to Confluence at org level
-  if (!integration) {
+  if (!skill) {
     return (
       <Card className="border-dashed">
         <CardHeader>
@@ -141,7 +141,7 @@ export function ConfluenceIntegration({ space, onUpdate }: ConfluenceIntegration
           open={showConnectDialog}
           onOpenChange={setShowConnectDialog}
           onConnected={() => {
-            loadIntegration();
+            loadSkill();
             setShowConnectDialog(false);
           }}
         />
@@ -150,7 +150,7 @@ export function ConfluenceIntegration({ space, onUpdate }: ConfluenceIntegration
   }
 
   // Connected but not linked to this space
-  if (!spaceIntegration) {
+  if (!spaceSkill) {
     return (
       <Card>
         <CardHeader>
@@ -184,9 +184,9 @@ export function ConfluenceIntegration({ space, onUpdate }: ConfluenceIntegration
           open={showConnectDialog}
           onOpenChange={setShowConnectDialog}
           spaceId={space.id}
-          integrationId={integration.id}
+          skillId={skill.id}
           onLinked={() => {
-            loadIntegration();
+            loadSkill();
             setShowConnectDialog(false);
             onUpdate?.();
           }}
@@ -207,9 +207,9 @@ export function ConfluenceIntegration({ space, onUpdate }: ConfluenceIntegration
             <div>
               <CardTitle className="text-base">Confluence</CardTitle>
               <CardDescription className="flex items-center gap-2">
-                Linked to <span className="font-mono">{spaceIntegration.confluenceSpaceKey}</span>
+                Linked to <span className="font-mono">{spaceSkill.confluenceSpaceKey}</span>
                 <span className="text-muted-foreground">·</span>
-                {spaceIntegration.confluenceSpaceName}
+                {spaceSkill.confluenceSpaceName}
               </CardDescription>
             </div>
           </div>
@@ -225,25 +225,25 @@ export function ConfluenceIntegration({ space, onUpdate }: ConfluenceIntegration
           <div>
             <div className="font-medium text-sm">Sync Status</div>
             <div className="text-xs text-muted-foreground">
-              {spaceIntegration.lastSyncAt
-                ? `Last synced ${new Date(spaceIntegration.lastSyncAt).toLocaleString()}`
+              {spaceSkill.lastSyncAt
+                ? `Last synced ${new Date(spaceSkill.lastSyncAt).toLocaleString()}`
                 : 'Never synced'}
             </div>
           </div>
           <div className="flex items-center gap-2">
             <Badge
               variant={
-                spaceIntegration.syncStatus === 'syncing'
+                spaceSkill.syncStatus === 'syncing'
                   ? 'secondary'
-                  : spaceIntegration.syncStatus === 'error'
+                  : spaceSkill.syncStatus === 'error'
                   ? 'destructive'
                   : 'outline'
               }
             >
-              {spaceIntegration.syncStatus === 'syncing' && (
+              {spaceSkill.syncStatus === 'syncing' && (
                 <Loader2 className="h-3 w-3 mr-1 animate-spin" />
               )}
-              {spaceIntegration.syncStatus}
+              {spaceSkill.syncStatus}
             </Badge>
           </div>
         </div>
@@ -291,20 +291,20 @@ export function ConfluenceIntegration({ space, onUpdate }: ConfluenceIntegration
                 Automatically sync changes
               </div>
             </div>
-            <Switch checked={spaceIntegration.syncEnabled} />
+            <Switch checked={spaceSkill.syncEnabled} />
           </div>
           <div className="flex items-center justify-between">
             <div>
               <div className="font-medium text-sm">Sync Direction</div>
               <div className="text-xs text-muted-foreground">
-                {spaceIntegration.syncDirection === 'bidirectional'
+                {spaceSkill.syncDirection === 'bidirectional'
                   ? 'Two-way sync'
-                  : spaceIntegration.syncDirection === 'import'
+                  : spaceSkill.syncDirection === 'import'
                   ? 'Import only'
                   : 'Export only'}
               </div>
             </div>
-            <Select defaultValue={spaceIntegration.syncDirection}>
+            <Select defaultValue={spaceSkill.syncDirection}>
               <SelectTrigger className="w-32">
                 <SelectValue />
               </SelectTrigger>
@@ -322,9 +322,9 @@ export function ConfluenceIntegration({ space, onUpdate }: ConfluenceIntegration
         open={showImportDialog}
         onOpenChange={setShowImportDialog}
         spaceId={space.id}
-        confluenceSpaceKey={spaceIntegration.confluenceSpaceKey!}
+        confluenceSpaceKey={spaceSkill.confluenceSpaceKey!}
         onImported={() => {
-          loadIntegration();
+          loadSkill();
           onUpdate?.();
         }}
       />
@@ -350,7 +350,7 @@ function ConnectConfluenceDialog({
     setError(null);
     try {
       // Get OAuth URL from backend and redirect
-      const { authUrl } = await integrationsApi.connectConfluence();
+      const { authUrl } = await skillsApi.connectConfluence();
 
       // Redirect to Atlassian OAuth
       window.location.href = authUrl;
@@ -358,7 +358,7 @@ function ConnectConfluenceDialog({
       console.error('Failed to initiate OAuth:', err);
       const axiosError = err as { response?: { status?: number } };
       if (axiosError.response?.status === 404 || axiosError.response?.status === 501) {
-        setError('Confluence integration is not configured on the server. Contact your administrator.');
+        setError('Confluence skill is not configured on the server. Contact your administrator.');
       } else {
         setError('Failed to connect to Confluence. Please ensure the backend is running.');
       }
@@ -443,13 +443,13 @@ function LinkConfluenceSpaceDialog({
   open,
   onOpenChange,
   spaceId,
-  integrationId,
+  skillId,
   onLinked,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   spaceId: string;
-  integrationId: string;
+  skillId: string;
   onLinked: () => void;
 }) {
   const [confluenceSpaces, setConfluenceSpaces] = useState<ConfluenceSpace[]>([]);
@@ -466,7 +466,7 @@ function LinkConfluenceSpaceDialog({
   const loadConfluenceSpaces = async () => {
     setIsLoading(true);
     try {
-      const spaces = await integrationsApi.getConfluenceSpaces();
+      const spaces = await skillsApi.getConfluenceSpaces();
       setConfluenceSpaces(spaces);
     } catch (err) {
       console.error('Failed to load Confluence spaces:', err);
@@ -480,7 +480,7 @@ function LinkConfluenceSpaceDialog({
 
     setIsLinking(true);
     try {
-      await integrationsApi.connectSpaceToConfluence(spaceId, integrationId, selectedSpace);
+      await skillsApi.connectSpaceToConfluence(spaceId, skillId, selectedSpace);
       onLinked();
     } catch (err) {
       console.error('Failed to link space:', err);
@@ -583,7 +583,7 @@ function ImportFromConfluenceDialog({
   const loadPages = async () => {
     setIsLoading(true);
     try {
-      const pagesData = await integrationsApi.getConfluencePages(confluenceSpaceKey);
+      const pagesData = await skillsApi.getConfluencePages(confluenceSpaceKey);
       setPages(pagesData);
     } catch (err) {
       console.error('Failed to load pages:', err);
@@ -617,7 +617,7 @@ function ImportFromConfluenceDialog({
 
     setIsImporting(true);
     try {
-      const importResult = await integrationsApi.importFromConfluence(
+      const importResult = await skillsApi.importFromConfluence(
         spaceId,
         Array.from(selectedPages)
       );

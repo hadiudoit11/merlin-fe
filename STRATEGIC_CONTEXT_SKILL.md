@@ -1,6 +1,6 @@
-# Strategic Context Panel - Integration Guide
+# Strategic Context Panel - Skill Guide
 
-## Quick Integration
+## Quick Skill
 
 Add the Strategic Context Panel to your canvas page in 3 steps:
 
@@ -47,10 +47,10 @@ export default function CanvasPage({ params }: { params: { id: string } }) {
 Update your Jira import dialog to automatically index issues:
 
 ```tsx
-// components/integrations/JiraIntegration.tsx
+// components/skills/JiraSkill.tsx
 const handleImport = async () => {
   // Import issues
-  const result = await integrationsApi.importFromJira({ jql, canvasId });
+  const result = await skillsApi.importFromJira({ jql, canvasId });
 
   toast({
     title: 'Import Complete',
@@ -59,7 +59,7 @@ const handleImport = async () => {
 
   // Auto-index for strategic context
   try {
-    await integrationsApi.indexJiraIssuesForCanvas(canvasId);
+    await skillsApi.indexJiraIssuesForCanvas(canvasId);
     toast({
       title: 'Ready for Strategic Context',
       description: 'Issues indexed and ready to discover',
@@ -447,7 +447,7 @@ const settings = useUserPreference<StrategicContextSettings>('strategic-context'
 
 ---
 
-## Example: Complete Integration
+## Example: Complete Skill
 
 ```tsx
 // app/(dashboard)/canvas/[id]/page.tsx

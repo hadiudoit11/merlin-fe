@@ -205,7 +205,7 @@ const TOOLS: Tool[] = [
         },
         node_type: {
           type: "string",
-          enum: ["problem", "objective", "keyresult", "metric", "doc", "agent", "webhook", "api", "mcp", "integration", "custom"],
+          enum: ["problem", "objective", "keyresult", "metric", "doc", "agent", "webhook", "api", "mcp", "skill", "custom"],
           description: "Type of node to create",
         },
         name: {

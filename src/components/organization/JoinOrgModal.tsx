@@ -135,7 +135,7 @@ export function JoinOrgModal({
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle className="h-4 w-4 text-emerald-500 mt-0.5 shrink-0" />
-                <span>Use organization integrations</span>
+                <span>Use organization skills</span>
               </li>
             </ul>
           </div>

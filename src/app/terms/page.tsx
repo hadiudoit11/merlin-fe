@@ -61,7 +61,7 @@ export default function TermsOfService() {
               <li>Visual OKR tracking and management</li>
               <li>Real-time collaboration tools</li>
               <li>AI-powered insights and recommendations</li>
-              <li>Integration with third-party services</li>
+              <li>Skill connections with third-party services</li>
               <li>Document and note management</li>
             </ul>
 
@@ -126,12 +126,12 @@ export default function TermsOfService() {
             </p>
 
             <h2 className="text-xl font-semibold mt-8 mb-4 text-gray-900">
-              7. Third-Party Integrations
+              7. Third-Party Skills
             </h2>
             <p className="text-gray-600 mb-4">
-              The Service may integrate with third-party applications and
+              The Service may connect with third-party applications and
               services (such as Zoom, Slack, Jira, and others). Your use of such
-              integrations is subject to the terms and privacy policies of those
+              skills is subject to the terms and privacy policies of those
               third parties. We are not responsible for the practices of
               third-party services.
             </p>

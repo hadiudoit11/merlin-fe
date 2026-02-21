@@ -474,8 +474,8 @@ function MetricSettings({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="manual">Manual Entry</SelectItem>
-            <SelectItem value="api">API Integration</SelectItem>
-            <SelectItem value="integration">Third-party Integration</SelectItem>
+            <SelectItem value="api">API Skill</SelectItem>
+            <SelectItem value="skill">Third-party Skill</SelectItem>
           </SelectContent>
         </Select>
       </div>

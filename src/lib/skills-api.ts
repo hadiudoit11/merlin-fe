@@ -1,16 +1,16 @@
 /**
- * Integrations API Client
+ * Skills API Client
  *
  * Handles connections to external services like Confluence, Notion, etc.
- * All integration logic runs on the backend - this client just proxies requests.
+ * All skill logic runs on the backend - this client just proxies requests.
  */
 
 import axios, { AxiosInstance } from 'axios';
 import { getSession } from 'next-auth/react';
 import {
-  Integration,
-  IntegrationProvider,
-  SpaceIntegration,
+  Skill,
+  SkillProvider,
+  SpaceSkill,
   ConfluenceSpace,
   ConfluencePage,
   PageSyncStatus,
@@ -22,12 +22,12 @@ import {
   JiraImportResult,
   JiraPushRequest,
   JiraPushResult,
-} from '@/types/integrations';
+} from '@/types/skills';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 // Backend response types (match backend schemas)
-interface BackendIntegration {
+interface BackendSkill {
   id: number;
   provider: string;
   status: string;
@@ -40,9 +40,9 @@ interface BackendIntegration {
   cloud_id?: string;
 }
 
-interface BackendSpaceIntegration {
+interface BackendSpaceSkill {
   id: number;
-  integration_id: number;
+  skill_id: number;
   space_id: string;
   space_type: string;
   external_space_key?: string;
@@ -91,13 +91,13 @@ interface ProviderInfo {
   scopes: string[];
 }
 
-class IntegrationsApiService {
+class SkillsApiService {
   private client: AxiosInstance;
   private organizationId: number | null = null;
 
   constructor() {
     this.client = axios.create({
-      baseURL: `${API_BASE_URL}/api/v1/integrations`,
+      baseURL: `${API_BASE_URL}/api/v1/skills`,
       headers: {
         'Content-Type': 'application/json',
       },
@@ -111,7 +111,7 @@ class IntegrationsApiService {
           config.headers.Authorization = `Bearer ${session.accessToken}`;
         }
       } catch (error) {
-        console.warn('Failed to get session for integration API request');
+        console.warn('Failed to get session for skill API request');
       }
 
       // Add organization context
@@ -134,17 +134,17 @@ class IntegrationsApiService {
     return response.data;
   }
 
-  // ============ Integration Connections ============
+  // ============ Skill Connections ============
 
-  async listIntegrations(): Promise<Integration[]> {
-    const response = await this.client.get<BackendIntegration[]>('/');
-    return response.data.map(this.mapIntegration);
+  async listSkills(): Promise<Skill[]> {
+    const response = await this.client.get<BackendSkill[]>('/');
+    return response.data.map(this.mapSkill);
   }
 
-  async getIntegration(provider: IntegrationProvider): Promise<Integration | null> {
+  async getSkill(provider: SkillProvider): Promise<Skill | null> {
     try {
-      const response = await this.client.get<BackendIntegration>(`/${provider}`);
-      return this.mapIntegration(response.data);
+      const response = await this.client.get<BackendSkill>(`/${provider}`);
+      return this.mapSkill(response.data);
     } catch (error: unknown) {
       if (axios.isAxiosError(error) && error.response?.status === 404) {
         return null;
@@ -153,7 +153,7 @@ class IntegrationsApiService {
     }
   }
 
-  async disconnectIntegration(provider: IntegrationProvider): Promise<boolean> {
+  async disconnectSkill(provider: SkillProvider): Promise<boolean> {
     try {
       await this.client.delete(`/${provider}`);
       return true;
@@ -308,18 +308,18 @@ class IntegrationsApiService {
     }));
   }
 
-  // ============ Space Integration ============
+  // ============ Space Skill ============
 
-  async getSpaceIntegration(spaceId: string, provider: IntegrationProvider): Promise<SpaceIntegration | null> {
+  async getSpaceSkill(spaceId: string, provider: SkillProvider): Promise<SpaceSkill | null> {
     try {
-      const response = await this.client.get<BackendSpaceIntegration | null>(
+      const response = await this.client.get<BackendSpaceSkill | null>(
         `/spaces/${spaceId}`,
         { params: { provider } }
       );
 
       if (!response.data) return null;
 
-      return this.mapSpaceIntegration(response.data);
+      return this.mapSpaceSkill(response.data);
     } catch (error: unknown) {
       if (axios.isAxiosError(error) && error.response?.status === 404) {
         return null;
@@ -330,10 +330,10 @@ class IntegrationsApiService {
 
   async connectSpaceToConfluence(
     spaceId: string,
-    integrationId: string,
+    skillId: string,
     confluenceSpaceKey: string
-  ): Promise<SpaceIntegration> {
-    const response = await this.client.post<BackendSpaceIntegration>(
+  ): Promise<SpaceSkill> {
+    const response = await this.client.post<BackendSpaceSkill>(
       `/spaces/${spaceId}/confluence`,
       {
         space_id: spaceId,
@@ -342,32 +342,32 @@ class IntegrationsApiService {
         auto_sync: false,
       }
     );
-    return this.mapSpaceIntegration(response.data);
+    return this.mapSpaceSkill(response.data);
   }
 
-  async disconnectSpaceIntegration(spaceIntegrationId: string): Promise<boolean> {
-    // Extract space ID from the integration (or pass it separately)
+  async disconnectSpaceSkill(spaceSkillId: string): Promise<boolean> {
+    // Extract space ID from the skill (or pass it separately)
     // For now, we need to track this in the UI
     try {
       // The backend expects DELETE /spaces/{space_id}/confluence
-      // We need the space_id, not the integration ID
+      // We need the space_id, not the skill ID
       // This is a simplified implementation - in production, you'd track this better
-      await this.client.delete(`/spaces/${spaceIntegrationId}/confluence`);
+      await this.client.delete(`/spaces/${spaceSkillId}/confluence`);
       return true;
     } catch {
       return false;
     }
   }
 
-  async updateSpaceIntegration(
+  async updateSpaceSkill(
     spaceId: string,
     settings: {
       syncEnabled?: boolean;
       syncDirection?: 'import' | 'export' | 'bidirectional';
       autoSync?: boolean;
     }
-  ): Promise<SpaceIntegration> {
-    const response = await this.client.patch<BackendSpaceIntegration>(
+  ): Promise<SpaceSkill> {
+    const response = await this.client.patch<BackendSpaceSkill>(
       `/spaces/${spaceId}/confluence`,
       {
         sync_enabled: settings.syncEnabled,
@@ -375,7 +375,7 @@ class IntegrationsApiService {
         auto_sync: settings.autoSync,
       }
     );
-    return this.mapSpaceIntegration(response.data);
+    return this.mapSpaceSkill(response.data);
   }
 
   // ============ Import/Export ============
@@ -441,7 +441,7 @@ class IntegrationsApiService {
    * Index Jira issues on a canvas for strategic context discovery
    */
   async indexJiraIssuesForCanvas(canvasId: number): Promise<{ indexed: number; status: string; message: string }> {
-    const response = await this.client.post(`/integrations/jira/index/${canvasId}`);
+    const response = await this.client.post(`/skills/jira/index/${canvasId}`);
     return response.data;
   }
 
@@ -467,7 +467,7 @@ class IntegrationsApiService {
     }>;
     formatted_context: string;
   }> {
-    const response = await this.client.post('/integrations/jira/search-context', {
+    const response = await this.client.post('/skills/jira/search-context', {
       query: request.query,
       canvas_id: request.canvasId,
       top_k: request.topK || 5,
@@ -492,7 +492,7 @@ class IntegrationsApiService {
     linked_task_ids: number[];
     message: string;
   }> {
-    const response = await this.client.post(`/integrations/jira/auto-link/${nodeId}`, null, {
+    const response = await this.client.post(`/skills/jira/auto-link/${nodeId}`, null, {
       params: {
         canvas_id: canvasId,
         node_content: nodeContent,
@@ -505,10 +505,10 @@ class IntegrationsApiService {
 
   // ============ Mappers ============
 
-  private mapIntegration(data: BackendIntegration): Integration {
+  private mapSkill(data: BackendSkill): Skill {
     return {
       id: String(data.id),
-      provider: data.provider as IntegrationProvider,
+      provider: data.provider as SkillProvider,
       name: data.provider.charAt(0).toUpperCase() + data.provider.slice(1),
       status: data.is_connected ? 'connected' : 'disconnected',
       config: {
@@ -522,11 +522,11 @@ class IntegrationsApiService {
     };
   }
 
-  private mapSpaceIntegration(data: BackendSpaceIntegration): SpaceIntegration {
+  private mapSpaceSkill(data: BackendSpaceSkill): SpaceSkill {
     return {
       id: String(data.id),
       spaceId: data.space_id,
-      integrationId: String(data.integration_id),
+      skillId: String(data.skill_id),
       provider: 'confluence',
       confluenceSpaceKey: data.external_space_key,
       confluenceSpaceId: data.external_space_id,
@@ -544,4 +544,4 @@ class IntegrationsApiService {
 }
 
 // Export singleton
-export const integrationsApi = new IntegrationsApiService();
+export const skillsApi = new SkillsApiService();

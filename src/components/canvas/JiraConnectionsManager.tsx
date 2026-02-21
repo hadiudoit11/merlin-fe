@@ -29,7 +29,7 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { api } from '@/lib/api';
-import { integrationsApi } from '@/lib/integrations-api';
+import { skillsApi } from '@/lib/skills-api';
 import { useToast } from '@/components/ui/use-toast';
 
 interface JiraConnectionsManagerProps {
@@ -108,7 +108,7 @@ export function JiraConnectionsManager({
     queryFn: async () => {
       if (!searchQuery || searchQuery.length < 3) return [];
 
-      const result = await integrationsApi.searchJiraContext({
+      const result = await skillsApi.searchJiraContext({
         query: searchQuery,
         canvasId,
         topK: 20,
