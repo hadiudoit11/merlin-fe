@@ -76,7 +76,8 @@ export default function Register() {
         return;
       }
 
-      router.push("/user/login?registered=true");
+      // Redirect to email verification pending page
+      router.push(`/user/verify-email-pending?email=${encodeURIComponent(formData.email)}`);
     } catch (err) {
       setError({ message: "An error occurred. Please try again." });
       setIsLoading(false);

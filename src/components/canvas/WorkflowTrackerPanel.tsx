@@ -291,7 +291,7 @@ export function WorkflowTrackerPanel({
   return (
     <div
       className={cn(
-        'absolute top-0 right-0 h-full w-80 bg-background border-l border-border shadow-2xl z-[70]',
+        'fixed top-0 right-0 h-screen w-80 bg-background border-l border-border shadow-2xl z-[70]',
         'transition-transform duration-200 ease-out flex flex-col',
         isOpen ? 'translate-x-0' : 'translate-x-full'
       )}

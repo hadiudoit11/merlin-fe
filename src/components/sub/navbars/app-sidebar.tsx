@@ -28,6 +28,8 @@ import {
   Map,
   Plug,
   FlaskConical,
+  Cpu,
+  Workflow,
 } from "lucide-react"
 
 import { NavMain } from "@/components/sub/navbars/nav-main"
@@ -83,6 +85,12 @@ const mainNavItems = [
     url: "/roadmap",
     icon: Map,
     description: "Now / Next / Later",
+  },
+  {
+    title: "Pipeline",
+    url: "/projects/pipeline",
+    icon: Workflow,
+    description: "Project stage overview",
   },
 ]
 
@@ -169,6 +177,12 @@ const developerNavItems = [
     url: "/settings/api-tokens",
     icon: Key,
     description: "Connect Claude & other tools",
+  },
+  {
+    title: "AI Settings",
+    url: "/settings/ai",
+    icon: Cpu,
+    description: "Configure AI provider API keys",
   },
 ]
 

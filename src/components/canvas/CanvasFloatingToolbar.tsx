@@ -66,6 +66,7 @@ import {
   Sparkles,
   LayoutGrid,
   GitBranch,
+  Rows,
 } from 'lucide-react';
 import { NodeType } from '@/types/canvas';
 import { colors } from '@/styles/colors';
@@ -92,6 +93,8 @@ interface CanvasFloatingToolbarProps {
   onGridToggle?: () => void;
   snapEnabled?: boolean;
   onSnapToggle?: () => void;
+  swimlanesEnabled?: boolean;
+  onSwimlanesToggle?: () => void;
   // Additional actions
   onExport?: () => void;
   onDuplicate?: () => void;
@@ -180,6 +183,8 @@ export function CanvasFloatingToolbar({
   onGridToggle,
   snapEnabled = true,
   onSnapToggle,
+  swimlanesEnabled = false,
+  onSwimlanesToggle,
   onExport,
   onDuplicate,
   onDelete,
@@ -314,6 +319,20 @@ export function CanvasFloatingToolbar({
 
           <button
             className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-accent transition-colors text-left text-sm"
+            onClick={() => { onSwimlanesToggle?.(); }}
+          >
+            <Rows className="h-4 w-4" />
+            <span>Stage Swimlanes</span>
+            <div className={cn(
+              "ml-auto w-4 h-4 rounded border flex items-center justify-center",
+              swimlanesEnabled && "bg-primary border-primary"
+            )}>
+              {swimlanesEnabled && <div className="w-2 h-2 bg-white rounded-sm" />}
+            </div>
+          </button>
+
+          <button
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-accent transition-colors text-left text-sm"
             onClick={() => { onResetZoom(); closeMenu(); }}
           >
             <Maximize className="h-4 w-4" />
@@ -381,182 +400,203 @@ export function CanvasFloatingToolbar({
         />
       )}
 
-      {/* Top Left - Hamburger Menu and Canvas Name */}
-      <div className="absolute top-4 left-4 z-50 flex items-center gap-2">
-        <Button
-          variant="ghost"
-          size="icon"
-          className={cn(
-            "h-10 w-10 rounded-xl bg-background/80 backdrop-blur-sm border shadow-sm hover:bg-background transition-colors",
-            isMenuOpen && "bg-accent"
-          )}
-          onClick={toggleMenu}
-        >
-          <Menu className="h-5 w-5" />
-        </Button>
+      {/* Top Unified Toolbar */}
+      <div className="absolute top-4 left-4 right-4 z-50">
+        <div className="flex items-center justify-between gap-3">
+          {/* Left Section - Menu & Canvas Name */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <Button
+              variant="ghost"
+              size="icon"
+              className={cn(
+                "h-10 w-10 rounded-xl bg-background/80 backdrop-blur-sm border shadow-sm hover:bg-background transition-colors",
+                isMenuOpen && "bg-accent"
+              )}
+              onClick={toggleMenu}
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
 
-        <div className="flex items-center gap-2 px-3 py-2 bg-background/80 backdrop-blur-sm border rounded-xl shadow-sm">
-          <span className="font-semibold text-sm max-w-[200px] truncate">
-            {canvasName}
-          </span>
-        </div>
-      </div>
+            <div className="flex items-center gap-2 px-3 py-2 bg-background/80 backdrop-blur-sm border rounded-xl shadow-sm">
+              <span className="font-semibold text-sm max-w-[160px] truncate">
+                {canvasName}
+              </span>
+            </div>
+          </div>
 
-      {/* Top Center - Main Toolbar */}
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50">
-        <div className="flex items-center gap-1 px-2 py-1.5 bg-background/80 backdrop-blur-sm border rounded-xl shadow-lg">
-          {/* Selection Tools */}
-          <ToolbarButton
-            tooltip="Select (V)"
-            active={activeTool === 'select'}
-            onClick={() => setActiveTool('select')}
-          >
-            <MousePointer2 className="h-4 w-4" />
-          </ToolbarButton>
-          <ToolbarButton
-            tooltip="Pan (H)"
-            active={activeTool === 'pan'}
-            onClick={() => setActiveTool('pan')}
-          >
-            <Hand className="h-4 w-4" />
-          </ToolbarButton>
+          {/* Center Section - Main Tools */}
+          <div className="flex items-center gap-1 px-3 py-2 bg-background/80 backdrop-blur-sm border rounded-xl shadow-lg">
+            {/* Selection Tools */}
+            <ToolbarButton
+              tooltip="Select (V)"
+              active={activeTool === 'select'}
+              onClick={() => setActiveTool('select')}
+            >
+              <MousePointer2 className="h-4 w-4" />
+            </ToolbarButton>
+            <ToolbarButton
+              tooltip="Pan (H)"
+              active={activeTool === 'pan'}
+              onClick={() => setActiveTool('pan')}
+            >
+              <Hand className="h-4 w-4" />
+            </ToolbarButton>
 
-          <Separator orientation="vertical" className="h-6 mx-1" />
+            <Separator orientation="vertical" className="h-6 mx-1.5" />
 
-          {/* Add Node Dropdown */}
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 px-3 rounded-lg gap-1"
-              >
-                <Plus className="h-4 w-4" />
-                <span className="text-sm">Add</span>
-                <ChevronDown className="h-3 w-3" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-56 p-2" align="start">
-              <div className="space-y-1">
-                {NODE_TYPES.map((node) => {
-                  const Icon = node.icon;
-                  const isAgent = node.type === 'agent';
-                  return (
-                    <button
-                      key={node.type}
-                      className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-accent transition-colors text-left"
-                      onClick={() => {
-                        if (isAgent) {
-                          onAddAgent();
-                        } else {
-                          onAddNode(node.type);
-                        }
-                      }}
-                    >
-                      <Icon className={cn('h-4 w-4', node.color)} />
-                      <span className="text-sm">{node.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </PopoverContent>
-          </Popover>
+            {/* Add Node Dropdown */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 px-3 rounded-lg gap-1"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span className="text-sm">Add</span>
+                  <ChevronDown className="h-3 w-3" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-56 p-2" align="center">
+                <div className="space-y-1">
+                  {NODE_TYPES.map((node) => {
+                    const Icon = node.icon;
+                    const isAgent = node.type === 'agent';
+                    return (
+                      <button
+                        key={node.type}
+                        className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-accent transition-colors text-left"
+                        onClick={() => {
+                          if (isAgent) {
+                            onAddAgent();
+                          } else {
+                            onAddNode(node.type);
+                          }
+                        }}
+                      >
+                        <Icon className={cn('h-4 w-4', node.color)} />
+                        <span className="text-sm">{node.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </PopoverContent>
+            </Popover>
 
-          <Separator orientation="vertical" className="h-6 mx-1" />
+            <Separator orientation="vertical" className="h-6 mx-1.5" />
 
-          {/* Undo/Redo */}
-          <ToolbarButton
-            tooltip="Undo (Cmd+Z)"
-            disabled={!canUndo}
-            onClick={onUndo}
-          >
-            <Undo className="h-4 w-4" />
-          </ToolbarButton>
-          <ToolbarButton
-            tooltip="Redo (Cmd+Shift+Z)"
-            disabled={!canRedo}
-            onClick={onRedo}
-          >
-            <Redo className="h-4 w-4" />
-          </ToolbarButton>
-        </div>
-      </div>
+            {/* Undo/Redo */}
+            <ToolbarButton
+              tooltip="Undo (Cmd+Z)"
+              disabled={!canUndo}
+              onClick={onUndo}
+            >
+              <Undo className="h-4 w-4" />
+            </ToolbarButton>
+            <ToolbarButton
+              tooltip="Redo (Cmd+Shift+Z)"
+              disabled={!canRedo}
+              onClick={onRedo}
+            >
+              <Redo className="h-4 w-4" />
+            </ToolbarButton>
 
-      {/* Top Right - Actions */}
-      <div className="absolute top-4 right-4 z-50 flex items-center gap-2">
-        {/* Workflow Tracker Button */}
-        {onOpenWorkflow && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className="relative h-10 px-3 rounded-xl bg-gradient-to-r from-teal-500/10 to-cyan-500/10 border-teal-500/30 hover:from-teal-500/20 hover:to-cyan-500/20 gap-2"
-                onClick={onOpenWorkflow}
-              >
-                <GitBranch className="h-4 w-4 text-teal-600" />
-                <span className="text-sm font-medium">Workflow</span>
-                {workflowProjectCount > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 h-4 w-4 rounded-full bg-primary text-[10px] text-white flex items-center justify-center font-bold">
-                    {workflowProjectCount}
-                  </span>
-                )}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">
-              <span className="text-xs">View workflow stages</span>
-            </TooltipContent>
-          </Tooltip>
-        )}
+            <Separator orientation="vertical" className="h-6 mx-1.5" />
 
-        {/* MCP Setup Button */}
-        {onOpenMCPSetup && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-10 w-10 rounded-xl bg-gradient-to-r from-purple-500/10 to-indigo-500/10 border-purple-500/30 hover:from-purple-500/20 hover:to-indigo-500/20"
-                onClick={onOpenMCPSetup}
-              >
-                <Server className="h-4 w-4 text-purple-600" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">
-              <span className="text-xs">Connect Claude via MCP</span>
-            </TooltipContent>
-          </Tooltip>
-        )}
+            {/* Workflow */}
+            {onOpenWorkflow && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="relative h-8 px-2.5 rounded-lg gap-1.5 hover:bg-teal-500/10"
+                    onClick={onOpenWorkflow}
+                  >
+                    <GitBranch className="h-4 w-4 text-teal-600" />
+                    <span className="text-sm">Workflow</span>
+                    {workflowProjectCount > 0 && (
+                      <span className="h-4 w-4 rounded-full bg-teal-500 text-[10px] text-white flex items-center justify-center font-bold">
+                        {workflowProjectCount}
+                      </span>
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  <span className="text-xs">View workflow stages</span>
+                </TooltipContent>
+              </Tooltip>
+            )}
 
-        {/* AI Assistant Button */}
-        {onOpenAssistant && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-10 px-3 rounded-xl bg-gradient-to-r from-violet-500/10 to-purple-500/10 border-violet-500/30 hover:from-violet-500/20 hover:to-purple-500/20 gap-2"
-            onClick={onOpenAssistant}
-          >
-            <Sparkles className="h-4 w-4 text-violet-500" />
-            <span className="text-sm font-medium">AI Assistant</span>
-          </Button>
-        )}
+            {/* MCP */}
+            {onOpenMCPSetup && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 rounded-lg hover:bg-purple-500/10"
+                    onClick={onOpenMCPSetup}
+                  >
+                    <Server className="h-4 w-4 text-purple-600" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  <span className="text-xs">Connect Claude via MCP</span>
+                </TooltipContent>
+              </Tooltip>
+            )}
 
-        <div className="flex items-center gap-1 px-2 py-1.5 bg-background/80 backdrop-blur-sm border rounded-xl shadow-sm">
-          <ToolbarButton tooltip="Comments">
-            <MessageSquare className="h-4 w-4" />
-          </ToolbarButton>
-          <ToolbarButton tooltip="Share">
-            <Share2 className="h-4 w-4" />
-          </ToolbarButton>
-          <Button
-            variant="default"
-            size="sm"
-            className="h-8 px-3 rounded-lg ml-1"
-            onClick={onSave}
-          >
-            <Save className="h-4 w-4 mr-1" />
-            Save
-          </Button>
+            {/* AI Assistant */}
+            {onOpenAssistant && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 px-2.5 rounded-lg gap-1.5 hover:bg-violet-500/10"
+                    onClick={onOpenAssistant}
+                  >
+                    <Sparkles className="h-4 w-4 text-violet-500" />
+                    <span className="text-sm">AI</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  <span className="text-xs">Open AI Assistant</span>
+                </TooltipContent>
+              </Tooltip>
+            )}
+
+            <Separator orientation="vertical" className="h-6 mx-1.5" />
+
+            {/* Comments */}
+            <ToolbarButton tooltip="Comments">
+              <MessageSquare className="h-4 w-4" />
+            </ToolbarButton>
+
+            {/* Share */}
+            <ToolbarButton tooltip="Share">
+              <Share2 className="h-4 w-4" />
+            </ToolbarButton>
+
+            <Separator orientation="vertical" className="h-6 mx-1.5" />
+
+            {/* Save */}
+            <Button
+              variant="default"
+              size="sm"
+              className="h-8 px-3 rounded-lg"
+              onClick={onSave}
+            >
+              <Save className="h-4 w-4 mr-1.5" />
+              Save
+            </Button>
+          </div>
+
+          {/* Right Spacer - Empty to balance the layout */}
+          <div className="flex-shrink-0 w-10 opacity-0">
+            {/* Invisible spacer to help center the main toolbar */}
+          </div>
         </div>
       </div>
 

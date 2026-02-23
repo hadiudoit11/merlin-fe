@@ -8,6 +8,7 @@ import { Viewport, CanvasNode as CanvasNodeType, NodeConnection, NodeType, Ancho
 import { CanvasNode } from './CanvasNode';
 import { CanvasConnections } from './CanvasConnections';
 import { ConnectionLine } from './ConnectionLine';
+import { SwimlaneOverlay } from './SwimlaneOverlay';
 // CanvasToolbar removed - now using CanvasFloatingToolbar in parent
 import { CanvasContextMenu } from './CanvasContextMenu';
 
@@ -19,6 +20,7 @@ interface CanvasProps {
   gridEnabled?: boolean;
   gridSize?: number;
   snapToGrid?: boolean;
+  swimlanesEnabled?: boolean;
   onViewportChange: (viewport: Viewport) => void;
   onNodeSelect: (nodeId: number, additive?: boolean) => void;
   onNodeMove: (nodeId: number, x: number, y: number) => void;
@@ -48,6 +50,7 @@ export function Canvas({
   gridEnabled = true,
   gridSize = 20,
   snapToGrid = true,
+  swimlanesEnabled = false,
   onViewportChange,
   onNodeSelect,
   onNodeMove,
@@ -372,6 +375,9 @@ export function Canvas({
     >
       {/* Grid background */}
       {gridPattern}
+
+      {/* Swimlane overlay */}
+      {swimlanesEnabled && <SwimlaneOverlay viewport={viewport} />}
 
       {/* Canvas content - transformed layer */}
       <div

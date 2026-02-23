@@ -102,18 +102,18 @@ export function NodeSettingsPanel({
 
   return (
     <>
-      {/* Overlay */}
+      {/* Overlay - fixed to viewport */}
       {isOpen && (
         <div
-          className="absolute inset-0 bg-black/20 z-[70]"
+          className="fixed inset-0 bg-black/20 z-[70]"
           onClick={onClose}
         />
       )}
 
-      {/* Panel */}
+      {/* Panel - fixed to viewport */}
       <div
         className={cn(
-          'absolute top-0 right-0 h-full w-[360px] bg-background border-l shadow-xl z-[75] transition-transform duration-200 ease-out',
+          'fixed top-0 right-0 h-screen w-[360px] bg-background border-l shadow-xl z-[75] transition-transform duration-200 ease-out',
           isOpen ? 'translate-x-0' : 'translate-x-full'
         )}
       >

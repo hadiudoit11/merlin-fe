@@ -22,6 +22,7 @@ export const isMockMode = USE_MOCK_API;
 export * from '@/types/canvas';
 
 // Log which mode we're in (only in development)
-if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+if (typeof window !== 'undefined') {
   console.log(`🔧 Merlin API Mode: ${USE_MOCK_API ? 'MOCK (localStorage)' : 'REAL (backend)'}`);
+  console.log(`🔧 NEXT_PUBLIC_USE_MOCK_API env value: "${process.env.NEXT_PUBLIC_USE_MOCK_API}"`);
 }

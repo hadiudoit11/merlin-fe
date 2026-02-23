@@ -1,10 +1,41 @@
 /**
  * Task types matching the Merlin backend Task model.
+ * Enhanced with Trello-like features: labels, checklists, covers.
  */
 
 export type TaskStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
 export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
 export type TaskSource = 'manual' | 'zoom' | 'slack' | 'calendar' | 'email' | 'jira' | 'ai_extracted';
+
+// Trello-like label colors
+export type LabelColor =
+  | 'green' | 'yellow' | 'orange' | 'red' | 'purple'
+  | 'blue' | 'sky' | 'lime' | 'pink' | 'black' | 'none';
+
+export interface TaskLabel {
+  id: string;
+  color: LabelColor;
+  name?: string;
+}
+
+export interface ChecklistItem {
+  id: string;
+  text: string;
+  completed: boolean;
+}
+
+export interface TaskChecklist {
+  id: string;
+  title: string;
+  items: ChecklistItem[];
+}
+
+// Card cover can be a color or an image URL
+export interface TaskCover {
+  type: 'color' | 'image';
+  value: string; // color hex or image URL
+  size: 'half' | 'full'; // half shows card content, full hides it
+}
 
 export interface LinkedNode {
   id: number;
@@ -18,8 +49,10 @@ export interface Task {
   description: string | null;
   assignee_name: string | null;
   assignee_email: string | null;
+  assignee_avatar?: string | null; // Avatar URL
   due_date: string | null;
   due_date_text: string | null;
+  start_date?: string | null; // Trello has start dates too
   status: TaskStatus;
   priority: TaskPriority;
   source: TaskSource;
@@ -32,6 +65,12 @@ export interface Task {
   linked_nodes: LinkedNode[];
   created_at: string;
   updated_at: string;
+  // Trello-like features (stored in frontend, can extend to backend later)
+  labels?: TaskLabel[];
+  checklists?: TaskChecklist[];
+  cover?: TaskCover | null;
+  attachment_count?: number;
+  comment_count?: number;
 }
 
 export interface TaskCreate {
@@ -39,11 +78,17 @@ export interface TaskCreate {
   description?: string;
   assignee_name?: string;
   assignee_email?: string;
+  assignee_avatar?: string;
+  start_date?: string;
   due_date?: string;
   due_date_text?: string;
   priority?: TaskPriority;
   canvas_id?: number;
   tags?: string[];
+  // Trello-like features
+  labels?: TaskLabel[];
+  checklists?: TaskChecklist[];
+  cover?: TaskCover;
 }
 
 export interface TaskUpdate {
@@ -51,12 +96,20 @@ export interface TaskUpdate {
   description?: string;
   assignee_name?: string;
   assignee_email?: string;
+  assignee_avatar?: string;
+  start_date?: string;
   due_date?: string;
   due_date_text?: string;
   status?: TaskStatus;
   priority?: TaskPriority;
   canvas_id?: number;
   tags?: string[];
+  // Trello-like features
+  labels?: TaskLabel[];
+  checklists?: TaskChecklist[];
+  cover?: TaskCover | null;
+  attachment_count?: number;
+  comment_count?: number;
 }
 
 export interface TaskListResponse {
@@ -130,6 +183,64 @@ export const TASK_SOURCE_LABELS: Record<TaskSource, string> = {
   jira: 'Jira',
   ai_extracted: 'AI Extracted',
 };
+
+// Trello-like label colors with their display values
+export const LABEL_COLORS: Record<LabelColor, { bg: string; text: string; name: string }> = {
+  green: { bg: '#61bd4f', text: '#ffffff', name: 'Green' },
+  yellow: { bg: '#f2d600', text: '#1d2125', name: 'Yellow' },
+  orange: { bg: '#ff9f1a', text: '#1d2125', name: 'Orange' },
+  red: { bg: '#eb5a46', text: '#ffffff', name: 'Red' },
+  purple: { bg: '#c377e0', text: '#ffffff', name: 'Purple' },
+  blue: { bg: '#0079bf', text: '#ffffff', name: 'Blue' },
+  sky: { bg: '#00c2e0', text: '#1d2125', name: 'Sky' },
+  lime: { bg: '#51e898', text: '#1d2125', name: 'Lime' },
+  pink: { bg: '#ff78cb', text: '#1d2125', name: 'Pink' },
+  black: { bg: '#344563', text: '#ffffff', name: 'Black' },
+  none: { bg: 'transparent', text: '#6b778c', name: 'No color' },
+};
+
+// Cover colors (matching Trello's cover color palette)
+export const COVER_COLORS = [
+  '#61bd4f', // green
+  '#f2d600', // yellow
+  '#ff9f1a', // orange
+  '#eb5a46', // red
+  '#c377e0', // purple
+  '#0079bf', // blue
+  '#00c2e0', // sky
+  '#51e898', // lime
+  '#ff78cb', // pink
+  '#344563', // black
+];
+
+// Due date status colors
+export const DUE_DATE_STYLES = {
+  overdue: { bg: '#eb5a46', text: '#ffffff' },
+  dueSoon: { bg: '#f2d600', text: '#1d2125' }, // within 24 hours
+  complete: { bg: '#61bd4f', text: '#ffffff' },
+  normal: { bg: '#091e420a', text: '#44546f' },
+};
+
+// Helper to calculate checklist progress
+export function getChecklistProgress(checklists: TaskChecklist[]): { completed: number; total: number } {
+  let completed = 0;
+  let total = 0;
+  checklists.forEach(checklist => {
+    checklist.items.forEach(item => {
+      total++;
+      if (item.completed) completed++;
+    });
+  });
+  return { completed, total };
+}
+
+// Helper to check if due date is within 24 hours
+export function isDueSoon(dueDate: string): boolean {
+  const due = new Date(dueDate);
+  const now = new Date();
+  const hoursUntilDue = (due.getTime() - now.getTime()) / (1000 * 60 * 60);
+  return hoursUntilDue > 0 && hoursUntilDue <= 24;
+}
 
 // Helper to group tasks by status for Kanban view
 export function groupTasksByStatus(tasks: Task[]): TasksByStatus {

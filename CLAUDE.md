@@ -160,3 +160,46 @@ import { api, isMockMode } from '@/lib/api';
 const canvases = await api.listCanvases();
 const node = await api.createNode({ ... });
 ```
+
+## Workflow Feature Testing
+
+The workflow panel on canvas pages manages product development stages.
+
+### How to Test Workflow UI
+
+1. **Start both services:**
+   ```bash
+   # Terminal 1 - Backend (Merlin/)
+   uvicorn app.main:app --reload
+
+   # Terminal 2 - Frontend (Merlin-fe/)
+   npm run dev
+   ```
+
+2. **Navigate to a canvas page:**
+   - Go to `http://localhost:3000/canvas/[id]`
+   - The workflow panel should appear in the right sidebar
+
+3. **Test workflow stages:**
+   - View current stage indicator
+   - Click "Advance Stage" button to progress through stages
+   - Stages progress: `research → prd_review → ux_review → engineering → qa → launch_prep → launched → retrospective`
+
+4. **Test project creation:**
+   - Click "Create Project" on a canvas
+   - Fill in project details
+   - Project should appear in workflow panel
+
+### Workflow Panel Location
+- Canvas page right sidebar: `src/components/canvas/WorkflowPanel.tsx`
+- Creation panel: `src/components/canvas/panels/CreationPanel.tsx`
+
+### Common Issues
+- **Panel loading forever**: Check browser console for 401/403 errors (auth issue) or 500 errors (backend issue)
+- **Projects not showing**: Verify user owns the canvas or is member of canvas organization
+- **Stage advance fails**: Check backend logs for validation errors
+
+### Backend Endpoints Used
+- `GET /api/v1/projects/?canvas_id=X` - List projects on canvas
+- `GET /api/v1/projects/{id}/details` - Project with artifacts and transitions
+- `POST /api/v1/projects/{id}/transitions` - Advance stage

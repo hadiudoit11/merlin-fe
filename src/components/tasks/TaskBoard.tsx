@@ -174,29 +174,54 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
         />
       )}
 
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold">Tasks</h2>
-        <Button variant="outline" size="sm" onClick={fetchTasks}>
+      <div className="flex items-center justify-between mb-2">
+        <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-200">Board</h2>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={fetchTasks}
+          className="text-gray-600 dark:text-gray-300 hover:bg-gray-200/50"
+        >
           <RefreshCw className="h-4 w-4 mr-2" />
           Refresh
         </Button>
       </div>
 
-      <DragDropContext onDragEnd={handleDragEnd}>
-        <div className="flex gap-4 overflow-x-auto pb-4">
-          {columns.map((status) => (
-            <TaskColumn
-              key={status}
-              status={status}
-              columnTasks={tasksByStatus[status]}
-              canvasId={canvasId}
-              onTaskCreated={handleTaskCreated}
-              onTaskUpdated={handleTaskUpdated}
-              onTaskDeleted={handleTaskDeleted}
-            />
-          ))}
-        </div>
-      </DragDropContext>
+      {/* Trello-like board background */}
+      <div className="bg-gradient-to-br from-blue-600 to-blue-700 dark:from-gray-900 dark:to-gray-800 rounded-xl p-4 -mx-2 shadow-inner">
+        <DragDropContext onDragEnd={handleDragEnd}>
+          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
+            {columns.map((status) => (
+              <TaskColumn
+                key={status}
+                status={status}
+                columnTasks={tasksByStatus[status]}
+                canvasId={canvasId}
+                onTaskCreated={handleTaskCreated}
+                onTaskUpdated={handleTaskUpdated}
+                onTaskDeleted={handleTaskDeleted}
+              />
+            ))}
+
+            {/* Add another list button */}
+            <div className="flex-shrink-0 w-72">
+              <button
+                className="w-full p-3 rounded-xl bg-white/20 hover:bg-white/30 transition-colors text-left text-white/90 text-sm font-medium flex items-center gap-2"
+                onClick={() => {
+                  toast({
+                    title: 'Coming soon',
+                    description: 'Custom lists will be available soon',
+                    duration: 2000,
+                  });
+                }}
+              >
+                <span className="text-lg">+</span>
+                Add another list
+              </button>
+            </div>
+          </div>
+        </DragDropContext>
+      </div>
     </div>
   );
 };

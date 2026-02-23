@@ -259,10 +259,17 @@ class CanvasApiService {
       params: Record<string, unknown>;
     }>;
   }> {
-    const response = await this.client.post(`/agent/${canvasId}/chat`, {
-      message,
-      conversation_history: conversationHistory,
-    });
+    // Agent calls Claude API which can take 60+ seconds
+    const response = await this.client.post(
+      `/agent/${canvasId}/chat`,
+      {
+        message,
+        conversation_history: conversationHistory,
+      },
+      {
+        timeout: 120000, // 2 minute timeout for AI operations
+      }
+    );
     return response.data;
   }
 }

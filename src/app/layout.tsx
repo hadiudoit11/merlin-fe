@@ -3,16 +3,16 @@
 import { ReactNode } from 'react';
 import { NextAuthProvider } from '@/providers/NextAuthProvider';
 import './globals.css';
-import { Open_Sans } from 'next/font/google';
+import { Inter } from 'next/font/google';
 import { ThemeProvider } from '@/components/ui/theme-provider';
 import { availableThemes } from '@/config/themes';
 
-// Initialize Open Sans font
-const openSans = Open_Sans({ 
+// Initialize Inter font - modern, clean, great for UI
+const inter = Inter({
   subsets: ['latin'],
   weight: ['300', '400', '500', '600', '700'],
   display: 'swap',
-  variable: '--font-open-sans'
+  variable: '--font-inter'
 });
 
 interface RootLayoutProps {
@@ -21,8 +21,8 @@ interface RootLayoutProps {
 
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
-    <html lang="en" suppressHydrationWarning className={`h-full ${openSans.variable}`}>
-      <body className="h-full bg-background text-foreground font-primary">
+    <html lang="en" suppressHydrationWarning className={`h-full ${inter.variable}`}>
+      <body className="h-full bg-background text-foreground font-sans">
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

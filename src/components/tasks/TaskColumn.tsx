@@ -2,19 +2,30 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Droppable, Draggable } from '@hello-pangea/dnd';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Loader2, PlusCircle } from 'lucide-react';
+import { Loader2, Plus, MoreHorizontal, X } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { tasks } from '@/lib/task-api';
 import {
   Task,
   TaskStatus,
   TASK_STATUS_LABELS,
-  TASK_STATUS_COLORS,
 } from '@/types/task';
 import TaskCard from './TaskCard';
+
+// Trello-like column header colors
+const COLUMN_COLORS: Record<TaskStatus, string> = {
+  pending: '#dfe1e6',
+  in_progress: '#0079bf',
+  completed: '#61bd4f',
+  cancelled: '#eb5a46',
+};
 
 interface TaskColumnProps {
   status: TaskStatus;
@@ -37,7 +48,7 @@ const TaskColumn: React.FC<TaskColumnProps> = ({
   const [isCreating, setIsCreating] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -50,8 +61,7 @@ const TaskColumn: React.FC<TaskColumnProps> = ({
     }
   }, [isCreating]);
 
-  const handleCreateTask = async (e?: React.KeyboardEvent) => {
-    if (e && e.key !== 'Enter') return;
+  const handleCreateTask = async () => {
     if (!newTaskTitle.trim()) {
       setIsCreating(false);
       return;
@@ -73,7 +83,7 @@ const TaskColumn: React.FC<TaskColumnProps> = ({
 
       toast({
         title: 'Task created',
-        duration: 3000,
+        duration: 2000,
       });
 
       if (onTaskCreated) {
@@ -94,119 +104,165 @@ const TaskColumn: React.FC<TaskColumnProps> = ({
     }
   };
 
-  const handleBlur = () => {
-    if (newTaskTitle.trim() && !isSubmitting) {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
       handleCreateTask();
-    } else if (!isSubmitting) {
+    }
+    if (e.key === 'Escape') {
       setIsCreating(false);
+      setNewTaskTitle('');
     }
   };
 
   return (
-    <Card className="flex-1 w-72 flex-shrink-0 border bg-card text-card-foreground rounded-md">
-      <CardHeader className="p-3 pb-2">
+    <div className="flex-shrink-0 w-72 flex flex-col bg-[#ebecf0] dark:bg-gray-800 rounded-xl max-h-[calc(100vh-200px)]">
+      {/* Column Header */}
+      <div className="p-3 pb-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className={`w-2 h-2 rounded-full ${TASK_STATUS_COLORS[status].split(' ')[0]}`} />
-            <h3 className="text-sm font-medium">{TASK_STATUS_LABELS[status]}</h3>
+            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200">
+              {TASK_STATUS_LABELS[status]}
+            </h3>
+            <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-200 dark:bg-gray-700 px-2 py-0.5 rounded-full">
+              {columnTasks.length}
+            </span>
           </div>
-          <Badge variant="outline" className="text-xs font-normal">
-            {columnTasks.length}
-          </Badge>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-7 w-7">
+                <MoreHorizontal className="h-4 w-4 text-gray-500" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setIsCreating(true)}>
+                Add card
+              </DropdownMenuItem>
+              <DropdownMenuItem>Copy list</DropdownMenuItem>
+              <DropdownMenuItem>Move all cards</DropdownMenuItem>
+              <DropdownMenuItem className="text-red-600">
+                Archive all cards
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
-      </CardHeader>
+      </div>
 
+      {/* Scrollable Card Area */}
       <Droppable droppableId={status} isDropDisabled={!isMounted}>
         {(droppableProvided, snapshot) => (
-          <CardContent
-            className="p-2 min-h-[200px]"
+          <div
+            className={`flex-1 overflow-y-auto px-2 pb-2 min-h-[100px] transition-colors ${
+              snapshot.isDraggingOver ? 'bg-gray-200/50 dark:bg-gray-700/50' : ''
+            }`}
             ref={droppableProvided.innerRef}
             {...droppableProvided.droppableProps}
           >
-            <div
-              className={`rounded-md transition-colors ${
-                snapshot.isDraggingOver ? 'bg-muted/50' : ''
-              }`}
-            >
-              {columnTasks.length === 0 && !isCreating && (
-                <div
-                  onClick={() => setIsCreating(true)}
-                  className="flex flex-col items-center justify-center h-24 text-center border border-dashed border-muted rounded-lg p-2 my-1 cursor-pointer hover:bg-muted/20 transition-colors"
-                >
-                  <PlusCircle className="h-5 w-5 text-muted-foreground mb-1" />
-                  <p className="text-sm text-muted-foreground">No tasks</p>
-                  <p className="text-xs text-muted-foreground mt-1">Click to add one</p>
-                </div>
-              )}
+            {columnTasks.length === 0 && !isCreating && !snapshot.isDraggingOver && (
+              <div
+                onClick={() => setIsCreating(true)}
+                className="flex flex-col items-center justify-center h-20 text-center rounded-lg cursor-pointer hover:bg-gray-200/50 dark:hover:bg-gray-700/50 transition-colors"
+              >
+                <p className="text-sm text-gray-500 dark:text-gray-400">No cards</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Click to add one</p>
+              </div>
+            )}
 
-              {columnTasks.map((task, index) => (
-                <Draggable
-                  key={task.id}
-                  draggableId={String(task.id)}
-                  index={index}
-                  isDragDisabled={!isMounted}
-                >
-                  {(draggableProvided, dragSnapshot) => (
-                    <div
-                      ref={draggableProvided.innerRef}
-                      {...draggableProvided.draggableProps}
-                      {...draggableProvided.dragHandleProps}
-                      className={`mb-2 ${dragSnapshot.isDragging ? 'opacity-90 rotate-1' : ''}`}
-                    >
-                      <TaskCard
-                        task={task}
-                        showStatus={false}
-                        onTaskUpdated={onTaskUpdated}
-                        onTaskDeleted={onTaskDeleted}
-                      />
-                    </div>
-                  )}
-                </Draggable>
-              ))}
+            {columnTasks.map((task, index) => (
+              <Draggable
+                key={task.id}
+                draggableId={String(task.id)}
+                index={index}
+                isDragDisabled={!isMounted}
+              >
+                {(draggableProvided, dragSnapshot) => (
+                  <div
+                    ref={draggableProvided.innerRef}
+                    {...draggableProvided.draggableProps}
+                    {...draggableProvided.dragHandleProps}
+                    className={`mb-2 ${
+                      dragSnapshot.isDragging
+                        ? 'rotate-2 shadow-lg'
+                        : ''
+                    }`}
+                  >
+                    <TaskCard
+                      task={task}
+                      showStatus={false}
+                      onTaskUpdated={onTaskUpdated}
+                      onTaskDeleted={onTaskDeleted}
+                    />
+                  </div>
+                )}
+              </Draggable>
+            ))}
 
-              {droppableProvided.placeholder}
+            {droppableProvided.placeholder}
 
-              {isCreating && (
-                <div className="p-2 bg-background/50 rounded-md border-2 border-dashed border-primary/20 focus-within:border-primary/50 transition-all my-1">
-                  {isSubmitting ? (
-                    <div className="flex items-center justify-center p-2">
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      <span className="text-sm">Creating...</span>
-                    </div>
-                  ) : (
-                    <input
+            {/* Inline Card Creation */}
+            {isCreating && (
+              <div className="bg-white dark:bg-gray-700 rounded-lg shadow-sm p-2 mb-2">
+                {isSubmitting ? (
+                  <div className="flex items-center justify-center p-3">
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    <span className="text-sm text-gray-500">Creating...</span>
+                  </div>
+                ) : (
+                  <>
+                    <textarea
                       ref={inputRef}
-                      type="text"
                       value={newTaskTitle}
                       onChange={(e) => setNewTaskTitle(e.target.value)}
-                      onKeyDown={handleCreateTask}
-                      onBlur={handleBlur}
-                      placeholder="Task title..."
-                      className="w-full bg-transparent px-2 py-1 border-none focus:outline-none text-sm"
+                      onKeyDown={handleKeyDown}
+                      placeholder="Enter a title for this card..."
+                      className="w-full bg-transparent border-none focus:outline-none text-sm resize-none min-h-[60px] placeholder:text-gray-400"
+                      rows={2}
                     />
-                  )}
-                </div>
-              )}
-            </div>
-          </CardContent>
+                    <div className="flex items-center gap-2 mt-2">
+                      <Button
+                        size="sm"
+                        onClick={handleCreateTask}
+                        disabled={!newTaskTitle.trim()}
+                        className="bg-[#0079bf] hover:bg-[#026aa7] text-white"
+                      >
+                        Add card
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8"
+                        onClick={() => {
+                          setIsCreating(false);
+                          setNewTaskTitle('');
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
         )}
       </Droppable>
 
-      {!isCreating && columnTasks.length > 0 && (
-        <div className="p-2 border-t">
+      {/* Add Card Button - Always visible at bottom */}
+      {!isCreating && (
+        <div className="p-2 pt-0">
           <Button
             variant="ghost"
             size="sm"
-            className="w-full justify-start text-xs text-muted-foreground hover:text-foreground"
+            className="w-full justify-start text-gray-600 dark:text-gray-300 hover:bg-gray-200/50 dark:hover:bg-gray-700/50 rounded-lg"
             onClick={() => setIsCreating(true)}
             disabled={isSubmitting}
           >
-            <PlusCircle className="h-4 w-4 mr-1" />
-            Add task
+            <Plus className="h-4 w-4 mr-1" />
+            Add a card
           </Button>
         </div>
       )}
-    </Card>
+    </div>
   );
 };
 

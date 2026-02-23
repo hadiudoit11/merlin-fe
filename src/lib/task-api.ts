@@ -187,6 +187,8 @@ export const mockTaskApi = {
       description: data.description || null,
       assignee_name: data.assignee_name || null,
       assignee_email: data.assignee_email || null,
+      assignee_avatar: data.assignee_avatar || null,
+      start_date: data.start_date || null,
       due_date: data.due_date || null,
       due_date_text: data.due_date_text || null,
       status: 'pending',
@@ -199,6 +201,12 @@ export const mockTaskApi = {
       tags: data.tags || [],
       is_overdue: false,
       linked_nodes: [],
+      // Trello-like features
+      labels: data.labels || [],
+      checklists: data.checklists || [],
+      cover: data.cover || null,
+      attachment_count: 0,
+      comment_count: 0,
       created_at: now,
       updated_at: now,
     };

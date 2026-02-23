@@ -81,6 +81,18 @@ export interface Viewport {
   zoom: number;
 }
 
+// Workflow stage values for swimlane visualization
+export type WorkflowStage =
+  | 'research'
+  | 'prd_review'
+  | 'ux_review'
+  | 'tech_spec'
+  | 'project_kickoff'
+  | 'development'
+  | 'qa'
+  | 'launch'
+  | 'retrospective';
+
 export interface CanvasNode {
   id: number;
   name: string;
@@ -97,6 +109,7 @@ export interface CanvasNode {
   is_locked: boolean;
   is_collapsed: boolean;
   z_index: number;
+  workflow_stage?: WorkflowStage | null;
   canvas_id: number;
   created_at: string;
   updated_at: string;
@@ -195,6 +208,7 @@ export interface UpdateNodeRequest {
   is_locked?: boolean;
   is_collapsed?: boolean;
   z_index?: number;
+  workflow_stage?: WorkflowStage | null;
 }
 
 export interface CreateConnectionRequest {

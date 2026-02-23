@@ -26,8 +26,9 @@ const Cursors = isLiveblocksEnabled
 const Collaborators = isLiveblocksEnabled
   ? require('@/components/collaboration').Collaborators
   : null;
-import { NodeType, UpdateNodeRequest, AgentNodeConfig, CONNECTION_RULES } from '@/types/canvas';
+import { NodeType, UpdateNodeRequest, AgentNodeConfig, CONNECTION_RULES, WorkflowStage } from '@/types/canvas';
 import { toast } from 'sonner';
+import { getStageFromY, SWIMLANE_HEIGHT } from '@/components/canvas/SwimlaneOverlay';
 
 export default function CanvasPage() {
   const params = useParams();
@@ -56,6 +57,7 @@ export default function CanvasPage() {
     addConnection,
     deleteConnection,
     saveCanvas,
+    refreshCanvas,
     autoLayout,
     undoLayout,
     canUndoLayout,
@@ -82,6 +84,7 @@ export default function CanvasPage() {
   // Grid and snap state
   const [gridEnabled, setGridEnabled] = useState(canvas?.grid_enabled ?? true);
   const [snapEnabled, setSnapEnabled] = useState(canvas?.snap_to_grid ?? true);
+  const [swimlanesEnabled, setSwimlanes] = useState(false);
 
   // AI Assistant panel state
   const [isAgentPanelOpen, setIsAgentPanelOpen] = useState(false);
@@ -99,6 +102,16 @@ export default function CanvasPage() {
       y: -viewport.y / viewport.zoom + 300,
     };
   }, [viewport]);
+
+  // Center the viewport on a specific canvas position
+  const centerOnPosition = useCallback((canvasX: number, canvasY: number) => {
+    // Calculate viewport offset to center the given canvas coordinates
+    const viewportWidth = window.innerWidth || 1200;
+    const viewportHeight = window.innerHeight || 800;
+    const newX = -(canvasX * viewport.zoom - viewportWidth / 2);
+    const newY = -(canvasY * viewport.zoom - viewportHeight / 2);
+    setViewport({ x: newX, y: newY, zoom: viewport.zoom });
+  }, [viewport.zoom, setViewport]);
 
   const handleNodeAdd = useCallback(
     async (type: NodeType, position: { x: number; y: number }) => {
@@ -321,6 +334,31 @@ export default function CanvasPage() {
     setSnapEnabled(prev => !prev);
   }, []);
 
+  // Toggle swimlanes
+  const handleSwimlanesToggle = useCallback(() => {
+    setSwimlanes(prev => !prev);
+  }, []);
+
+  // Handle node move with swimlane stage detection
+  const handleNodeMove = useCallback(
+    async (nodeId: number, x: number, y: number) => {
+      // Move the node first
+      moveNode(nodeId, x, y);
+
+      // If swimlanes enabled, detect and update stage based on Y position
+      if (swimlanesEnabled) {
+        const newStage = getStageFromY(y);
+        const node = nodes.find(n => n.id === nodeId);
+
+        if (newStage && node && node.workflow_stage !== newStage) {
+          await updateNode(nodeId, { workflow_stage: newStage as WorkflowStage });
+          toast.success(`Moved to ${newStage.replace('_', ' ')} stage`);
+        }
+      }
+    },
+    [moveNode, swimlanesEnabled, nodes, updateNode]
+  );
+
   // Export canvas
   const handleExport = useCallback(() => {
     toast.info('Export functionality coming soon');
@@ -425,6 +463,8 @@ export default function CanvasPage() {
         name: n.name,
         type: n.node_type,
         content: n.content,
+        position_x: n.position_x,
+        position_y: n.position_y,
       })),
       connections: connections.map(c => ({
         sourceId: c.source_node_id,
@@ -488,9 +528,10 @@ export default function CanvasPage() {
         gridEnabled={gridEnabled}
         gridSize={canvas.grid_size}
         snapToGrid={snapEnabled}
+        swimlanesEnabled={swimlanesEnabled}
         onViewportChange={setViewport}
         onNodeSelect={selectNode}
-        onNodeMove={moveNode}
+        onNodeMove={handleNodeMove}
         onNodeResize={handleNodeResize}
         onNodeUpdate={handleNodeUpdate}
         onNodeDelete={deleteNode}
@@ -526,6 +567,8 @@ export default function CanvasPage() {
           onGridToggle={handleGridToggle}
           snapEnabled={snapEnabled}
           onSnapToggle={handleSnapToggle}
+          swimlanesEnabled={swimlanesEnabled}
+          onSwimlanesToggle={handleSwimlanesToggle}
           onExport={handleExport}
           onDuplicate={handleDuplicate}
           onDelete={handleDeleteCanvas}
@@ -591,6 +634,8 @@ export default function CanvasPage() {
         onUpdateNode={handleAgentUpdateNode}
         onDeleteNode={handleAgentDeleteNode}
         getCanvasState={getCanvasState}
+        onRefreshCanvas={refreshCanvas}
+        onCenterOnPosition={centerOnPosition}
       />
 
       {/* MCP Setup Dialog */}

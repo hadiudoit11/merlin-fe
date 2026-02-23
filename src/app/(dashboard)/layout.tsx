@@ -1,6 +1,5 @@
 "use client";
 import { ReactNode } from "react";
-import { Open_Sans } from 'next/font/google';
 import { NextAuthProvider } from '@/providers/NextAuthProvider';
 import { OrganizationProvider } from '@/contexts/OrganizationContext';
 import { DomainCheckProvider } from '@/components/organization/DomainCheckProvider';
@@ -21,14 +20,6 @@ import {
 } from "@/components/ui/sidebar";
 import { SiteHeader } from '@/components/main/site-header';
 import { ToastProvider } from "@/components/ui/toast-provider";
-
-// Initialize Open Sans font
-const openSans = Open_Sans({
-  subsets: ['latin'],
-  weight: ['300', '400', '500', '600', '700'],
-  display: 'swap',
-  variable: '--font-open-sans'
-});
 
 interface DashboardLayoutProps {
   children: ReactNode;

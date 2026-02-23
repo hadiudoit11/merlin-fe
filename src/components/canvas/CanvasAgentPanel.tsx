@@ -19,7 +19,7 @@ import {
   Bell,
 } from 'lucide-react';
 import { NodeType } from '@/types/canvas';
-import { api } from '@/lib/api';
+import { api, isMockMode } from '@/lib/api';
 
 // Message types
 interface AgentMessage {
@@ -33,10 +33,11 @@ interface AgentMessage {
 
 // Actions the agent can take
 interface AgentAction {
-  type: 'create_node' | 'connect_nodes' | 'update_node' | 'delete_node' | 'get_canvas_state';
+  type: 'create_node' | 'connect_nodes' | 'update_node' | 'delete_node' | 'get_canvas_state' | 'create_canvas' | 'create_project' | 'create_artifact';
   description: string;
   status: 'pending' | 'complete' | 'error';
   params: Record<string, unknown>;
+  result?: Record<string, unknown>;
 }
 
 interface CanvasAgentPanelProps {
@@ -48,7 +49,11 @@ interface CanvasAgentPanelProps {
   onConnectNodes: (sourceId: number, targetId: number) => Promise<boolean>;
   onUpdateNode: (nodeId: number, data: { name?: string; content?: string }) => Promise<void>;
   onDeleteNode: (nodeId: number) => Promise<void>;
-  getCanvasState: () => { nodes: Array<{ id: number; name: string; type: NodeType; content?: string }>; connections: Array<{ sourceId: number; targetId: number }> };
+  getCanvasState: () => { nodes: Array<{ id: number; name: string; type: NodeType; content?: string; position_x?: number; position_y?: number }>; connections: Array<{ sourceId: number; targetId: number }> };
+  /** Refresh canvas state after agent makes changes */
+  onRefreshCanvas?: () => Promise<void>;
+  /** Center the canvas viewport on a specific position */
+  onCenterOnPosition?: (x: number, y: number) => void;
   /** Number of projects on this canvas */
   projectCount?: number;
   /** Number of pending change proposals across all projects */
@@ -77,6 +82,8 @@ export function CanvasAgentPanel({
   onUpdateNode,
   onDeleteNode,
   getCanvasState,
+  onRefreshCanvas,
+  onCenterOnPosition,
   projectCount = 0,
   pendingProposalsCount = 0,
 }: CanvasAgentPanelProps) {
@@ -86,11 +93,21 @@ export function CanvasAgentPanel({
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Log API mode on mount
+  useEffect(() => {
+    console.log('[Agent] Component mounted');
+    console.log('[Agent] Using mock API:', isMockMode);
+    console.log('[Agent] canvasId:', canvasId, 'type:', typeof canvasId);
+    console.log('[Agent] userId:', userId);
+  }, [canvasId, userId]);
+
   // Load messages from session storage on mount (user-specific)
   useEffect(() => {
     const sessionKey = getSessionKey(canvasId, userId);
+    console.log('[Agent] Loading session with key:', sessionKey);
     try {
       const saved = sessionStorage.getItem(sessionKey);
+      console.log('[Agent] Loaded from sessionStorage:', saved ? 'found data' : 'no data');
       if (saved) {
         const parsed = JSON.parse(saved);
         // Convert timestamp strings back to Date objects
@@ -98,6 +115,7 @@ export function CanvasAgentPanel({
           ...m,
           timestamp: new Date(m.timestamp),
         }));
+        console.log('[Agent] Restored messages count:', restored.length);
         setMessages(restored);
       }
     } catch (e) {
@@ -138,6 +156,7 @@ export function CanvasAgentPanel({
   const processMessage = useCallback(async (userMessage: string): Promise<{ responseText: string; actions: AgentAction[] }> => {
     // If no canvasId, fall back to a simple response
     if (!canvasId) {
+      console.log('[Agent] No canvasId provided');
       return {
         responseText: "I need a canvas to work with. Please open a canvas first.",
         actions: [],
@@ -145,8 +164,14 @@ export function CanvasAgentPanel({
     }
 
     try {
+      console.log('[Agent] Calling chatWithCanvasAgent with canvasId:', canvasId);
+      console.log('[Agent] Using API:', api);
       // Call the real AI backend
       const response = await api.chatWithCanvasAgent(canvasId, userMessage, conversationHistoryRef.current);
+      console.log('[Agent] Raw response received:', response);
+      console.log('[Agent] Response type:', typeof response);
+      console.log('[Agent] Response.response:', response?.response);
+      console.log('[Agent] Response.actions:', response?.actions);
 
       // Update conversation history for context
       conversationHistoryRef.current.push({ role: 'user', content: userMessage });
@@ -158,24 +183,65 @@ export function CanvasAgentPanel({
       }
 
       // Map backend actions to frontend format
-      const actions: AgentAction[] = response.actions.map((action: { type: string; description: string; status: string; params: Record<string, unknown> }) => ({
+      const actions: AgentAction[] = response.actions.map((action: { type: string; description: string; status: string; params: Record<string, unknown>; result?: Record<string, unknown> }) => ({
         type: action.type as AgentAction['type'],
         description: action.description,
         status: action.status as 'pending' | 'complete' | 'error',
         params: action.params,
+        result: action.result,
       }));
+
+      // If the agent performed actions that modified the canvas, refresh to sync state
+      if (actions.length > 0 && onRefreshCanvas) {
+        await onRefreshCanvas();
+
+        // Center on the last created node
+        if (onCenterOnPosition) {
+          const createNodeActions = actions.filter(
+            a => (a.type === 'create_node' || a.type === 'create_artifact') && a.status === 'complete'
+          );
+          if (createNodeActions.length > 0) {
+            const lastAction = createNodeActions[createNodeActions.length - 1];
+            // Get node position from canvas state after refresh
+            const state = getCanvasState();
+            const nodeId = (lastAction.result as { node_id?: number })?.node_id ||
+                          (lastAction.params as { id?: number })?.id;
+            if (nodeId) {
+              const node = state.nodes.find(n => n.id === nodeId);
+              if (node && node.position_x !== undefined && node.position_y !== undefined) {
+                // Center on the node (add offset for node center)
+                onCenterOnPosition(node.position_x + 140, node.position_y + 100);
+              }
+            }
+          }
+        }
+      }
 
       return {
         responseText: response.response,
         actions,
       };
     } catch (error) {
+      // Log detailed error info for debugging
       console.error('Canvas agent error:', error);
+      if (error instanceof Error) {
+        console.error('Error message:', error.message);
+        console.error('Error name:', error.name);
+        // Check if it's an Axios error with response data
+        const axiosError = error as { response?: { status?: number; data?: unknown }; code?: string };
+        if (axiosError.response) {
+          console.error('Response status:', axiosError.response.status);
+          console.error('Response data:', axiosError.response.data);
+        }
+        if (axiosError.code) {
+          console.error('Error code:', axiosError.code);
+        }
+      }
 
       // Fallback to local processing if API fails
       return processMessageLocally(userMessage);
     }
-  }, [canvasId]);
+  }, [canvasId, onRefreshCanvas, onCenterOnPosition, getCanvasState]);
 
   // Local fallback processing when API is unavailable
   const processMessageLocally = useCallback(async (userMessage: string): Promise<{ responseText: string; actions: AgentAction[] }> => {
@@ -270,6 +336,8 @@ export function CanvasAgentPanel({
   const handleSend = useCallback(async () => {
     if (!input.trim() || isLoading) return;
 
+    console.log('[Agent] handleSend called with input:', input.trim());
+
     const userMessage: AgentMessage = {
       id: Date.now().toString(),
       role: 'user',
@@ -282,18 +350,30 @@ export function CanvasAgentPanel({
     setIsLoading(true);
 
     try {
+      console.log('[Agent] Calling processMessage...');
       const { responseText, actions } = await processMessage(input.trim());
+      console.log('[Agent] processMessage returned:', { responseText, actions });
+
+      // Ensure we always have a response to show
+      const finalResponseText = responseText || 'I received your message but had no response text.';
 
       const assistantMessage: AgentMessage = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: responseText,
+        content: finalResponseText,
         timestamp: new Date(),
         actions: actions.length > 0 ? actions : undefined,
       };
 
-      setMessages((prev) => [...prev, assistantMessage]);
+      console.log('[Agent] Setting assistant message:', assistantMessage);
+      setMessages((prev) => {
+        console.log('[Agent] Previous messages count:', prev.length);
+        const newMessages = [...prev, assistantMessage];
+        console.log('[Agent] New messages count:', newMessages.length);
+        return newMessages;
+      });
     } catch (error) {
+      console.error('[Agent] Error in handleSend:', error);
       const errorMessage: AgentMessage = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
@@ -316,18 +396,18 @@ export function CanvasAgentPanel({
 
   return (
     <>
-      {/* Overlay */}
+      {/* Overlay - fixed to viewport */}
       {isOpen && (
         <div
-          className="absolute inset-0 bg-black/20 z-[80]"
+          className="fixed inset-0 bg-black/20 z-[80]"
           onClick={onClose}
         />
       )}
 
-      {/* Panel */}
+      {/* Panel - fixed to viewport, not affected by canvas scroll/pan */}
       <div
         className={cn(
-          'absolute top-0 right-0 h-full w-[400px] bg-background border-l shadow-xl z-[85] transition-transform duration-200 ease-out flex flex-col',
+          'fixed top-0 right-0 h-screen w-[400px] bg-background border-l shadow-xl z-[85] transition-transform duration-200 ease-out flex flex-col',
           isOpen ? 'translate-x-0' : 'translate-x-full'
         )}
       >

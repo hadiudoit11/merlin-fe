@@ -106,6 +106,8 @@ export function CreationPanel({
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const isMountedRef = useRef(true);
+  const hasStartedRef = useRef(false);
 
   // Auto-scroll to bottom when content changes
   useEffect(() => {
@@ -114,15 +116,30 @@ export function CreationPanel({
     }
   }, [actions, messages]);
 
-  // Start streaming on mount
+  // Start streaming on mount - handle React StrictMode double-invoke
   useEffect(() => {
-    sendMessage(initialMessage);
-    return () => abortRef.current?.abort();
+    isMountedRef.current = true;
+
+    // Only start the request once, even with StrictMode double-invoke
+    if (!hasStartedRef.current) {
+      hasStartedRef.current = true;
+      // Create abort controller for cancellation
+      abortRef.current = new AbortController();
+      sendMessage(initialMessage);
+    }
+
+    return () => {
+      isMountedRef.current = false;
+      // Don't abort here - let ongoing requests complete
+      // AbortController is only used for user-initiated cancel
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const sendMessage = async (text: string) => {
-    if (!text.trim() || isStreaming) return;
+    if (!text.trim() || isStreaming) {
+      return;
+    }
 
     setIsStreaming(true);
     setError(null);
@@ -130,18 +147,25 @@ export function CreationPanel({
     // Add user message to display
     setMessages((prev) => [...prev, { role: 'user', content: text }]);
 
-    abortRef.current = new AbortController();
+    // Create abort controller if not already set (for follow-up messages)
+    if (!abortRef.current) {
+      abortRef.current = new AbortController();
+    }
 
     try {
       // Get auth token
       const session = await getSession();
       const token = (session as { accessToken?: string })?.accessToken;
 
+      if (!token) {
+        throw new Error('No authentication token available. Please log in again.');
+      }
+
       const response = await fetch(`${API_BASE}/api/v1/agent/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           message: text,
@@ -151,7 +175,8 @@ export function CreationPanel({
       });
 
       if (!response.ok || !response.body) {
-        throw new Error(`Request failed: ${response.status}`);
+        const errorText = await response.text();
+        throw new Error(`Request failed: ${response.status} - ${errorText}`);
       }
 
       const reader = response.body.getReader();
@@ -227,6 +252,8 @@ export function CreationPanel({
             }
           } else if (type === 'error') {
             setError(event.message as string);
+            setIsStreaming(false);
+            return;
           }
         }
       }
@@ -239,8 +266,10 @@ export function CreationPanel({
         ]);
       }
     } catch (err: unknown) {
+      // Ignore AbortError (happens on cleanup/cancel)
       if ((err as Error).name !== 'AbortError') {
-        setError((err as Error).message || 'Something went wrong');
+        const errorMsg = (err as Error).message || 'Something went wrong';
+        setError(errorMsg);
       }
     } finally {
       setIsStreaming(false);

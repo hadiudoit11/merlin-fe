@@ -12,34 +12,48 @@ const config: Config = {
   theme: {
   	extend: {
   		fontFamily: {
-  			// Typequest Brand Fonts
+  			// Modern UI font
+  			sans: [
+  				"var(--font-inter)",
+  				"Inter",
+  				"system-ui",
+  				"-apple-system",
+  				"sans-serif"
+  			],
+  			// Brand fonts
   			primary: [
-  				"Fraunces",
-  				"Georgia",
-  				"serif"
+  				"var(--font-inter)",
+  				"Inter",
+  				"system-ui",
+  				"sans-serif"
   			],
   			secondary: [
-  				"Space Grotesk",
+  				"var(--font-inter)",
+  				"Inter",
   				"system-ui",
   				"sans-serif"
   			],
   			mono: [
   				"JetBrains Mono",
+  				"ui-monospace",
   				"monospace"
   			],
-  			// Aliases for brand usage
+  			// Aliases
   			headline: [
-  				"Fraunces",
-  				"Georgia",
-  				"serif"
+  				"var(--font-inter)",
+  				"Inter",
+  				"system-ui",
+  				"sans-serif"
   			],
   			body: [
-  				"Space Grotesk",
+  				"var(--font-inter)",
+  				"Inter",
   				"system-ui",
   				"sans-serif"
   			],
   			nav: [
-  				"Plus Jakarta Sans",
+  				"var(--font-inter)",
+  				"Inter",
   				"system-ui",
   				"sans-serif"
   			],

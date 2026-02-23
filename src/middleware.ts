@@ -19,22 +19,56 @@ export default withAuth(
 // Protect all routes under (dashboard) and other protected areas
 export const config = {
   matcher: [
-    // Match all dashboard routes
-    '/(dashboard)/:path*',
+    // Match home route
+    '/home',
+    '/home/:path*',
     // Match organization routes
+    '/organization',
     '/organization/:path*',
     // Match canvas routes
+    '/canvas',
     '/canvas/:path*',
     // Match agents routes
+    '/agents',
     '/agents/:path*',
     // Match projects routes
+    '/projects',
     '/projects/:path*',
     // Match metrics routes
+    '/metrics',
     '/metrics/:path*',
     // Match documents routes
+    '/documents',
     '/documents/:path*',
-    // Match home (dashboard home)
-    '/home/:path*',
-    // Exclude auth-related routes, static files, and API routes
+    // Match tasks routes
+    '/tasks',
+    '/tasks/:path*',
+    // Match settings routes
+    '/settings',
+    '/settings/:path*',
+    // Match meetings routes
+    '/meetings',
+    '/meetings/:path*',
+    // Match integrations routes
+    '/integrations',
+    '/integrations/:path*',
+    // Match OKRs routes
+    '/okrs',
+    '/okrs/:path*',
+    // Match timeline routes
+    '/timeline',
+    '/timeline/:path*',
+    // Match sprints routes
+    '/sprints',
+    '/sprints/:path*',
+    // Match roadmap routes
+    '/roadmap',
+    '/roadmap/:path*',
+    // Match decisions routes
+    '/decisions',
+    '/decisions/:path*',
+    // Match research routes
+    '/research',
+    '/research/:path*',
   ],
 };
