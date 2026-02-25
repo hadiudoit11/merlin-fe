@@ -6,30 +6,18 @@ import { usePathname } from "next/navigation"
 import {
   LayoutDashboard,
   FileText,
-  Target,
   BarChart3,
   Settings,
-  Building2,
   Users,
   CreditCard,
   Shield,
   HelpCircle,
-  Sparkles,
   Bot,
   CheckSquare,
   Key,
-  Code2,
   Home,
-  Calendar,
-  Zap,
-  Video,
-  GitBranch,
-  Lightbulb,
-  Map,
   Plug,
-  FlaskConical,
   Cpu,
-  Workflow,
 } from "lucide-react"
 
 import { NavMain } from "@/components/sub/navbars/nav-main"
@@ -63,62 +51,64 @@ const mainNavItems = [
     description: "Your workspaces",
   },
   {
-    title: "Timeline",
-    url: "/timeline",
-    icon: Calendar,
-    description: "Initiative lifecycle",
-  },
-  {
-    title: "Sprints",
-    url: "/sprints",
-    icon: Zap,
-    description: "Sprint cockpit",
-  },
-  {
     title: "Tasks",
     url: "/tasks",
     icon: CheckSquare,
     description: "Action items & to-dos",
   },
-  {
-    title: "Roadmap",
-    url: "/roadmap",
-    icon: Map,
-    description: "Now / Next / Later",
-  },
-  {
-    title: "Pipeline",
-    url: "/projects/pipeline",
-    icon: Workflow,
-    description: "Project stage overview",
-  },
+  // Coming soon - hidden for now
+  // {
+  //   title: "Pipeline",
+  //   url: "/projects/pipeline",
+  //   icon: Workflow,
+  //   description: "Project stage overview",
+  // },
+  // {
+  //   title: "Timeline",
+  //   url: "/timeline",
+  //   icon: Calendar,
+  //   description: "Initiative lifecycle",
+  // },
+  // {
+  //   title: "Sprints",
+  //   url: "/sprints",
+  //   icon: Zap,
+  //   description: "Sprint cockpit",
+  // },
+  // {
+  //   title: "Roadmap",
+  //   url: "/roadmap",
+  //   icon: Map,
+  //   description: "Now / Next / Later",
+  // },
 ]
 
 const productNavItems = [
-  {
-    title: "OKRs",
-    url: "/okrs",
-    icon: Target,
-    description: "Objectives & key results",
-  },
   {
     title: "Metrics",
     url: "/metrics",
     icon: BarChart3,
     description: "Track performance",
   },
-  {
-    title: "Decisions",
-    url: "/decisions",
-    icon: GitBranch,
-    description: "Decision log",
-  },
-  {
-    title: "Research",
-    url: "/research",
-    icon: FlaskConical,
-    description: "User insights",
-  },
+  // Coming soon - hidden for now
+  // {
+  //   title: "OKRs",
+  //   url: "/okrs",
+  //   icon: Target,
+  //   description: "Objectives & key results",
+  // },
+  // {
+  //   title: "Decisions",
+  //   url: "/decisions",
+  //   icon: GitBranch,
+  //   description: "Decision log",
+  // },
+  // {
+  //   title: "Research",
+  //   url: "/research",
+  //   icon: FlaskConical,
+  //   description: "User insights",
+  // },
 ]
 
 const toolsNavItems = [
@@ -127,12 +117,6 @@ const toolsNavItems = [
     url: "/documents",
     icon: FileText,
     description: "Team docs",
-  },
-  {
-    title: "Meetings",
-    url: "/meetings",
-    icon: Video,
-    description: "Meeting intelligence",
   },
   {
     title: "Agents",
@@ -146,6 +130,13 @@ const toolsNavItems = [
     icon: Plug,
     description: "Connected apps",
   },
+  // Coming soon - hidden for now
+  // {
+  //   title: "Meetings",
+  //   url: "/meetings",
+  //   icon: Video,
+  //   description: "Meeting intelligence",
+  // },
 ]
 
 const organizationNavItems = [

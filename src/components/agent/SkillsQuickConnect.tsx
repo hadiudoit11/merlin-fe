@@ -8,7 +8,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Check, Loader2, Plus, X, HelpCircle, ExternalLink, ChevronDown, ChevronUp, Settings } from 'lucide-react';
+import { Check, Loader2, Plus, X, HelpCircle, ExternalLink, ChevronDown, ChevronUp, Settings, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -140,7 +140,18 @@ export function SkillsQuickConnect({
 
   // Configuration state
   const [expandedConfig, setExpandedConfig] = useState<SkillProvider | null>(null);
-  const [jiraJql, setJiraJql] = useState('project = PROJ AND status != Done ORDER BY updated DESC');
+
+  // Jira config - user-friendly
+  const [jiraProjects, setJiraProjects] = useState<Array<{ key: string; name: string; avatarUrl?: string }>>([]);
+  const [selectedJiraProject, setSelectedJiraProject] = useState<string | null>(null);
+  const [jiraSearchQuery, setJiraSearchQuery] = useState('');
+  const [jiraIssues, setJiraIssues] = useState<Array<{ key: string; summary: string; status: string; issueType: string }>>([]);
+  const [selectedJiraIssues, setSelectedJiraIssues] = useState<string[]>([]);
+  const [loadingJiraProjects, setLoadingJiraProjects] = useState(false);
+  const [loadingJiraIssues, setLoadingJiraIssues] = useState(false);
+  const [jiraFilter, setJiraFilter] = useState<'recent' | 'mine' | 'search'>('recent');
+
+  // Confluence config
   const [confluenceSpaces, setConfluenceSpaces] = useState<ConfluenceSpace[]>([]);
   const [selectedConfluenceSpaces, setSelectedConfluenceSpaces] = useState<string[]>([]);
   const [loadingSpaces, setLoadingSpaces] = useState(false);
@@ -151,11 +162,19 @@ export function SkillsQuickConnect({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Notify config changes when JQL or spaces change
+  // Notify config changes when selections change
   useEffect(() => {
     handleConfigUpdate();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [jiraJql, selectedConfluenceSpaces]);
+  }, [selectedJiraProject, selectedJiraIssues, selectedConfluenceSpaces]);
+
+  // Load Jira issues when project or filter changes
+  useEffect(() => {
+    if (connectedSkills.get('jira') && expandedConfig === 'jira') {
+      loadJiraIssues();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedJiraProject, jiraFilter]);
 
   // Listen for OAuth callback
   useEffect(() => {
@@ -193,6 +212,8 @@ export function SkillsQuickConnect({
       // Auto-expand config for first connected skill
       if (statusMap.get('jira') && !expandedConfig) {
         setExpandedConfig('jira');
+        loadJiraProjects();
+        loadJiraIssues();
       } else if (statusMap.get('confluence') && !expandedConfig) {
         setExpandedConfig('confluence');
         loadConfluenceSpaces();
@@ -216,11 +237,62 @@ export function SkillsQuickConnect({
     }
   };
 
+  const loadJiraProjects = async () => {
+    setLoadingJiraProjects(true);
+    try {
+      const projects = await skillsApi.getJiraProjects();
+      setJiraProjects(projects);
+    } catch (err) {
+      console.warn('Failed to load Jira projects:', err);
+    } finally {
+      setLoadingJiraProjects(false);
+    }
+  };
+
+  const loadJiraIssues = async () => {
+    setLoadingJiraIssues(true);
+    try {
+      let result;
+      if (jiraFilter === 'mine') {
+        result = await skillsApi.getMyJiraIssues(15);
+      } else if (jiraFilter === 'search' && jiraSearchQuery) {
+        result = await skillsApi.searchJiraIssues(jiraSearchQuery, selectedJiraProject || undefined, 15);
+      } else {
+        // Recent issues
+        result = await skillsApi.searchJiraIssues('', selectedJiraProject || undefined, 15);
+      }
+      setJiraIssues(result.issues);
+    } catch (err) {
+      console.warn('Failed to load Jira issues:', err);
+      setJiraIssues([]);
+    } finally {
+      setLoadingJiraIssues(false);
+    }
+  };
+
+  const handleJiraSearch = () => {
+    setJiraFilter('search');
+    loadJiraIssues();
+  };
+
   // Notify parent when config changes
   const handleConfigUpdate = () => {
     const config: SkillConfig = {};
-    if (connectedSkills.get('jira') && jiraJql) {
-      config.jira = { jql: jiraJql };
+    if (connectedSkills.get('jira')) {
+      // Build JQL from selected project and issues
+      const jqlParts: string[] = [];
+      if (selectedJiraProject) {
+        jqlParts.push(`project = "${selectedJiraProject}"`);
+      }
+      if (selectedJiraIssues.length > 0) {
+        jqlParts.push(`key in (${selectedJiraIssues.join(', ')})`);
+      }
+      if (jqlParts.length > 0) {
+        config.jira = {
+          jql: jqlParts.join(' AND '),
+          projectKey: selectedJiraProject || undefined
+        };
+      }
     }
     if (connectedSkills.get('confluence') && selectedConfluenceSpaces.length > 0) {
       config.confluence = { spaceKeys: selectedConfluenceSpaces };
@@ -449,6 +521,9 @@ export function SkillsQuickConnect({
                           setExpandedConfig(skill.provider);
                           if (skill.provider === 'confluence') {
                             loadConfluenceSpaces();
+                          } else if (skill.provider === 'jira') {
+                            loadJiraProjects();
+                            loadJiraIssues();
                           }
                         }
                       }}
@@ -483,22 +558,171 @@ export function SkillsQuickConnect({
                 {isConnected && expandedConfig === skill.provider && (
                   <div className="px-3 pb-3 pt-0 border-t border-border/50">
                   {skill.provider === 'jira' && (
-                    <div className="space-y-2">
-                      <label className="text-xs font-medium text-muted-foreground">
-                        Import issues matching this JQL query:
-                      </label>
-                      <Input
-                        value={jiraJql}
-                        onChange={(e) => setJiraJql(e.target.value)}
-                        onBlur={handleConfigUpdate}
-                        placeholder="project = PROJ AND status != Done"
-                        className="h-8 text-xs font-mono"
-                      />
-                      <p className="text-[10px] text-muted-foreground">
-                        Examples: <code className="bg-muted px-1 rounded">project = MYPROJ</code>,{' '}
-                        <code className="bg-muted px-1 rounded">assignee = currentUser()</code>,{' '}
-                        <code className="bg-muted px-1 rounded">labels = &quot;roadmap&quot;</code>
-                      </p>
+                    <div className="space-y-3 pt-2">
+                      {/* Project Selector */}
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-medium text-muted-foreground">
+                          Project
+                        </label>
+                        {loadingJiraProjects ? (
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground py-1">
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                            Loading projects...
+                          </div>
+                        ) : (
+                          <select
+                            value={selectedJiraProject || ''}
+                            onChange={(e) => setSelectedJiraProject(e.target.value || null)}
+                            className="w-full h-8 text-xs rounded-md border border-border bg-background px-2 focus:outline-none focus:ring-1 focus:ring-primary"
+                          >
+                            <option value="">All projects</option>
+                            {jiraProjects.map((project) => (
+                              <option key={project.key} value={project.key}>
+                                {project.name} ({project.key})
+                              </option>
+                            ))}
+                          </select>
+                        )}
+                      </div>
+
+                      {/* Filter Tabs */}
+                      <div className="flex gap-1 border-b border-border">
+                        <button
+                          onClick={() => setJiraFilter('recent')}
+                          className={cn(
+                            'px-3 py-1.5 text-xs font-medium border-b-2 -mb-px transition-colors',
+                            jiraFilter === 'recent'
+                              ? 'border-primary text-foreground'
+                              : 'border-transparent text-muted-foreground hover:text-foreground'
+                          )}
+                        >
+                          Recent
+                        </button>
+                        <button
+                          onClick={() => setJiraFilter('mine')}
+                          className={cn(
+                            'px-3 py-1.5 text-xs font-medium border-b-2 -mb-px transition-colors',
+                            jiraFilter === 'mine'
+                              ? 'border-primary text-foreground'
+                              : 'border-transparent text-muted-foreground hover:text-foreground'
+                          )}
+                        >
+                          My Issues
+                        </button>
+                        <button
+                          onClick={() => setJiraFilter('search')}
+                          className={cn(
+                            'px-3 py-1.5 text-xs font-medium border-b-2 -mb-px transition-colors',
+                            jiraFilter === 'search'
+                              ? 'border-primary text-foreground'
+                              : 'border-transparent text-muted-foreground hover:text-foreground'
+                          )}
+                        >
+                          Search
+                        </button>
+                      </div>
+
+                      {/* Search Input - only visible when search tab is active */}
+                      {jiraFilter === 'search' && (
+                        <div className="flex gap-2">
+                          <div className="relative flex-1">
+                            <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                            <Input
+                              value={jiraSearchQuery}
+                              onChange={(e) => setJiraSearchQuery(e.target.value)}
+                              onKeyDown={(e) => e.key === 'Enter' && handleJiraSearch()}
+                              placeholder="Search issues..."
+                              className="h-8 text-xs pl-7"
+                            />
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            className="h-8 text-xs"
+                            onClick={handleJiraSearch}
+                          >
+                            Search
+                          </Button>
+                        </div>
+                      )}
+
+                      {/* Issue List */}
+                      <div className="space-y-1">
+                        {loadingJiraIssues ? (
+                          <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground py-4">
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Loading issues...
+                          </div>
+                        ) : jiraIssues.length > 0 ? (
+                          <div className="max-h-48 overflow-y-auto space-y-1 pr-1">
+                            {jiraIssues.map((issue) => (
+                              <label
+                                key={issue.key}
+                                className={cn(
+                                  'flex items-start gap-2 p-2 rounded-md cursor-pointer transition-colors',
+                                  selectedJiraIssues.includes(issue.key)
+                                    ? 'bg-primary/10 border border-primary/30'
+                                    : 'bg-muted/30 border border-transparent hover:bg-muted/50'
+                                )}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={selectedJiraIssues.includes(issue.key)}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      setSelectedJiraIssues((prev) => [...prev, issue.key]);
+                                    } else {
+                                      setSelectedJiraIssues((prev) =>
+                                        prev.filter((k) => k !== issue.key)
+                                      );
+                                    }
+                                  }}
+                                  className="mt-0.5 rounded border-border"
+                                />
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs font-mono text-muted-foreground">
+                                      {issue.key}
+                                    </span>
+                                    <span className={cn(
+                                      'text-[10px] px-1.5 py-0.5 rounded',
+                                      issue.status.toLowerCase().includes('done')
+                                        ? 'bg-emerald-500/20 text-emerald-600'
+                                        : issue.status.toLowerCase().includes('progress')
+                                        ? 'bg-blue-500/20 text-blue-600'
+                                        : 'bg-muted text-muted-foreground'
+                                    )}>
+                                      {issue.status}
+                                    </span>
+                                  </div>
+                                  <p className="text-xs truncate">{issue.summary}</p>
+                                </div>
+                              </label>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-xs text-muted-foreground text-center py-4">
+                            {jiraFilter === 'search' && !jiraSearchQuery
+                              ? 'Enter a search term to find issues'
+                              : 'No issues found'}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Selected count */}
+                      {selectedJiraIssues.length > 0 && (
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-muted-foreground">
+                            {selectedJiraIssues.length} issue{selectedJiraIssues.length !== 1 ? 's' : ''} selected
+                          </span>
+                          <button
+                            onClick={() => setSelectedJiraIssues([])}
+                            className="text-primary hover:underline"
+                          >
+                            Clear selection
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
 

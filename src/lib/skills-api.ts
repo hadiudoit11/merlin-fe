@@ -262,6 +262,89 @@ class SkillsApiService {
     };
   }
 
+  // ============ Jira Browse/Search (User-Friendly) ============
+
+  async getJiraProjects(): Promise<JiraProject[]> {
+    const response = await this.client.get<{
+      projects: Array<{
+        key: string;
+        name: string;
+        id: string;
+        avatarUrl?: string;
+        projectTypeKey?: string;
+      }>;
+    }>('/jira/projects');
+    return response.data.projects;
+  }
+
+  async searchJiraIssues(query: string, projectKey?: string, maxResults = 20): Promise<{
+    total: number;
+    issues: JiraIssue[];
+  }> {
+    const response = await this.client.get<{
+      total: number;
+      issues: Array<{
+        key: string;
+        summary: string;
+        status: string;
+        priority: string;
+        assignee?: string;
+        projectKey: string;
+        projectName: string;
+        issueType: string;
+        updated: string;
+      }>;
+    }>('/jira/search', {
+      params: { q: query, project: projectKey, max_results: maxResults },
+    });
+    return {
+      total: response.data.total,
+      issues: response.data.issues.map((i) => ({
+        key: i.key,
+        summary: i.summary,
+        status: i.status,
+        priority: i.priority,
+        assignee: i.assignee,
+        projectKey: i.projectKey,
+        projectName: i.projectName,
+        issueType: i.issueType,
+        updatedAt: i.updated,
+      })),
+    };
+  }
+
+  async getMyJiraIssues(maxResults = 20): Promise<{
+    total: number;
+    issues: JiraIssue[];
+  }> {
+    const response = await this.client.get<{
+      total: number;
+      issues: Array<{
+        key: string;
+        summary: string;
+        status: string;
+        priority: string;
+        projectKey: string;
+        issueType: string;
+        updated: string;
+      }>;
+    }>('/jira/my-issues', {
+      params: { max_results: maxResults },
+    });
+    return {
+      total: response.data.total,
+      issues: response.data.issues.map((i) => ({
+        key: i.key,
+        summary: i.summary,
+        status: i.status,
+        priority: i.priority,
+        projectKey: i.projectKey,
+        issueType: i.issueType,
+        updatedAt: i.updated,
+      })),
+    };
+  }
+
   // ============ Confluence OAuth ============
 
   async connectConfluence(): Promise<{ authUrl: string; state: string }> {
