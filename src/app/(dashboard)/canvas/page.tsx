@@ -17,7 +17,7 @@ import {
   List,
 } from 'lucide-react';
 import { GlobalChatInput } from '@/components/agent/GlobalChatInput';
-import { CreationPanel } from '@/components/agent/CreationPanel';
+import { CreationPanel, loadDrafts, deleteDraft, WizardDraft } from '@/components/agent/CreationPanel';
 import { Badge } from '@/components/ui/badge';
 import { mockCanvasApi } from '@/lib/canvas-mock';
 import { Button } from '@/components/ui/button';
@@ -94,10 +94,32 @@ export default function CanvasListPage() {
   const [creationPanelOpen, setCreationPanelOpen] = useState(false);
   const [creationMessage, setCreationMessage] = useState('');
   const [creationSessionId, setCreationSessionId] = useState<string | null>(null);
+  const [resumeDraftId, setResumeDraftId] = useState<string | null>(null);
+
+  // Saved drafts
+  const [drafts, setDrafts] = useState<WizardDraft[]>([]);
 
   useEffect(() => {
     loadCanvases();
+    loadSavedDrafts();
   }, []);
+
+  const loadSavedDrafts = () => {
+    const savedDrafts = loadDrafts();
+    setDrafts(savedDrafts);
+  };
+
+  const handleDeleteDraft = (draftId: string) => {
+    deleteDraft(draftId);
+    loadSavedDrafts();
+  };
+
+  const handleResumeDraft = (draftId: string) => {
+    setResumeDraftId(draftId);
+    setCreationMessage('');
+    setCreationSessionId(null);
+    setCreationPanelOpen(true);
+  };
 
   const loadCanvases = async () => {
     try {
@@ -168,13 +190,19 @@ export default function CanvasListPage() {
 
   return (
     <div className="min-h-screen p-4 md:p-6">
-      {/* Creation panel overlay */}
+      {/* Creation panel overlay - conversational mode for problem-oriented flow */}
       {creationPanelOpen && (
         <CreationPanel
           message={creationMessage}
           sessionId={creationSessionId}
+          draftId={resumeDraftId}
           onComplete={handleCreationComplete}
-          onCancel={() => setCreationPanelOpen(false)}
+          onCancel={() => {
+            setCreationPanelOpen(false);
+            setResumeDraftId(null);
+            loadSavedDrafts(); // Refresh drafts in case one was saved
+          }}
+          conversationalMode={true}
         />
       )}
 
@@ -205,11 +233,26 @@ export default function CanvasListPage() {
                 </Badge>
               )}
 
+              {/* AI-guided creation (conversational) */}
+              <Button
+                variant="secondary"
+                className="bg-white/20 text-white hover:bg-white/30 border-0"
+                onClick={() => {
+                  setCreationMessage('');
+                  setCreationSessionId(null);
+                  setCreationPanelOpen(true);
+                }}
+              >
+                <Sparkles className="h-4 w-4 mr-2" />
+                Create with AI
+              </Button>
+
+              {/* Quick creation dialog */}
               <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
                 <DialogTrigger asChild>
                   <Button className="bg-white text-primary hover:bg-white/90 shadow-lg">
                     <Plus className="h-4 w-4 mr-2" />
-                    New Canvas
+                    Quick Create
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-md">
@@ -298,6 +341,53 @@ export default function CanvasListPage() {
           placeholder="Describe what you want to build — Merlin will set up your canvas, project, and a draft PRD…"
         />
       </motion.div>
+
+      {/* Saved Drafts */}
+      {drafts.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.08 }}
+          className="mb-6"
+        >
+          <p className="text-xs text-muted-foreground mb-2 font-medium tracking-wide uppercase">
+            Continue where you left off
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {drafts.slice(0, 3).map((draft) => (
+              <div
+                key={draft.id}
+                className="group flex items-center gap-2 px-3 py-2 rounded-lg border bg-card hover:border-primary/30 hover:shadow-sm transition-all cursor-pointer"
+                onClick={() => handleResumeDraft(draft.id)}
+              >
+                <FolderOpen className="h-4 w-4 text-muted-foreground" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate max-w-[200px]">{draft.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {formatDistanceToNow(new Date(draft.updatedAt), { addSuffix: true })}
+                  </p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteDraft(draft.id);
+                  }}
+                >
+                  <Trash2 className="h-3 w-3 text-muted-foreground" />
+                </Button>
+              </div>
+            ))}
+            {drafts.length > 3 && (
+              <span className="text-xs text-muted-foreground self-center">
+                +{drafts.length - 3} more
+              </span>
+            )}
+          </div>
+        </motion.div>
+      )}
 
       {/* Search and Filters */}
       <motion.div

@@ -370,3 +370,56 @@ export interface MetricNodeConfig {
   source: 'manual' | 'api' | 'skill';
   refreshInterval?: number;
 }
+
+// Sync configuration for canvas integrations
+export type SyncFrequency = 'realtime' | 'hourly' | 'daily' | 'manual';
+
+export interface CanvasSyncConfig {
+  frequency: SyncFrequency;
+  skills: string[];  // 'jira', 'confluence', 'slack'
+  lastSync?: string;
+  nextScheduledSync?: string;
+  enabled: boolean;
+}
+
+// Problem/signal configuration for canvas monitoring
+export interface CanvasProblemConfig {
+  problems: string[];           // Problem statements to watch for
+  signals: ProblemSignal[];     // Specific signals to monitor
+  notifyOnMatch: boolean;
+  autoCreateTasks: boolean;
+}
+
+export interface ProblemSignal {
+  id: string;
+  type: 'jira_query' | 'slack_keyword' | 'confluence_change' | 'custom';
+  name: string;
+  description: string;
+  config: {
+    jql?: string;              // For Jira queries
+    keywords?: string[];       // For Slack monitoring
+    pageIds?: string[];        // For Confluence changes
+    customQuery?: string;      // For custom signals
+  };
+  enabled: boolean;
+  lastTriggered?: string;
+}
+
+// Canvas goals configuration
+export interface CanvasGoals {
+  objective: string;           // Main objective statement
+  successMetrics: string[];    // What success looks like
+  keyResults: string[];        // Key results to track
+  timeframe?: {
+    startDate?: string;
+    endDate?: string;
+    quarter?: string;
+  };
+}
+
+// Extended canvas settings to include sync and problem config
+export interface CanvasSettings {
+  sync?: CanvasSyncConfig;
+  problems?: CanvasProblemConfig;
+  goals?: CanvasGoals;
+}

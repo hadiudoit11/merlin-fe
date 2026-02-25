@@ -3,9 +3,13 @@
 /**
  * CreationPanel
  *
- * Full-screen overlay shown while the Lifecycle Agent is building a canvas.
- * Consumes an SSE stream from POST /api/v1/agent/chat and displays each
- * action as it completes.
+ * Full-screen overlay for problem-oriented canvas creation.
+ * Guides the user through a conversational flow:
+ * 1. Connect skills (Jira, Confluence, Slack)
+ * 2. Define problems to watch for
+ * 3. Set check frequency
+ * 4. Establish goals
+ * 5. Auto-generate OKR structure
  *
  * Usage:
  *   <CreationPanel
@@ -16,7 +20,7 @@
  *   />
  */
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -26,12 +30,20 @@ import {
   ExternalLink,
   X,
   Send,
+  Sparkles,
+  FolderOpen,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { getSession } from 'next-auth/react';
+import { SkillsQuickConnect, ConnectedSkill } from './SkillsQuickConnect';
+import {
+  ConversationProgress,
+  ConversationPhase,
+  getPhasePrompt,
+  PHASE_SUGGESTIONS,
+} from './ConversationProgress';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -61,7 +73,77 @@ interface CreationPanelProps {
   onComplete?: (canvasId: number, sessionId: string) => void;
   /** Called when the user dismisses the panel */
   onCancel?: () => void;
+  /** Enable problem-oriented conversational flow */
+  conversationalMode?: boolean;
+  /** Resume from a saved draft */
+  draftId?: string | null;
 }
+
+// Draft state for saving/restoring wizard progress
+interface WizardDraft {
+  id: string;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
+  sessionId: string | null;
+  currentPhase: ConversationPhase;
+  completedPhases: ConversationPhase[];
+  messages: AgentMessage[];
+  actions: AgentAction[];
+  connectedSkills: ConnectedSkill[];
+}
+
+const DRAFT_STORAGE_KEY = 'canvas-creation-drafts';
+
+// Helper functions for draft management
+function loadDrafts(): WizardDraft[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const stored = localStorage.getItem(DRAFT_STORAGE_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveDrafts(drafts: WizardDraft[]): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(drafts));
+}
+
+function getDraft(id: string): WizardDraft | null {
+  const drafts = loadDrafts();
+  return drafts.find((d) => d.id === id) || null;
+}
+
+function deleteDraft(id: string): void {
+  const drafts = loadDrafts();
+  saveDrafts(drafts.filter((d) => d.id !== id));
+}
+
+// System prompt for structured conversation
+const CONVERSATION_SYSTEM_PROMPT = `You are helping a PM create a new canvas. Guide them through this flow:
+
+1. SKILLS: First, ask what tools they use (Jira, Confluence, Slack). They can connect them inline.
+
+2. PROBLEMS: Ask "What problems are you trying to solve?" or "What signals should I watch for?"
+   Help them articulate specific signals like "tickets blocked for >3 days" or "customer complaints about X".
+
+3. FREQUENCY: Ask how often to check for updates:
+   - Real-time (every 5 min)
+   - Hourly
+   - Daily digest
+   - Manual only
+
+4. GOALS: Ask "What does success look like?" to define their objective.
+
+After gathering this information, create the canvas with:
+- A Problem node describing their problems
+- An Objective node with their goal
+- 3-5 Key Result nodes with measurable outcomes
+- Connect them: Problem → Objective → Key Results
+
+Keep responses concise and conversational. Ask one question at a time.`;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -93,6 +175,8 @@ export function CreationPanel({
   sessionId: initialSessionId,
   onComplete,
   onCancel,
+  conversationalMode = true,
+  draftId,
 }: CreationPanelProps) {
   const router = useRouter();
   const [actions, setActions] = useState<AgentAction[]>([]);
@@ -104,10 +188,134 @@ export function CreationPanel({
   const [followUpMessage, setFollowUpMessage] = useState('');
   const [error, setError] = useState<string | null>(null);
 
+  // Conversational flow state
+  const [currentPhase, setCurrentPhase] = useState<ConversationPhase>('skills');
+  const [completedPhases, setCompletedPhases] = useState<ConversationPhase[]>([]);
+  const [connectedSkills, setConnectedSkills] = useState<ConnectedSkill[]>([]);
+  const [showSkillsPanel, setShowSkillsPanel] = useState(false); // Start collapsed, compact bar always shows
+
+  // Draft state
+  const [currentDraftId, setCurrentDraftId] = useState<string | null>(draftId || null);
+  const [isSavingDraft, setIsSavingDraft] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [isRestoredFromDraft, setIsRestoredFromDraft] = useState(false);
+
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const isMountedRef = useRef(true);
   const hasStartedRef = useRef(false);
+
+  // Save current state as draft
+  const saveDraft = useCallback(() => {
+    if (isDone || currentPhase === 'complete') return; // Don't save completed wizards
+
+    setIsSavingDraft(true);
+
+    const draftName = messages.length > 0
+      ? messages[0].content.slice(0, 50) + (messages[0].content.length > 50 ? '...' : '')
+      : 'New Canvas';
+
+    const draft: WizardDraft = {
+      id: currentDraftId || `draft-${Date.now()}`,
+      name: draftName,
+      createdAt: currentDraftId ? getDraft(currentDraftId)?.createdAt || new Date().toISOString() : new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      sessionId,
+      currentPhase,
+      completedPhases,
+      messages,
+      actions,
+      connectedSkills,
+    };
+
+    const drafts = loadDrafts();
+    const existingIndex = drafts.findIndex((d) => d.id === draft.id);
+
+    if (existingIndex >= 0) {
+      drafts[existingIndex] = draft;
+    } else {
+      drafts.unshift(draft);
+    }
+
+    // Keep only last 10 drafts
+    saveDrafts(drafts.slice(0, 10));
+    setCurrentDraftId(draft.id);
+    setLastSaved(new Date());
+    setIsSavingDraft(false);
+  }, [isDone, currentPhase, messages, actions, connectedSkills, completedPhases, sessionId, currentDraftId]);
+
+  // Restore from draft on mount
+  useEffect(() => {
+    if (draftId && !isRestoredFromDraft) {
+      const draft = getDraft(draftId);
+      if (draft) {
+        setMessages(draft.messages);
+        setActions(draft.actions);
+        setCurrentPhase(draft.currentPhase);
+        setCompletedPhases(draft.completedPhases);
+        setConnectedSkills(draft.connectedSkills);
+        if (draft.sessionId) setSessionId(draft.sessionId);
+        setCurrentDraftId(draft.id);
+        setIsRestoredFromDraft(true);
+        hasStartedRef.current = true; // Don't auto-start when restoring
+      }
+    }
+  }, [draftId, isRestoredFromDraft]);
+
+  // Auto-save draft every 10 seconds if there's progress
+  useEffect(() => {
+    if (!conversationalMode || isDone || messages.length === 0) return;
+
+    const interval = setInterval(() => {
+      saveDraft();
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, [conversationalMode, isDone, messages.length, saveDraft]);
+
+  // Save draft when user is about to close
+  const handleCancel = useCallback(() => {
+    if (messages.length > 0 && !isDone) {
+      saveDraft();
+    }
+    onCancel?.();
+  }, [messages.length, isDone, saveDraft, onCancel]);
+
+  // Clear draft when canvas is successfully created
+  useEffect(() => {
+    if (isDone && currentDraftId) {
+      deleteDraft(currentDraftId);
+      setCurrentDraftId(null);
+    }
+  }, [isDone, currentDraftId]);
+
+  // Detect phase from agent responses
+  const detectPhaseFromMessage = useCallback((content: string) => {
+    const lowerContent = content.toLowerCase();
+
+    if (lowerContent.includes('what tools') || lowerContent.includes('connect') || lowerContent.includes('jira') || lowerContent.includes('confluence') || lowerContent.includes('slack')) {
+      return 'skills';
+    }
+    if (lowerContent.includes('problem') || lowerContent.includes('signal') || lowerContent.includes('watch for') || lowerContent.includes('listen for')) {
+      return 'problems';
+    }
+    if (lowerContent.includes('how often') || lowerContent.includes('frequency') || lowerContent.includes('check') || lowerContent.includes('real-time') || lowerContent.includes('daily')) {
+      return 'frequency';
+    }
+    if (lowerContent.includes('goal') || lowerContent.includes('success') || lowerContent.includes('objective') || lowerContent.includes('achieve')) {
+      return 'goals';
+    }
+    if (lowerContent.includes('creating') || lowerContent.includes('building') || lowerContent.includes('setting up')) {
+      return 'generating';
+    }
+
+    return null;
+  }, []);
+
+  // Handle skills change
+  const handleSkillsChanged = useCallback((skills: ConnectedSkill[]) => {
+    setConnectedSkills(skills);
+  }, []);
 
   // Auto-scroll to bottom when content changes
   useEffect(() => {
@@ -125,7 +333,13 @@ export function CreationPanel({
       hasStartedRef.current = true;
       // Create abort controller for cancellation
       abortRef.current = new AbortController();
-      sendMessage(initialMessage);
+
+      // In conversational mode, start with a greeting that asks about skills
+      if (conversationalMode && !initialMessage.trim()) {
+        sendMessage("I'd like to create a new canvas to track a problem space.", true);
+      } else {
+        sendMessage(initialMessage, conversationalMode);
+      }
     }
 
     return () => {
@@ -136,7 +350,7 @@ export function CreationPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const sendMessage = async (text: string) => {
+  const sendMessage = async (text: string, includeSystemPrompt: boolean = false) => {
     if (!text.trim() || isStreaming) {
       return;
     }
@@ -161,6 +375,17 @@ export function CreationPanel({
         throw new Error('No authentication token available. Please log in again.');
       }
 
+      // Build message with optional system context
+      let messageToSend = text;
+      if (includeSystemPrompt && conversationalMode) {
+        // Prepend system context for the agent
+        const skillsContext = connectedSkills.filter(s => s.connected).map(s => s.name).join(', ');
+        const contextInfo = skillsContext
+          ? `\n\n[Context: User has connected: ${skillsContext}]`
+          : '\n\n[Context: No tools connected yet]';
+        messageToSend = `${CONVERSATION_SYSTEM_PROMPT}${contextInfo}\n\nUser: ${text}`;
+      }
+
       const response = await fetch(`${API_BASE}/api/v1/agent/chat`, {
         method: 'POST',
         headers: {
@@ -168,7 +393,7 @@ export function CreationPanel({
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          message: text,
+          message: messageToSend,
           session_id: sessionId,
         }),
         signal: abortRef.current.signal,
@@ -206,6 +431,18 @@ export function CreationPanel({
 
           if (type === 'text') {
             agentTextBuffer += event.content as string;
+
+            // In conversational mode, detect phase from agent response
+            if (conversationalMode) {
+              const detectedPhase = detectPhaseFromMessage(agentTextBuffer);
+              if (detectedPhase && detectedPhase !== currentPhase) {
+                // Mark current phase as completed and move to next
+                if (currentPhase !== 'complete') {
+                  setCompletedPhases((prev) => [...prev, currentPhase]);
+                }
+                setCurrentPhase(detectedPhase);
+              }
+            }
           } else if (type === 'action') {
             const status = event.status as ActionStatus;
             const actionName = event.action as string;
@@ -243,7 +480,13 @@ export function CreationPanel({
             const doneCanvasId = event.canvas_id as number | undefined;
             const doneSessionId = event.session_id as string | undefined;
 
-            if (doneCanvasId) setCanvasId(doneCanvasId);
+            if (doneCanvasId) {
+              setCanvasId(doneCanvasId);
+              // Canvas created - mark as complete
+              if (conversationalMode) {
+                setCurrentPhase('complete');
+              }
+            }
             if (doneSessionId) setSessionId(doneSessionId);
 
             setIsDone(true);
@@ -280,12 +523,34 @@ export function CreationPanel({
     const text = followUpMessage.trim();
     if (!text) return;
     setFollowUpMessage('');
-    sendMessage(text);
+    sendMessage(text, false);
+  };
+
+  const handleSuggestionClick = (suggestion: string) => {
+    // Handle special suggestions
+    if (suggestion === 'Skip for now') {
+      // Close expanded panel if open, but compact bar still shows
+      setShowSkillsPanel(false);
+      sendMessage("Let's skip connecting tools for now and continue.", false);
+      return;
+    }
+
+    if (suggestion.startsWith('Connect ')) {
+      // Expand the skills panel
+      setShowSkillsPanel(true);
+      return;
+    }
+
+    // Send the suggestion as a message
+    sendMessage(suggestion, false);
   };
 
   const handleOpenCanvas = () => {
     if (canvasId) router.push(`/canvas/${canvasId}`);
   };
+
+  // Get current suggestions based on phase
+  const currentSuggestions = conversationalMode ? PHASE_SUGGESTIONS[currentPhase] : [];
 
   // ---------------------------------------------------------------------------
   // Render
@@ -295,34 +560,153 @@ export function CreationPanel({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
       <div className="relative w-full max-w-2xl mx-4 bg-card border border-border rounded-2xl shadow-2xl flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border shrink-0">
-          <div className="flex items-center gap-2">
-            {isStreaming ? (
-              <Loader2 className="w-4 h-4 animate-spin text-primary" />
-            ) : isDone ? (
-              <Check className="w-4 h-4 text-green-500" />
-            ) : (
-              <div className="w-4 h-4" />
-            )}
-            <h2 className="text-sm font-semibold">
-              {isStreaming
-                ? 'Building your workspace…'
-                : isDone
-                ? 'Workspace ready'
-                : 'Merlin'}
-            </h2>
+        <div className="flex flex-col gap-3 px-6 py-4 border-b border-border shrink-0">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {isStreaming ? (
+                <Loader2 className="w-4 h-4 animate-spin text-primary" />
+              ) : isDone ? (
+                <Check className="w-4 h-4 text-green-500" />
+              ) : (
+                <Sparkles className="w-4 h-4 text-primary" />
+              )}
+              <h2 className="text-sm font-semibold">
+                {isStreaming
+                  ? currentPhase === 'generating'
+                    ? 'Creating your canvas…'
+                    : 'Thinking…'
+                  : isDone
+                  ? 'Canvas ready'
+                  : 'Create New Canvas'}
+              </h2>
+            </div>
+            <div className="flex items-center gap-2">
+              {/* Auto-save indicator - subtle, no user action needed */}
+              {conversationalMode && !isDone && messages.length > 0 && (
+                <span className="text-[10px] text-muted-foreground/60 flex items-center gap-1">
+                  {isSavingDraft ? (
+                    <>
+                      <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                      saving
+                    </>
+                  ) : lastSaved ? (
+                    <>
+                      <Check className="w-2.5 h-2.5" />
+                      draft saved
+                    </>
+                  ) : null}
+                </span>
+              )}
+              {onCancel && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 text-muted-foreground"
+                  onClick={handleCancel}
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              )}
+            </div>
           </div>
-          {onCancel && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 text-muted-foreground"
-              onClick={onCancel}
-            >
-              <X className="w-4 h-4" />
-            </Button>
+
+          {/* Restored from draft indicator */}
+          {isRestoredFromDraft && (
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <FolderOpen className="w-3 h-3" />
+              <span>Continuing from saved draft</span>
+            </div>
+          )}
+
+          {/* Conversation Progress */}
+          {conversationalMode && currentPhase !== 'complete' && (
+            <ConversationProgress
+              currentPhase={currentPhase}
+              completedPhases={completedPhases}
+            />
           )}
         </div>
+
+        {/* Skills Bar - Shows connection status and config options */}
+        <div className="px-6 py-2 border-b border-border bg-muted/20 shrink-0">
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground shrink-0">Tools:</span>
+
+            {/* Jira */}
+            {connectedSkills.find(s => s.provider === 'jira')?.connected ? (
+              <button
+                onClick={() => setShowSkillsPanel(true)}
+                className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md border text-xs font-medium bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-all"
+              >
+                <Check className="h-3 w-3" />
+                <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none">
+                  <path d="M11.5 2C6.25 2 2 6.25 2 11.5C2 16.75 6.25 21 11.5 21C16.75 21 21 16.75 21 11.5C21 6.25 16.75 2 11.5 2Z" fill="#2684FF"/>
+                </svg>
+                Jira
+              </button>
+            ) : (
+              <button
+                onClick={() => setShowSkillsPanel(true)}
+                className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md border text-xs font-medium bg-muted/50 border-border hover:bg-muted text-muted-foreground hover:text-foreground transition-all"
+              >
+                <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none">
+                  <path d="M11.5 2C6.25 2 2 6.25 2 11.5C2 16.75 6.25 21 11.5 21C16.75 21 21 16.75 21 11.5C21 6.25 16.75 2 11.5 2Z" fill="#2684FF"/>
+                </svg>
+                Jira
+              </button>
+            )}
+
+            {/* Confluence */}
+            {connectedSkills.find(s => s.provider === 'confluence')?.connected ? (
+              <button
+                onClick={() => setShowSkillsPanel(true)}
+                className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md border text-xs font-medium bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-all"
+              >
+                <Check className="h-3 w-3" />
+                <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none">
+                  <path d="M3 12.5C3 12.5 4.5 10 7 10C9.5 10 11 12.5 11 12.5C11 12.5 12.5 15 15 15C17.5 15 19 12.5 19 12.5L21 14C21 14 18.5 18 15 18C11.5 18 9 14 9 14C9 14 6.5 10 4 10L3 12.5Z" fill="#2684FF"/>
+                </svg>
+                Confluence
+              </button>
+            ) : (
+              <button
+                onClick={() => setShowSkillsPanel(true)}
+                className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md border text-xs font-medium bg-muted/50 border-border hover:bg-muted text-muted-foreground hover:text-foreground transition-all"
+              >
+                <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none">
+                  <path d="M3 12.5C3 12.5 4.5 10 7 10C9.5 10 11 12.5 11 12.5C11 12.5 12.5 15 15 15C17.5 15 19 12.5 19 12.5L21 14C21 14 18.5 18 15 18C11.5 18 9 14 9 14C9 14 6.5 10 4 10L3 12.5Z" fill="#2684FF"/>
+                </svg>
+                Confluence
+              </button>
+            )}
+
+            {/* Slack - disabled */}
+            <button
+              disabled
+              className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md border text-xs font-medium bg-muted/30 border-border text-muted-foreground/50 cursor-not-allowed"
+            >
+              Slack
+              <span className="text-[10px]">soon</span>
+            </button>
+
+            <button
+              onClick={() => setShowSkillsPanel(!showSkillsPanel)}
+              className="ml-auto text-xs text-primary hover:underline"
+            >
+              {showSkillsPanel ? 'Hide' : (connectedSkills.some(s => s.connected) ? 'Configure' : 'Setup')}
+            </button>
+          </div>
+        </div>
+
+        {/* Expanded Skills Panel - shows connection or configuration */}
+        {showSkillsPanel && (
+          <div className="px-6 py-3 border-b border-border bg-card shrink-0">
+            <SkillsQuickConnect
+              onSkillsChanged={handleSkillsChanged}
+              compact={false}
+            />
+          </div>
+        )}
 
         {/* Scrollable body */}
         <div className="flex-1 overflow-y-auto px-6 py-4" ref={scrollRef}>
@@ -387,6 +771,23 @@ export function CreationPanel({
 
         {/* Footer */}
         <div className="px-6 py-4 border-t border-border shrink-0 space-y-3">
+          {/* Suggestions */}
+          {conversationalMode && currentSuggestions.length > 0 && !isStreaming && !isDone && (
+            <div className="flex flex-wrap gap-2">
+              {currentSuggestions.map((suggestion) => (
+                <Button
+                  key={suggestion}
+                  variant="outline"
+                  size="sm"
+                  className="text-xs h-7"
+                  onClick={() => handleSuggestionClick(suggestion)}
+                >
+                  {suggestion}
+                </Button>
+              ))}
+            </div>
+          )}
+
           {/* Follow-up input — always available */}
           <div className="flex items-end gap-2">
             <Textarea
@@ -398,7 +799,11 @@ export function CreationPanel({
                   handleFollowUp();
                 }
               }}
-              placeholder="Ask a follow-up or request changes…"
+              placeholder={
+                conversationalMode && currentPhase !== 'complete'
+                  ? getPhasePrompt(currentPhase).replace(/[.?!]$/, '…')
+                  : 'Ask a follow-up or request changes…'
+              }
               rows={1}
               disabled={isStreaming}
               className="resize-none text-sm min-h-[36px] max-h-28"
@@ -428,3 +833,7 @@ export function CreationPanel({
     </div>
   );
 }
+
+// Export draft utilities for use in canvas page
+export { loadDrafts, deleteDraft };
+export type { WizardDraft };
