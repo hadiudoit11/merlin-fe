@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { GlobalChatInput } from '@/components/agent/GlobalChatInput';
 import { CreationPanel, loadDrafts, deleteDraft, WizardDraft } from '@/components/agent/CreationPanel';
+import { SkillsQuickConnect, SkillConfig } from '@/components/agent/SkillsQuickConnect';
 import { Badge } from '@/components/ui/badge';
 import { mockCanvasApi } from '@/lib/canvas-mock';
 import { Button } from '@/components/ui/button';
@@ -87,6 +88,7 @@ export default function CanvasListPage() {
   const [newCanvasName, setNewCanvasName] = useState('');
   const [newCanvasDescription, setNewCanvasDescription] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+  const [quickCreateSkillConfig, setQuickCreateSkillConfig] = useState<SkillConfig>({});
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
@@ -142,10 +144,22 @@ export default function CanvasListPage() {
         name: newCanvasName,
         description: newCanvasDescription || undefined,
       });
+
+      // TODO: Backend integration - Apply skill config to canvas
+      // The quickCreateSkillConfig contains:
+      // - jira: { jql, projectKey } - Issues to import
+      // - confluence: { spaceKeys } - Spaces to sync
+      // This would call an API like: POST /canvases/{id}/skills/configure
+      if (Object.keys(quickCreateSkillConfig).length > 0) {
+        console.log('Canvas skill config to apply:', quickCreateSkillConfig);
+        // await api.configureCanvasSkills(newCanvas.id, quickCreateSkillConfig);
+      }
+
       setCanvases((prev) => [...prev, newCanvas]);
       setIsCreateDialogOpen(false);
       setNewCanvasName('');
       setNewCanvasDescription('');
+      setQuickCreateSkillConfig({});
       router.push(`/canvas/${newCanvas.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create canvas');
@@ -248,39 +262,56 @@ export default function CanvasListPage() {
               </Button>
 
               {/* Quick creation dialog */}
-              <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+              <Dialog open={isCreateDialogOpen} onOpenChange={(open) => {
+                setIsCreateDialogOpen(open);
+                if (!open) {
+                  // Reset state when dialog closes
+                  setNewCanvasName('');
+                  setNewCanvasDescription('');
+                  setQuickCreateSkillConfig({});
+                }
+              }}>
                 <DialogTrigger asChild>
                   <Button className="bg-white text-primary hover:bg-white/90 shadow-lg">
                     <Plus className="h-4 w-4 mr-2" />
                     Quick Create
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-md">
+                <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>Create New Canvas</DialogTitle>
                     <DialogDescription>
-                      Create a new workspace to organize your product management
+                      Create a new workspace and optionally connect your tools
                     </DialogDescription>
                   </DialogHeader>
-                  <div className="space-y-4 py-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Canvas Name</Label>
-                      <Input
-                        id="name"
-                        placeholder="Q1 Product Strategy"
-                        value={newCanvasName}
-                        onChange={(e) => setNewCanvasName(e.target.value)}
-                        className="h-11"
-                      />
+                  <div className="space-y-6 py-4">
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="name">Canvas Name</Label>
+                        <Input
+                          id="name"
+                          placeholder="Q1 Product Strategy"
+                          value={newCanvasName}
+                          onChange={(e) => setNewCanvasName(e.target.value)}
+                          className="h-11"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="description">Description (optional)</Label>
+                        <Input
+                          id="description"
+                          placeholder="Planning for Q1 OKRs and initiatives"
+                          value={newCanvasDescription}
+                          onChange={(e) => setNewCanvasDescription(e.target.value)}
+                          className="h-11"
+                        />
+                      </div>
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="description">Description (optional)</Label>
-                      <Input
-                        id="description"
-                        placeholder="Planning for Q1 OKRs and initiatives"
-                        value={newCanvasDescription}
-                        onChange={(e) => setNewCanvasDescription(e.target.value)}
-                        className="h-11"
+
+                    {/* Skills Connection */}
+                    <div className="border-t pt-4">
+                      <SkillsQuickConnect
+                        onConfigChanged={setQuickCreateSkillConfig}
                       />
                     </div>
                   </div>
