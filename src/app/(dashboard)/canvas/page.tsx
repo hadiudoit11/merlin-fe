@@ -308,11 +308,14 @@ export default function CanvasListPage() {
                       </div>
                     </div>
 
-                    {/* Skills Connection */}
+                    {/* Skills Connection - key forces remount when dialog opens */}
                     <div className="border-t pt-4">
-                      <SkillsQuickConnect
-                        onConfigChanged={setQuickCreateSkillConfig}
-                      />
+                      {isCreateDialogOpen && (
+                        <SkillsQuickConnect
+                          key={`skills-${isCreateDialogOpen}`}
+                          onConfigChanged={setQuickCreateSkillConfig}
+                        />
+                      )}
                     </div>
                   </div>
                   <DialogFooter>

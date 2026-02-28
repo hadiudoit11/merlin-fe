@@ -170,16 +170,21 @@ export function SkillsQuickConnect({
   }, []);
 
   const loadSkillStatus = async () => {
+    console.log('[SkillsQuickConnect] Loading skill status...');
     try {
       const skills = await skillsApi.listSkills();
+      console.log('[SkillsQuickConnect] API returned skills:', skills);
+
       const statusMap = new Map<SkillProvider, boolean>();
 
       skills.forEach((skill) => {
+        console.log(`[SkillsQuickConnect] Skill ${skill.provider}: status=${skill.status}, connected=${skill.status === 'connected'}`);
         if (skill.status === 'connected') {
           statusMap.set(skill.provider, true);
         }
       });
 
+      console.log('[SkillsQuickConnect] Final statusMap:', Object.fromEntries(statusMap));
       setConnectedSkills(statusMap);
 
       // Notify parent of current status
@@ -190,7 +195,14 @@ export function SkillsQuickConnect({
       }));
       onSkillsChanged?.(connectedList);
     } catch (err) {
-      console.warn('Failed to load skill status:', err);
+      console.error('[SkillsQuickConnect] Failed to load skill status:', err);
+      // On error, show empty state (no skills connected) so UI is still usable
+      setConnectedSkills(new Map());
+      onSkillsChanged?.(AVAILABLE_SKILLS.map((s) => ({
+        provider: s.provider,
+        name: s.name,
+        connected: false,
+      })));
     } finally {
       setIsLoading(false);
     }
