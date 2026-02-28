@@ -19,17 +19,17 @@ export default function TasksPage() {
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center justify-between p-6 border-b">
+      <div className="flex flex-col md:flex-row md:items-center justify-between p-4 md:p-6 border-b gap-3">
         <div>
-          <h1 className="text-2xl font-semibold">Tasks</h1>
+          <h1 className="text-xl md:text-2xl font-semibold">Tasks</h1>
           <p className="text-sm text-muted-foreground mt-1">
             Manage action items from meetings, skills, and manual entries
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 md:gap-3">
           {/* Filter by source */}
           <Select value={filterSource} onValueChange={setFilterSource}>
-            <SelectTrigger className="w-[160px]">
+            <SelectTrigger className="w-full sm:w-[160px]">
               <Filter className="h-4 w-4 mr-2" />
               <SelectValue placeholder="All sources" />
             </SelectTrigger>
@@ -50,7 +50,8 @@ export default function TasksPage() {
             onClick={() => setShowCancelled(!showCancelled)}
           >
             <SlidersHorizontal className="h-4 w-4 mr-2" />
-            {showCancelled ? 'Hide cancelled' : 'Show cancelled'}
+            <span className="hidden sm:inline">{showCancelled ? 'Hide cancelled' : 'Show cancelled'}</span>
+            <span className="sm:hidden">{showCancelled ? 'Hide' : 'Cancelled'}</span>
           </Button>
 
           {/* Create task button */}
@@ -62,7 +63,7 @@ export default function TasksPage() {
       </div>
 
       {/* Task Board */}
-      <div className="flex-1 overflow-hidden p-6">
+      <div className="flex-1 overflow-hidden p-4 md:p-6">
         <TaskBoard showStats={true} showCancelled={showCancelled} />
       </div>
     </div>

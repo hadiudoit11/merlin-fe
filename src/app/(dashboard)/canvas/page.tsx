@@ -333,7 +333,7 @@ export default function CanvasListPage() {
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-3 gap-4 mt-6 max-w-md">
+          <div className="grid grid-cols-3 gap-2 md:gap-4 mt-6 max-w-md">
             <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3">
               <div className="text-2xl font-bold text-white">{canvases.length}</div>
               <div className="text-sm text-white/70">Total Canvases</div>

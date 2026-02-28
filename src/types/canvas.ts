@@ -303,8 +303,18 @@ export interface DocNodeConfig {
 
 export interface SkillNodeConfig {
   service: string;
+  connected?: boolean;
   credentials?: Record<string, unknown>;
   endpoints?: string[];
+  // Per-canvas tracking config
+  jira?: {
+    projectKey?: string;
+    jql?: string;
+    selectedIssues?: string[];
+  };
+  confluence?: {
+    spaceKeys?: string[];
+  };
 }
 
 export interface WebhookNodeConfig {

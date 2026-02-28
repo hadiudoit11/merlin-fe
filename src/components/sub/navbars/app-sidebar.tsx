@@ -235,7 +235,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                       }
                     `}
                   >
-                    <a href={item.url} className="flex items-center gap-3 px-3 py-2.5 font-nav text-sidebar-foreground">
+                    <a href={item.url} className="flex items-center gap-3 px-3 py-3 md:py-2.5 font-nav text-sidebar-foreground">
                       <item.icon
                         className={`h-4 w-4 ${isActive ? 'text-sidebar-primary' : 'text-sidebar-foreground/80 group-hover:text-sidebar-foreground'}`}
                       />
@@ -273,7 +273,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                       }
                     `}
                   >
-                    <a href={item.url} className="flex items-center gap-3 px-3 py-2 font-nav text-sidebar-foreground">
+                    <a href={item.url} className="flex items-center gap-3 px-3 py-3 md:py-2 font-nav text-sidebar-foreground">
                       <item.icon
                         className={`h-4 w-4 ${isActive ? 'text-sidebar-primary' : 'text-sidebar-foreground/80 group-hover:text-sidebar-foreground'}`}
                       />
@@ -311,7 +311,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                       }
                     `}
                   >
-                    <a href={item.url} className="flex items-center gap-3 px-3 py-2 font-nav text-sidebar-foreground">
+                    <a href={item.url} className="flex items-center gap-3 px-3 py-3 md:py-2 font-nav text-sidebar-foreground">
                       <item.icon
                         className={`h-4 w-4 ${isActive ? 'text-sidebar-primary' : 'text-sidebar-foreground/80 group-hover:text-sidebar-foreground'}`}
                       />
@@ -349,7 +349,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                       }
                     `}
                   >
-                    <a href={item.url} className="flex items-center gap-3 px-3 py-2 font-nav text-sidebar-foreground">
+                    <a href={item.url} className="flex items-center gap-3 px-3 py-3 md:py-2 font-nav text-sidebar-foreground">
                       <item.icon className={`h-4 w-4 ${isActive ? 'text-sidebar-foreground' : 'text-sidebar-foreground/80 group-hover:text-sidebar-foreground'}`} />
                       <span className="text-sm">{item.title}</span>
                     </a>
@@ -382,7 +382,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                       }
                     `}
                   >
-                    <a href={item.url} className="flex items-center gap-3 px-3 py-2 font-nav text-sidebar-foreground">
+                    <a href={item.url} className="flex items-center gap-3 px-3 py-3 md:py-2 font-nav text-sidebar-foreground">
                       <item.icon className={`h-4 w-4 ${isActive ? 'text-sidebar-foreground' : 'text-sidebar-foreground/80 group-hover:text-sidebar-foreground'}`} />
                       <span className="text-sm">{item.title}</span>
                     </a>
@@ -402,7 +402,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 tooltip="Help & Support"
                 className="hover:bg-sidebar-accent/50 rounded-lg"
               >
-                <a href="/help" className="flex items-center gap-3 px-3 py-2 font-nav text-sidebar-foreground group">
+                <a href="/help" className="flex items-center gap-3 px-3 py-3 md:py-2 font-nav text-sidebar-foreground group">
                   <HelpCircle className="h-4 w-4 text-sidebar-foreground/80 group-hover:text-sidebar-foreground" />
                   <span className="text-sm">Help & Support</span>
                 </a>

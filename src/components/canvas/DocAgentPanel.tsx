@@ -212,7 +212,7 @@ export function DocAgentPanel({
   return (
     <div
       className={cn(
-        'absolute top-0 right-0 h-full w-[400px] bg-background border-l shadow-xl z-[60]',
+        'absolute top-0 right-0 h-full w-full md:w-[400px] bg-background border-l shadow-xl z-[60]',
         'flex flex-col transition-transform duration-300',
         isOpen ? 'translate-x-0' : 'translate-x-full'
       )}
@@ -228,7 +228,7 @@ export function DocAgentPanel({
             <p className="text-xs text-muted-foreground">AI-powered editing</p>
           </div>
         </div>
-        <Button variant="ghost" size="icon" onClick={onClose}>
+        <Button variant="ghost" size="icon" className="h-10 w-10 md:h-9 md:w-9" onClick={onClose}>
           <X className="h-4 w-4" />
         </Button>
       </div>

@@ -116,7 +116,7 @@ const TaskColumn: React.FC<TaskColumnProps> = ({
   };
 
   return (
-    <div className="flex-shrink-0 w-72 flex flex-col bg-[#ebecf0] dark:bg-gray-800 rounded-xl max-h-[calc(100vh-200px)]">
+    <div className="flex-shrink-0 w-[75vw] sm:w-72 snap-center sm:snap-align-none flex flex-col bg-[#ebecf0] dark:bg-gray-800 rounded-xl max-h-[calc(100dvh-260px)] sm:max-h-[calc(100vh-200px)]">
       {/* Column Header */}
       <div className="p-3 pb-2">
         <div className="flex items-center justify-between">
@@ -130,7 +130,7 @@ const TaskColumn: React.FC<TaskColumnProps> = ({
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-7 w-7">
+              <Button variant="ghost" size="icon" className="h-9 w-9 md:h-7 md:w-7">
                 <MoreHorizontal className="h-4 w-4 text-gray-500" />
               </Button>
             </DropdownMenuTrigger>

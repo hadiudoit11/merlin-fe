@@ -244,7 +244,7 @@ export default function APITokensPage() {
     : "";
 
   return (
-    <div className="p-8 max-w-4xl mx-auto">
+    <div className="p-4 md:p-8 max-w-4xl mx-auto">
       <div className="mb-8">
         <h1 className="text-2xl font-semibold">API Tokens</h1>
         <p className="text-muted-foreground mt-1">
@@ -360,7 +360,7 @@ export default function APITokensPage() {
                 {canvases.length === 0 ? (
                   <p className="text-xs text-muted-foreground">No canvases found. Create a canvas first.</p>
                 ) : (
-                  <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-40 overflow-y-auto">
                     {canvases.map((canvas) => (
                       <label
                         key={canvas.id}

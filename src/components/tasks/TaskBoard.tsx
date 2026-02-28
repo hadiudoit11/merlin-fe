@@ -190,7 +190,7 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
       {/* Trello-like board background */}
       <div className="bg-gradient-to-br from-blue-600 to-blue-700 dark:from-gray-900 dark:to-gray-800 rounded-xl p-4 -mx-2 shadow-inner">
         <DragDropContext onDragEnd={handleDragEnd}>
-          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
+          <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory sm:snap-none scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent -mx-1 px-1">
             {columns.map((status) => (
               <TaskColumn
                 key={status}

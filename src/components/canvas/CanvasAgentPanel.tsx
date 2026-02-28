@@ -407,7 +407,7 @@ export function CanvasAgentPanel({
       {/* Panel - fixed to viewport, not affected by canvas scroll/pan */}
       <div
         className={cn(
-          'fixed top-0 right-0 h-screen w-[400px] bg-background border-l shadow-xl z-[85] transition-transform duration-200 ease-out flex flex-col',
+          'fixed top-0 right-0 h-screen w-full md:w-[400px] bg-background border-l shadow-xl z-[85] transition-transform duration-200 ease-out flex flex-col',
           isOpen ? 'translate-x-0' : 'translate-x-full'
         )}
       >
@@ -422,7 +422,7 @@ export function CanvasAgentPanel({
               <p className="text-xs text-muted-foreground">Product lifecycle assistant</p>
             </div>
           </div>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onClose}>
+          <Button variant="ghost" size="icon" className="h-10 w-10 md:h-8 md:w-8" onClick={onClose}>
             <X className="h-4 w-4" />
           </Button>
         </div>

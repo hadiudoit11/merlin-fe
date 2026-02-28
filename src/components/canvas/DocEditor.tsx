@@ -94,7 +94,7 @@ function MenuButton({
           variant="ghost"
           size="icon"
           className={cn(
-            'h-8 w-8',
+            'h-10 w-10 md:h-8 md:w-8',
             active && 'bg-accent text-accent-foreground'
           )}
           onClick={onClick}
@@ -137,7 +137,7 @@ function EditorToolbar({ editor }: { editor: Editor | null }) {
 
   return (
     <TooltipProvider delayDuration={0}>
-      <div className="flex items-center gap-0.5 flex-wrap px-4 py-2 border-b bg-background sticky top-0 z-10">
+      <div className="flex items-center gap-0.5 overflow-x-auto md:flex-wrap px-4 py-2 border-b bg-background sticky top-0 z-10 scrollbar-none">
         {/* Undo/Redo */}
         <MenuButton
           onClick={() => editor.chain().focus().undo().run()}
@@ -384,7 +384,7 @@ export function DocEditor({
     },
     editorProps: {
       attributes: {
-        class: 'prose prose-lg dark:prose-invert max-w-none focus:outline-none min-h-[500px] px-4 py-6',
+        class: 'prose prose-sm md:prose-lg dark:prose-invert max-w-none focus:outline-none min-h-[300px] md:min-h-[500px] px-3 md:px-4 py-4 md:py-6',
       },
     },
   });
@@ -444,9 +444,9 @@ export function DocEditor({
   return (
     <div className="absolute inset-0 z-[100] bg-background flex flex-col">
       {/* Header */}
-      <header className="flex items-center justify-between px-4 py-2 border-b bg-background">
-        <div className="flex items-center gap-4 flex-1">
-          <Button variant="ghost" size="icon" onClick={onClose}>
+      <header className="flex items-center justify-between px-2 md:px-4 py-2 border-b bg-background gap-2">
+        <div className="flex items-center gap-1 md:gap-4 flex-1 min-w-0">
+          <Button variant="ghost" size="icon" className="h-10 w-10 shrink-0" onClick={onClose}>
             <X className="h-5 w-5" />
           </Button>
           <Input
@@ -454,25 +454,24 @@ export function DocEditor({
             onChange={handleTitleChange}
             onBlur={handleTitleBlur}
             placeholder="Untitled Document"
-            className="text-xl font-semibold border-none shadow-none focus-visible:ring-0 max-w-md"
+            className="text-base md:text-xl font-semibold border-none shadow-none focus-visible:ring-0 min-w-0"
           />
         </div>
 
-        <div className="flex items-center gap-4">
-          <span className="text-sm text-muted-foreground">
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="text-sm text-muted-foreground hidden lg:inline">
             {wordCount} words &middot; {characterCount} characters
           </span>
           <Button
             variant={isAgentPanelOpen ? "default" : "outline"}
             size="sm"
             onClick={() => setIsAgentPanelOpen(!isAgentPanelOpen)}
-            className="gap-2"
+            className="gap-1.5"
           >
-            <Bot className="h-4 w-4" />
-            <Sparkles className="h-3 w-3" />
-            AI Assistant
+            <Sparkles className="h-4 w-4" />
+            <span className="hidden sm:inline">AI</span>
           </Button>
-          <Button onClick={onClose}>
+          <Button size="sm" onClick={onClose}>
             Done
           </Button>
         </div>
@@ -484,7 +483,7 @@ export function DocEditor({
       {/* Main content area - adjusts when agent panel is open */}
       <div className={cn(
         "flex-1 overflow-auto transition-all duration-300",
-        isAgentPanelOpen && "mr-[400px]"
+        isAgentPanelOpen && "md:mr-[400px]"
       )}>
         <div className="max-w-4xl mx-auto">
           <EditorContent editor={editor} />
@@ -494,7 +493,7 @@ export function DocEditor({
       {/* Status bar */}
       <footer className={cn(
         "px-4 py-2 border-t text-xs text-muted-foreground flex items-center justify-between transition-all duration-300",
-        isAgentPanelOpen && "mr-[400px]"
+        isAgentPanelOpen && "md:mr-[400px]"
       )}>
         <span>Press Escape to close</span>
         <span>Auto-saved</span>

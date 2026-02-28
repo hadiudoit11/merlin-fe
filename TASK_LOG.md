@@ -6,6 +6,7 @@
 |---|------|--------|--------|-------|
 | 1 | Set up CLAUDE.md + TASK_LOG.md | Persistent context across Claude sessions | Completed | Instructions in CLAUDE.md, logs here |
 | 2 | Rename "Integrations" to "Skills" | Agent capabilities rebrand | Completed | Types, API client, components, routes, canvas, docs all renamed |
+| 3 | Make Merlin Frontend Mobile Responsive | Full app usability on mobile devices | Completed | 6 phases: header/sidebar polish, canvas toolbar mobile layout, side panels full-width, task board snap-scroll, dashboard pages audit, touch target audit. Build passes. |
 
 ## Decision Log
 

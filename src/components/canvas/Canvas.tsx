@@ -361,7 +361,7 @@ export function Canvas({
     <div
       ref={containerRef}
       className={cn(
-        'relative w-full h-full overflow-hidden bg-background',
+        'relative w-full h-full overflow-hidden bg-background touch-none',
         isPanning && 'cursor-grabbing',
         className
       )}

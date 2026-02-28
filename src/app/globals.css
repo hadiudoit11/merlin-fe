@@ -39,6 +39,14 @@
   .text-balance {
     text-wrap: balance;
   }
+  /* Hide scrollbar while keeping scroll behavior */
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 /* Add global input styling */

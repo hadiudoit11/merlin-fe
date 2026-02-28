@@ -289,9 +289,17 @@ export function WorkflowTrackerPanel({
   // ---------------------------------------------------------------------------
 
   return (
+    <>
+    {/* Overlay for mobile — dismiss by tapping background */}
+    {isOpen && (
+      <div
+        className="fixed inset-0 bg-black/20 z-[69] md:hidden"
+        onClick={onClose}
+      />
+    )}
     <div
       className={cn(
-        'fixed top-0 right-0 h-screen w-80 bg-background border-l border-border shadow-2xl z-[70]',
+        'fixed top-0 right-0 h-screen w-full md:w-80 bg-background border-l border-border shadow-2xl z-[70]',
         'transition-transform duration-200 ease-out flex flex-col',
         isOpen ? 'translate-x-0' : 'translate-x-full'
       )}
@@ -306,7 +314,7 @@ export function WorkflowTrackerPanel({
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7 text-muted-foreground"
+            className="h-10 w-10 md:h-7 md:w-7 text-muted-foreground"
             onClick={() => {
               if (selectedProjectId !== null) loadDetails(selectedProjectId);
             }}
@@ -317,7 +325,7 @@ export function WorkflowTrackerPanel({
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7 text-muted-foreground"
+            className="h-10 w-10 md:h-7 md:w-7 text-muted-foreground"
             onClick={onClose}
           >
             <X className="h-4 w-4" />
@@ -548,5 +556,6 @@ export function WorkflowTrackerPanel({
         ) : null}
       </ScrollArea>
     </div>
+    </>
   );
 }

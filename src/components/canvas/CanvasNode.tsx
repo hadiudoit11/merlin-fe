@@ -686,16 +686,64 @@ function McpNodeContent({ node }: { node: CanvasNodeType }) {
 }
 
 function SkillNodeContent({ node }: { node: CanvasNodeType }) {
-  const config = node.config as { service?: string; connected?: boolean };
+  const config = node.config as {
+    service?: string;
+    connected?: boolean;
+    jira?: { projectKey?: string; selectedIssues?: string[] };
+    confluence?: { spaceKeys?: string[] };
+  };
+
+  const service = config.service;
+  const issueCount = config.jira?.selectedIssues?.length || 0;
+  const spaceCount = config.confluence?.spaceKeys?.length || 0;
+
+  const serviceIcon = service === 'jira' ? (
+    <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none">
+      <path d="M11.5 2C6.25 2 2 6.25 2 11.5C2 16.75 6.25 21 11.5 21C16.75 21 21 16.75 21 11.5C21 6.25 16.75 2 11.5 2Z" fill="#2684FF" />
+      <path d="M11.75 6.5L8.25 10L11.75 13.5V10.5H15.25V9.5H11.75V6.5Z" fill="white" />
+      <path d="M11.25 17.5L14.75 14L11.25 10.5V13.5H7.75V14.5H11.25V17.5Z" fill="white" />
+    </svg>
+  ) : service === 'confluence' ? (
+    <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none">
+      <path d="M3 12.5C3 12.5 4.5 10 7 10C9.5 10 11 12.5 11 12.5C11 12.5 12.5 15 15 15C17.5 15 19 12.5 19 12.5L21 14C21 14 18.5 18 15 18C11.5 18 9 14 9 14C9 14 6.5 10 4 10L3 12.5Z" fill="#2684FF" />
+      <path d="M21 11.5C21 11.5 19.5 14 17 14C14.5 14 13 11.5 13 11.5C13 11.5 11.5 9 9 9C6.5 9 5 11.5 5 11.5L3 10C3 10 5.5 6 9 6C12.5 6 15 10 15 10C15 10 17.5 14 20 14L21 11.5Z" fill="#2684FF" />
+    </svg>
+  ) : null;
+
+  // Build summary line
+  let summary = '';
+  if (service === 'jira') {
+    const parts: string[] = [];
+    if (config.jira?.projectKey) parts.push(config.jira.projectKey);
+    if (issueCount > 0) parts.push(`${issueCount} issue${issueCount !== 1 ? 's' : ''}`);
+    summary = parts.join(' \u00B7 ');
+  } else if (service === 'confluence') {
+    if (spaceCount > 0) summary = `${spaceCount} space${spaceCount !== 1 ? 's' : ''}`;
+  }
+
   return (
     <div className="space-y-2 text-sm">
       <div className="flex items-center gap-2">
+        {serviceIcon || (
+          <span className={cn(
+            'w-2 h-2 rounded-full shrink-0',
+            config.connected ? 'bg-green-500' : 'bg-yellow-500'
+          )} />
+        )}
+        <span className="font-medium">
+          {service ? service.charAt(0).toUpperCase() + service.slice(1) : 'Not configured'}
+        </span>
         <span className={cn(
-          'w-2 h-2 rounded-full',
+          'w-2 h-2 rounded-full shrink-0 ml-auto',
           config.connected ? 'bg-green-500' : 'bg-yellow-500'
         )} />
-        <span>{config.service || 'Not configured'}</span>
       </div>
+      {summary && (
+        <p className="text-xs text-muted-foreground">{summary}</p>
+      )}
+      {service && !config.connected && (
+        <p className="text-[10px] text-muted-foreground/60 italic">Double-click to connect</p>
+      )}
     </div>
   );
 }
