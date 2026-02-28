@@ -32,6 +32,8 @@ interface SkillsQuickConnectProps {
   onConfigChanged?: (config: SkillConfig) => void;
   compact?: boolean;
   className?: string;
+  /** For testing: pre-set which skills are connected */
+  initialConnected?: SkillProvider[];
 }
 
 // Configuration that will be passed to canvas creation
@@ -135,19 +137,31 @@ export function SkillsQuickConnect({
   onConfigChanged,
   compact = false,
   className,
+  initialConnected,
 }: SkillsQuickConnectProps) {
-  const [connectedSkills, setConnectedSkills] = useState<Map<SkillProvider, boolean>>(new Map());
+  // Initialize with initialConnected if provided (for testing)
+  const getInitialMap = () => {
+    const map = new Map<SkillProvider, boolean>();
+    if (initialConnected) {
+      initialConnected.forEach(p => map.set(p, true));
+    }
+    return map;
+  };
+
+  const [connectedSkills, setConnectedSkills] = useState<Map<SkillProvider, boolean>>(getInitialMap);
   const [loadingSkill, setLoadingSkill] = useState<SkillProvider | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!initialConnected); // Skip loading if initial provided
 
   // Simple context strings for each skill - what should the agent watch for?
   const [jiraContext, setJiraContext] = useState('');
   const [confluenceContext, setConfluenceContext] = useState('');
   const [slackContext, setSlackContext] = useState('');
 
-  // Load current skill status on mount
+  // Load current skill status on mount (skip if initialConnected provided)
   useEffect(() => {
-    loadSkillStatus();
+    if (!initialConnected) {
+      loadSkillStatus();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
