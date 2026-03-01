@@ -315,6 +315,12 @@ export interface SkillNodeConfig {
   confluence?: {
     spaceKeys?: string[];
   };
+  lastSyncAt?: string;
+  syncStatus?: 'idle' | 'syncing' | 'error';
+  syncError?: string;
+  issueCount?: number;
+  spaceCount?: number;
+  isIndexedForAI?: boolean;
 }
 
 export interface WebhookNodeConfig {

@@ -30,7 +30,9 @@ import {
   ChevronLeft,
   Plus,
   AlertCircle,
+  Loader2 as Loader2Icon,
 } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { AgentNodeConfig, SkillType } from '@/types/canvas';
 import { colors } from '@/styles/colors';
@@ -691,11 +693,17 @@ function SkillNodeContent({ node }: { node: CanvasNodeType }) {
     connected?: boolean;
     jira?: { projectKey?: string; selectedIssues?: string[] };
     confluence?: { spaceKeys?: string[] };
+    lastSyncAt?: string;
+    syncStatus?: 'idle' | 'syncing' | 'error';
+    syncError?: string;
+    issueCount?: number;
+    spaceCount?: number;
+    isIndexedForAI?: boolean;
   };
 
   const service = config.service;
-  const issueCount = config.jira?.selectedIssues?.length || 0;
-  const spaceCount = config.confluence?.spaceKeys?.length || 0;
+  const issueCount = config.issueCount ?? config.jira?.selectedIssues?.length ?? 0;
+  const spaceCount = config.spaceCount ?? config.confluence?.spaceKeys?.length ?? 0;
 
   const serviceIcon = service === 'jira' ? (
     <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none">
@@ -721,6 +729,17 @@ function SkillNodeContent({ node }: { node: CanvasNodeType }) {
     if (spaceCount > 0) summary = `${spaceCount} space${spaceCount !== 1 ? 's' : ''}`;
   }
 
+  // Status indicator
+  const statusIndicator = config.syncStatus === 'syncing' ? (
+    <Loader2Icon className="w-3 h-3 animate-spin text-blue-500 shrink-0 ml-auto" />
+  ) : config.syncStatus === 'error' ? (
+    <span className="w-2 h-2 rounded-full bg-red-500 shrink-0 ml-auto" />
+  ) : config.connected ? (
+    <span className="w-2 h-2 rounded-full bg-green-500 shrink-0 ml-auto" />
+  ) : (
+    <span className="w-2 h-2 rounded-full bg-yellow-500 shrink-0 ml-auto" />
+  );
+
   return (
     <div className="space-y-2 text-sm">
       <div className="flex items-center gap-2">
@@ -733,13 +752,25 @@ function SkillNodeContent({ node }: { node: CanvasNodeType }) {
         <span className="font-medium">
           {service ? service.charAt(0).toUpperCase() + service.slice(1) : 'Not configured'}
         </span>
-        <span className={cn(
-          'w-2 h-2 rounded-full shrink-0 ml-auto',
-          config.connected ? 'bg-green-500' : 'bg-yellow-500'
-        )} />
+        {config.isIndexedForAI && (
+          <span className="text-[9px] font-bold px-1 py-0.5 rounded bg-violet-500/20 text-violet-600 leading-none">
+            AI
+          </span>
+        )}
+        {statusIndicator}
       </div>
       {summary && (
         <p className="text-xs text-muted-foreground">{summary}</p>
+      )}
+      {config.lastSyncAt && (
+        <p className="text-[10px] text-muted-foreground">
+          Synced {formatDistanceToNow(new Date(config.lastSyncAt), { addSuffix: true })}
+        </p>
+      )}
+      {config.syncStatus === 'error' && config.syncError && (
+        <p className="text-[10px] text-destructive truncate" title={config.syncError}>
+          {config.syncError}
+        </p>
       )}
       {service && !config.connected && (
         <p className="text-[10px] text-muted-foreground/60 italic">Double-click to connect</p>

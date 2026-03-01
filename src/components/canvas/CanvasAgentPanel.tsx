@@ -49,7 +49,7 @@ interface CanvasAgentPanelProps {
   onConnectNodes: (sourceId: number, targetId: number) => Promise<boolean>;
   onUpdateNode: (nodeId: number, data: { name?: string; content?: string }) => Promise<void>;
   onDeleteNode: (nodeId: number) => Promise<void>;
-  getCanvasState: () => { nodes: Array<{ id: number; name: string; type: NodeType; content?: string; position_x?: number; position_y?: number }>; connections: Array<{ sourceId: number; targetId: number }> };
+  getCanvasState: () => { nodes: Array<{ id: number; name: string; type: NodeType; content?: string; position_x?: number; position_y?: number; config?: Record<string, unknown> }>; connections: Array<{ sourceId: number; targetId: number }> };
   /** Refresh canvas state after agent makes changes */
   onRefreshCanvas?: () => Promise<void>;
   /** Center the canvas viewport on a specific position */

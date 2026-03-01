@@ -465,6 +465,7 @@ export default function CanvasPage() {
         content: n.content,
         position_x: n.position_x,
         position_y: n.position_y,
+        ...(n.node_type === 'skill' ? { config: n.config } : {}),
       })),
       connections: connections.map(c => ({
         sourceId: c.source_node_id,
@@ -607,6 +608,8 @@ export default function CanvasPage() {
         onUpdate={handleNodeUpdate}
         onDelete={deleteNode}
         onAddConnectedNode={handleAddConnectedNode}
+        canvasId={canvasId}
+        onRefreshCanvas={refreshCanvas}
       />
 
       {/* Agent Wizard */}

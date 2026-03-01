@@ -27,7 +27,11 @@ import {
   Search,
   Check,
   ExternalLink,
+  RefreshCw,
+  Sparkles,
 } from 'lucide-react';
+import { toast } from 'sonner';
+import { formatDistanceToNow } from 'date-fns';
 import {
   CanvasNode,
   NodeType,
@@ -47,6 +51,8 @@ interface NodeSettingsPanelProps {
   onUpdate: (nodeId: number, data: Partial<CanvasNode>) => void;
   onDelete: (nodeId: number) => void;
   onAddConnectedNode?: (sourceNodeId: number, nodeType: NodeType) => void;
+  canvasId?: number;
+  onRefreshCanvas?: () => Promise<void>;
 }
 
 export function NodeSettingsPanel({
@@ -56,6 +62,8 @@ export function NodeSettingsPanel({
   onUpdate,
   onDelete,
   onAddConnectedNode,
+  canvasId,
+  onRefreshCanvas,
 }: NodeSettingsPanelProps) {
   const [localName, setLocalName] = useState(node?.name || '');
   const [localContent, setLocalContent] = useState(node?.content || '');
@@ -194,7 +202,7 @@ export function NodeSettingsPanel({
             )}
 
             {node.node_type === 'skill' && (
-              <SkillSettings node={node} onConfigUpdate={handleConfigUpdate} />
+              <SkillSettings node={node} onConfigUpdate={handleConfigUpdate} canvasId={canvasId} onRefreshCanvas={onRefreshCanvas} />
             )}
 
             {/* Add Connected Nodes */}
@@ -498,9 +506,13 @@ function MetricSettings({
 function SkillSettings({
   node,
   onConfigUpdate,
+  canvasId,
+  onRefreshCanvas,
 }: {
   node: CanvasNode;
   onConfigUpdate: (config: Record<string, unknown>) => void;
+  canvasId?: number;
+  onRefreshCanvas?: () => Promise<void>;
 }) {
   const config = node.config as SkillNodeConfig | undefined;
   const service = config?.service || '';
@@ -521,6 +533,10 @@ function SkillSettings({
   // Confluence config state
   const [confluenceSpaces, setConfluenceSpaces] = useState<ConfluenceSpace[]>([]);
   const [loadingSpaces, setLoadingSpaces] = useState(false);
+
+  // Sync state
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [isIndexing, setIsIndexing] = useState(false);
 
   // Derived state from node config
   const selectedProject = config?.jira?.projectKey || null;
@@ -712,6 +728,69 @@ function SkillSettings({
       // ignore
     } finally {
       setLoadingSpaces(false);
+    }
+  };
+
+  const handleSyncNow = async () => {
+    if (isSyncing) return;
+    setIsSyncing(true);
+    onConfigUpdate({ syncStatus: 'syncing', syncError: undefined });
+    try {
+      if (service === 'jira') {
+        // Build JQL from config
+        const parts: string[] = [];
+        if (config?.jira?.projectKey) {
+          parts.push(`project = "${config.jira.projectKey}"`);
+        }
+        if (selectedIssues.length > 0) {
+          parts.push(`key in (${selectedIssues.join(',')})`);
+        }
+        const jql = parts.length > 0 ? parts.join(' AND ') : 'order by updated DESC';
+        const result = await skillsApi.importFromJira({ jql, canvasId: canvasId! });
+        const totalImported = (result.imported || 0) + (result.updated || 0);
+        onConfigUpdate({
+          lastSyncAt: new Date().toISOString(),
+          syncStatus: 'idle',
+          syncError: undefined,
+          issueCount: totalImported || selectedIssues.length,
+        });
+        toast.success(`Synced ${totalImported} Jira issue${totalImported !== 1 ? 's' : ''}`);
+      } else if (service === 'confluence') {
+        let totalSynced = 0;
+        for (const spaceKey of selectedSpaceKeys) {
+          const result = await skillsApi.syncNow(spaceKey, 'import');
+          totalSynced += result.pagesProcessed || 0;
+        }
+        onConfigUpdate({
+          lastSyncAt: new Date().toISOString(),
+          syncStatus: 'idle',
+          syncError: undefined,
+          spaceCount: selectedSpaceKeys.length,
+        });
+        toast.success(`Synced ${selectedSpaceKeys.length} Confluence space${selectedSpaceKeys.length !== 1 ? 's' : ''}`);
+      }
+      if (onRefreshCanvas) await onRefreshCanvas();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Sync failed';
+      onConfigUpdate({ syncStatus: 'error', syncError: message });
+      toast.error(`Sync failed: ${message}`);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const handleIndexForAI = async () => {
+    if (isIndexing || !canvasId) return;
+    setIsIndexing(true);
+    try {
+      const result = await skillsApi.indexJiraIssuesForCanvas(canvasId);
+      onConfigUpdate({ isIndexedForAI: true });
+      toast.success(`Indexed ${result.indexed} issue${result.indexed !== 1 ? 's' : ''} for AI`);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Indexing failed';
+      toast.error(`Indexing failed: ${message}`);
+    } finally {
+      setIsIndexing(false);
     }
   };
 
@@ -952,6 +1031,48 @@ function SkillSettings({
               )}
             </div>
           )}
+
+          {/* Sync actions */}
+          <Separator className="my-3" />
+          <div className="space-y-3">
+            {/* Last synced timestamp */}
+            {config?.lastSyncAt && (
+              <p className="text-xs text-muted-foreground">
+                Last synced: {formatDistanceToNow(new Date(config.lastSyncAt), { addSuffix: true })}
+              </p>
+            )}
+
+            {/* Sync error */}
+            {config?.syncStatus === 'error' && config.syncError && (
+              <p className="text-xs text-destructive">{config.syncError}</p>
+            )}
+
+            {/* Sync Now button */}
+            <Button
+              size="sm"
+              variant="outline"
+              className="w-full gap-2"
+              disabled={isSyncing || (!selectedIssues.length && !selectedSpaceKeys.length)}
+              onClick={handleSyncNow}
+            >
+              <RefreshCw className={cn('w-3.5 h-3.5', isSyncing && 'animate-spin')} />
+              {isSyncing ? 'Syncing...' : 'Sync Now'}
+            </Button>
+
+            {/* Index for AI button (Jira only) */}
+            {service === 'jira' && canvasId && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="w-full gap-2"
+                disabled={isIndexing}
+                onClick={handleIndexForAI}
+              >
+                <Sparkles className={cn('w-3.5 h-3.5', isIndexing && 'animate-pulse')} />
+                {isIndexing ? 'Indexing...' : config?.isIndexedForAI ? 'Re-index for AI' : 'Index for AI'}
+              </Button>
+            )}
+          </div>
         </div>
       )}
     </div>
