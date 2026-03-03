@@ -53,6 +53,7 @@ interface CanvasNodeProps {
   connectedAnchors?: AnchorPosition[]; // Which anchors have connections
   onSelect: (nodeId: number, additive?: boolean) => void;
   onUpdate: (nodeId: number, data: Partial<CanvasNodeType>) => void;
+  onDelete: (nodeId: number) => void;
   onResize: (nodeId: number, width: number, height: number) => void;
   onConnectionStart: (nodeId: number, anchor: AnchorPosition) => void;
   onConnectionEnd: (nodeId: number, anchor: AnchorPosition) => void;
@@ -124,6 +125,7 @@ export function CanvasNode({
   connectedAnchors = [],
   onSelect,
   onUpdate,
+  onDelete,
   onResize,
   onConnectionStart,
   onConnectionEnd,
@@ -344,7 +346,10 @@ export function CanvasNode({
               )}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-destructive">
+            <DropdownMenuItem
+              className="text-destructive"
+              onClick={() => onDelete(node.id)}
+            >
               <Trash2 className="h-4 w-4 mr-2" />
               Delete
             </DropdownMenuItem>

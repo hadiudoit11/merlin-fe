@@ -316,6 +316,7 @@ export interface SkillNodeConfig {
     spaceKeys?: string[];
   };
   lastSyncAt?: string;
+  syncFrequency?: 'manual' | 'hourly' | 'daily' | 'weekly';
   syncStatus?: 'idle' | 'syncing' | 'error';
   syncError?: string;
   issueCount?: number;

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useSession } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import { motion } from "framer-motion";
 import { Mail, ArrowRight, Loader2, RefreshCw, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -62,7 +62,9 @@ function VerifyEmailPendingContent() {
         if (response.ok) {
           const data = await response.json();
           if (data.email_verified) {
-            // User is already verified, redirect to login with success message
+            // Email is verified — sign out and redirect to login so
+            // the user gets a fresh JWT with emailVerified: true
+            await signOut({ redirect: false });
             router.replace("/user/login?verified=true");
             return;
           }

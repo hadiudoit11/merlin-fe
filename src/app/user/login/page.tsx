@@ -41,41 +41,16 @@ const LoginContent: React.FC = () => {
   }, [searchParams]);
 
   useEffect(() => {
-    const checkExistingSession = async () => {
-      try {
-        if (status === "authenticated" && session?.accessToken && !session?.error) {
-          const isComingFromVerification = searchParams?.get("verified") === "true";
-
-          // If session says not verified, double-check with the API
-          // (session data might be stale)
-          if (session.user?.emailVerified === false) {
-            const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
-            const response = await fetch(`${backendUrl}/api/v1/auth/check-verification?email=${encodeURIComponent(session.user.email || "")}`);
-
-            if (response.ok) {
-              const data = await response.json();
-              if (data.email_verified) {
-                // Email is actually verified in DB, go to home
-                router.replace("/home");
-                return;
-              }
-            }
-
-            // Only redirect to verify page if not coming from there (prevent loop)
-            if (!isComingFromVerification) {
-              router.replace(`/user/verify-email-pending?email=${encodeURIComponent(session.user.email || "")}`);
-              return;
-            }
-          }
-
-          router.replace("/home");
-        }
-      } catch (err) {
-        console.error("Session check error:", err);
+    if (status === "authenticated" && session?.accessToken && !session?.error) {
+      // JWT callback auto-heals emailVerified from the backend,
+      // so by the time session is available, it reflects the true DB state.
+      if (session.user?.emailVerified === false) {
+        router.replace(`/user/verify-email-pending?email=${encodeURIComponent(session.user.email || "")}`);
+        return;
       }
-    };
-    checkExistingSession();
-  }, [session, status, router, searchParams]);
+      router.replace("/home");
+    }
+  }, [session, status, router]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

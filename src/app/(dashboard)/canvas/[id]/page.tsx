@@ -26,9 +26,10 @@ const Cursors = isLiveblocksEnabled
 const Collaborators = isLiveblocksEnabled
   ? require('@/components/collaboration').Collaborators
   : null;
-import { NodeType, UpdateNodeRequest, AgentNodeConfig, CONNECTION_RULES, WorkflowStage } from '@/types/canvas';
+import { NodeType, UpdateNodeRequest, AgentNodeConfig, CONNECTION_RULES, WorkflowStage, SkillNodeConfig } from '@/types/canvas';
 import { toast } from 'sonner';
 import { getStageFromY, SWIMLANE_HEIGHT } from '@/components/canvas/SwimlaneOverlay';
+import { skillsApi } from '@/lib/skills-api';
 
 export default function CanvasPage() {
   const params = useParams();
@@ -95,6 +96,54 @@ export default function CanvasPage() {
   // MCP Setup dialog state
   const [isMCPDialogOpen, setIsMCPDialogOpen] = useState(false);
 
+  // Auto-create skill nodes for connected skills
+  const hasAutoCreatedSkills = useRef(false);
+
+  useEffect(() => {
+    if (isLoading || !canvas || hasAutoCreatedSkills.current) return;
+    hasAutoCreatedSkills.current = true;
+
+    const autoCreateSkillNodes = async () => {
+      try {
+        const skills = await skillsApi.listSkills();
+        const connectedSkills = skills.filter(s => s.status === 'connected');
+        if (connectedSkills.length === 0) return;
+
+        // Check which services already have skill nodes on this canvas
+        const existingServices = new Set(
+          nodes
+            .filter(n => n.node_type === 'skill')
+            .map(n => (n.config as SkillNodeConfig)?.service)
+            .filter(Boolean)
+        );
+
+        // Find the rightmost node to position new nodes after it
+        const maxX = nodes.length > 0
+          ? Math.max(...nodes.map(n => n.position_x + n.width))
+          : 0;
+        const startX = maxX + 120;
+        let yOffset = 100;
+
+        for (const skill of connectedSkills) {
+          if (existingServices.has(skill.provider)) continue;
+
+          await addNode(
+            'skill',
+            { x: startX, y: yOffset },
+            `${skill.name}`,
+            { service: skill.provider, connected: true }
+          );
+          yOffset += 240;
+        }
+      } catch (err) {
+        // Silently fail - skills might not be available
+        console.warn('Failed to auto-create skill nodes:', err);
+      }
+    };
+
+    autoCreateSkillNodes();
+  }, [isLoading, canvas, nodes, addNode]);
+
   // For adding nodes from toolbar (center of viewport)
   const getViewportCenter = useCallback(() => {
     return {
@@ -155,6 +204,35 @@ export default function CanvasPage() {
       }
     },
     [addNode, addConnection, getViewportCenter]
+  );
+
+  // Add skill node at a specific position (from context menu)
+  const handleAddSkillNode = useCallback(
+    async (provider: string, position: { x: number; y: number }) => {
+      const providerName = provider.charAt(0).toUpperCase() + provider.slice(1);
+      const newNode = await addNode('skill', position, providerName, {
+        service: provider,
+      });
+      if (newNode) {
+        setSettingsNodeId(newNode.id);
+      }
+    },
+    [addNode]
+  );
+
+  // Add skill node at viewport center (from toolbar)
+  const handleToolbarAddSkillNode = useCallback(
+    async (provider: string) => {
+      const center = getViewportCenter();
+      const providerName = provider.charAt(0).toUpperCase() + provider.slice(1);
+      const newNode = await addNode('skill', center, providerName, {
+        service: provider,
+      });
+      if (newNode) {
+        setSettingsNodeId(newNode.id);
+      }
+    },
+    [addNode, getViewportCenter]
   );
 
   const handleNodeUpdate = useCallback(
@@ -538,6 +616,7 @@ export default function CanvasPage() {
         onNodeDelete={deleteNode}
         onNodeAdd={handleNodeAdd}
         onAddAgent={handleAddAgent}
+        onAddSkillNode={handleAddSkillNode}
         onConnectionAdd={handleConnectionAdd}
         onConnectionDelete={deleteConnection}
         onClearSelection={clearSelection}
@@ -579,6 +658,7 @@ export default function CanvasPage() {
           onAutoLayout={handleAutoLayout}
           onUndoLayout={handleUndoLayout}
           canUndoLayout={canUndoLayout}
+          onAddSkillNode={handleToolbarAddSkillNode}
         />
       )}
 

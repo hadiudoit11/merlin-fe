@@ -34,9 +34,6 @@ import {
   Bot,
   Target,
   BarChart3,
-  Globe,
-  Webhook,
-  Server,
   Puzzle,
   Plus,
   Search,
@@ -67,6 +64,7 @@ import {
   LayoutGrid,
   GitBranch,
   Rows,
+  Server,
 } from 'lucide-react';
 import { NodeType } from '@/types/canvas';
 import { colors } from '@/styles/colors';
@@ -111,6 +109,8 @@ interface CanvasFloatingToolbarProps {
   onAutoLayout?: () => void;
   onUndoLayout?: () => void;
   canUndoLayout?: boolean;
+  // Skill node creation
+  onAddSkillNode?: (provider: string) => void;
 }
 
 const NODE_TYPES: Array<{ type: NodeType; label: string; icon: React.ComponentType<{ className?: string }>; color: string }> = [
@@ -119,10 +119,15 @@ const NODE_TYPES: Array<{ type: NodeType; label: string; icon: React.ComponentTy
   { type: 'problem', label: 'Problem Statement', icon: AlertCircle, color: 'text-rose-500' },
   { type: 'objective', label: 'Objective', icon: Target, color: 'text-yellow-500' },
   { type: 'metric', label: 'Metric', icon: BarChart3, color: 'text-cyan-500' },
-  { type: 'api', label: 'API Call', icon: Globe, color: 'text-green-500' },
-  { type: 'webhook', label: 'Webhook', icon: Webhook, color: 'text-orange-500' },
-  { type: 'mcp', label: 'MCP Server', icon: Server, color: 'text-purple-500' },
-  { type: 'skill', label: 'Skill', icon: Puzzle, color: 'text-pink-500' },
+];
+
+const INTEGRATION_ITEMS: Array<{ provider: string; label: string; icon: React.ComponentType<{ className?: string }>; color: string }> = [
+  { provider: 'jira', label: 'Jira', icon: Puzzle, color: 'text-blue-500' },
+  { provider: 'confluence', label: 'Confluence', icon: Puzzle, color: 'text-blue-600' },
+  { provider: 'slack', label: 'Slack', icon: Puzzle, color: 'text-purple-500' },
+  { provider: 'github', label: 'GitHub', icon: Puzzle, color: 'text-gray-700 dark:text-gray-300' },
+  { provider: 'google-docs', label: 'Google Docs', icon: Puzzle, color: 'text-yellow-600' },
+  { provider: 'notion', label: 'Notion', icon: Puzzle, color: 'text-gray-800 dark:text-gray-200' },
 ];
 
 function ToolbarButton({
@@ -196,6 +201,7 @@ export function CanvasFloatingToolbar({
   onAutoLayout,
   onUndoLayout,
   canUndoLayout = false,
+  onAddSkillNode,
 }: CanvasFloatingToolbarProps) {
   const isMobile = useIsMobile();
   const [activeTool, setActiveTool] = useState<'select' | 'pan'>('select');
@@ -463,6 +469,27 @@ export function CanvasFloatingToolbar({
                         </button>
                       );
                     })}
+                    {onAddSkillNode && (
+                      <>
+                        <Separator className="my-1" />
+                        <div className="px-3 py-1">
+                          <span className="text-xs font-medium text-muted-foreground">Integrations</span>
+                        </div>
+                        {INTEGRATION_ITEMS.map((item) => {
+                          const Icon = item.icon;
+                          return (
+                            <button
+                              key={item.provider}
+                              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-accent transition-colors text-left"
+                              onClick={() => onAddSkillNode(item.provider)}
+                            >
+                              <Icon className={cn('h-4 w-4', item.color)} />
+                              <span className="text-sm">{item.label}</span>
+                            </button>
+                          );
+                        })}
+                      </>
+                    )}
                   </div>
                 </PopoverContent>
               </Popover>
@@ -600,6 +627,27 @@ export function CanvasFloatingToolbar({
                         </button>
                       );
                     })}
+                    {onAddSkillNode && (
+                      <>
+                        <Separator className="my-1" />
+                        <div className="px-3 py-1">
+                          <span className="text-xs font-medium text-muted-foreground">Integrations</span>
+                        </div>
+                        {INTEGRATION_ITEMS.map((item) => {
+                          const Icon = item.icon;
+                          return (
+                            <button
+                              key={item.provider}
+                              className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-accent transition-colors text-left"
+                              onClick={() => onAddSkillNode(item.provider)}
+                            >
+                              <Icon className={cn('h-4 w-4', item.color)} />
+                              <span className="text-sm">{item.label}</span>
+                            </button>
+                          );
+                        })}
+                      </>
+                    )}
                   </div>
                 </PopoverContent>
               </Popover>

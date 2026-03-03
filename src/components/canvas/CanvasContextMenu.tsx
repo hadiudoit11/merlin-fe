@@ -4,23 +4,22 @@ import React, { useEffect, useRef } from 'react';
 import { NodeType } from '@/types/canvas';
 import {
   FileText,
-  Webhook,
-  Globe,
-  Server,
   Target,
   BarChart3,
-  Puzzle,
   Bot,
   Sparkles,
   AlertCircle,
+  Puzzle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Separator } from '@/components/ui/separator';
 
 interface CanvasContextMenuProps {
   x: number;
   y: number;
   onAddNode: (type: NodeType) => void;
   onAddAgent?: () => void;
+  onAddSkillNode?: (provider: string) => void;
   onClose: () => void;
 }
 
@@ -62,30 +61,22 @@ const MENU_ITEMS: MenuItemData[] = [
     icon: BarChart3,
     description: 'Track a company metric',
   },
-  {
-    type: 'api',
-    label: 'API Call',
-    icon: Globe,
-    description: 'REST or GraphQL API endpoint',
-  },
-  {
-    type: 'webhook',
-    label: 'Webhook',
-    icon: Webhook,
-    description: 'HTTP webhook receiver',
-  },
-  {
-    type: 'mcp',
-    label: 'MCP Server',
-    icon: Server,
-    description: 'Model Context Protocol connection',
-  },
-  {
-    type: 'skill',
-    label: 'Skill',
-    icon: Puzzle,
-    description: 'Connect to external service',
-  },
+];
+
+interface IntegrationItemData {
+  provider: string;
+  label: string;
+  description: string;
+  color: string;
+}
+
+const INTEGRATION_ITEMS: IntegrationItemData[] = [
+  { provider: 'jira', label: 'Jira', description: 'Import & track Jira issues', color: 'text-blue-500' },
+  { provider: 'confluence', label: 'Confluence', description: 'Sync Confluence spaces', color: 'text-blue-600' },
+  { provider: 'slack', label: 'Slack', description: 'Connect Slack channels', color: 'text-purple-500' },
+  { provider: 'github', label: 'GitHub', description: 'Link GitHub repos', color: 'text-gray-700 dark:text-gray-300' },
+  { provider: 'google-docs', label: 'Google Docs', description: 'Sync Google documents', color: 'text-yellow-600' },
+  { provider: 'notion', label: 'Notion', description: 'Import Notion pages', color: 'text-gray-800 dark:text-gray-200' },
 ];
 
 export function CanvasContextMenu({
@@ -93,6 +84,7 @@ export function CanvasContextMenu({
   y,
   onAddNode,
   onAddAgent,
+  onAddSkillNode,
   onClose,
 }: CanvasContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
@@ -196,6 +188,36 @@ export function CanvasContextMenu({
             </button>
           );
         })}
+
+        {/* Integrations section */}
+        {onAddSkillNode && (
+          <>
+            <Separator className="my-1" />
+            <div className="px-3 py-1.5">
+              <p className="text-xs font-medium text-muted-foreground">Integrations</p>
+            </div>
+            {INTEGRATION_ITEMS.map((item) => (
+              <button
+                key={item.provider}
+                className={cn(
+                  'w-full flex items-start gap-3 px-3 py-2 rounded-md',
+                  'hover:bg-accent hover:text-accent-foreground',
+                  'focus:bg-accent focus:text-accent-foreground focus:outline-none',
+                  'transition-colors text-left'
+                )}
+                onClick={() => onAddSkillNode(item.provider)}
+              >
+                <Puzzle className={cn('h-5 w-5 mt-0.5 flex-shrink-0', item.color)} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium">{item.label}</p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {item.description}
+                  </p>
+                </div>
+              </button>
+            ))}
+          </>
+        )}
       </div>
     </div>
   );

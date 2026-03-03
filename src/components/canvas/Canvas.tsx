@@ -34,6 +34,7 @@ interface CanvasProps {
   onClearSelection: () => void;
   onNodeDoubleClick?: (nodeId: number) => void;
   onAddConnectedNode?: (sourceNodeId: number, nodeType: NodeType) => void;
+  onAddSkillNode?: (provider: string, position: { x: number; y: number }) => void;
   onCanvasInteraction?: () => void;
   className?: string;
 }
@@ -64,6 +65,7 @@ export function Canvas({
   onClearSelection,
   onNodeDoubleClick,
   onAddConnectedNode,
+  onAddSkillNode,
   onCanvasInteraction,
   className,
 }: CanvasProps) {
@@ -273,6 +275,19 @@ export function Canvas({
     closeContextMenu();
   }, [contextMenu, screenToCanvas, snapPosition, onAddAgent, closeContextMenu]);
 
+  // Handle adding skill node from context menu
+  const handleAddSkillNode = useCallback(
+    (provider: string) => {
+      if (contextMenu && onAddSkillNode) {
+        const canvasPos = screenToCanvas(contextMenu.x, contextMenu.y);
+        const snapped = snapPosition(canvasPos.x, canvasPos.y);
+        onAddSkillNode(provider, snapped);
+      }
+      closeContextMenu();
+    },
+    [contextMenu, screenToCanvas, snapPosition, onAddSkillNode, closeContextMenu]
+  );
+
   // Handle drag end for nodes
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
@@ -433,6 +448,7 @@ export function Canvas({
               connectedAnchors={getConnectedAnchors(node.id)}
               onSelect={onNodeSelect}
               onUpdate={onNodeUpdate}
+              onDelete={onNodeDelete}
               onResize={onNodeResize}
               onConnectionStart={handleConnectionStart}
               onConnectionEnd={handleConnectionEnd}
@@ -452,6 +468,7 @@ export function Canvas({
           y={contextMenu.y}
           onAddNode={handleAddNode}
           onAddAgent={handleAddAgent}
+          onAddSkillNode={handleAddSkillNode}
           onClose={closeContextMenu}
         />
       )}

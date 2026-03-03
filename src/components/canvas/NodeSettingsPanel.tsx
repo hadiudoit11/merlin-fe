@@ -638,10 +638,6 @@ function SkillSettings({
     }
   };
 
-  const handleServiceChange = (value: string) => {
-    onConfigUpdate({ service: value, jira: undefined, confluence: undefined });
-  };
-
   const handleProjectChange = (projectKey: string) => {
     onConfigUpdate({
       jira: {
@@ -797,7 +793,7 @@ function SkillSettings({
   if (isCheckingStatus) {
     return (
       <div className="space-y-4">
-        <h3 className="text-sm font-medium text-muted-foreground">Skill Settings</h3>
+        <h3 className="text-sm font-medium text-muted-foreground">Skill Context</h3>
         <div className="flex items-center gap-2 text-sm text-muted-foreground py-4">
           <Loader2 className="w-4 h-4 animate-spin" />
           Checking connection...
@@ -810,18 +806,21 @@ function SkillSettings({
     <div className="space-y-4">
       <h3 className="text-sm font-medium text-muted-foreground">Skill Settings</h3>
 
-      {/* Service selector */}
+      {/* Service identity (read-only) */}
       <div className="space-y-2">
         <Label>Service</Label>
-        <Select value={service} onValueChange={handleServiceChange}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select a service..." />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="jira">Jira</SelectItem>
-            <SelectItem value="confluence">Confluence</SelectItem>
-          </SelectContent>
-        </Select>
+        {service ? (
+          <div className="flex items-center gap-2 px-3 py-2 rounded-md border bg-muted/50">
+            <span className="text-lg">{service === 'jira' ? '\uD83C\uDFAB' : service === 'confluence' ? '\uD83D\uDCD8' : service === 'slack' ? '\uD83D\uDCAC' : service === 'github' ? '\uD83D\uDC19' : service === 'google-docs' ? '\uD83D\uDCC4' : service === 'notion' ? '\uD83D\uDCDD' : '\uD83E\uDDE9'}</span>
+            <span className="text-sm font-medium">{service.charAt(0).toUpperCase() + service.slice(1)}</span>
+          </div>
+        ) : (
+          <div className="rounded-lg border border-dashed border-border p-3">
+            <p className="text-xs text-muted-foreground">
+              No service configured. Delete this node and add a specific integration from the context menu or toolbar.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Connection status + connect button */}
@@ -1031,6 +1030,32 @@ function SkillSettings({
               )}
             </div>
           )}
+
+          {/* Sync frequency */}
+          <Separator className="my-3" />
+          <div className="space-y-2">
+            <Label className="text-xs">Update Frequency</Label>
+            <Select
+              value={config?.syncFrequency || 'manual'}
+              onValueChange={(value) => onConfigUpdate({ syncFrequency: value })}
+            >
+              <SelectTrigger className="h-8 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="manual">Manual only</SelectItem>
+                <SelectItem value="hourly">Every hour</SelectItem>
+                <SelectItem value="daily">Daily</SelectItem>
+                <SelectItem value="weekly">Weekly</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-[11px] text-muted-foreground">
+              {config?.syncFrequency === 'hourly' ? 'Data will refresh every hour' :
+               config?.syncFrequency === 'daily' ? 'Data will refresh once a day' :
+               config?.syncFrequency === 'weekly' ? 'Data will refresh once a week' :
+               'Use the Sync Now button to pull the latest data'}
+            </p>
+          </div>
 
           {/* Sync actions */}
           <Separator className="my-3" />

@@ -42,7 +42,7 @@ interface UseCanvasReturn {
   clearSelection: () => void;
 
   // Node operations
-  addNode: (type: NodeType, position: { x: number; y: number }, name?: string) => Promise<CanvasNode | null>;
+  addNode: (type: NodeType, position: { x: number; y: number }, name?: string, config?: Record<string, unknown>) => Promise<CanvasNode | null>;
   updateNode: (nodeId: number, data: UpdateNodeRequest) => Promise<void>;
   moveNode: (nodeId: number, x: number, y: number) => void;
   moveNodes: (updates: Array<{ id: number; x: number; y: number }>) => void;
@@ -178,7 +178,7 @@ export function useCanvas({ canvasId, autoSave = true, saveDebounceMs = 1000 }: 
 
   // Node operations
   const addNode = useCallback(
-    async (type: NodeType, position: { x: number; y: number }, name?: string): Promise<CanvasNode | null> => {
+    async (type: NodeType, position: { x: number; y: number }, name?: string, config?: Record<string, unknown>): Promise<CanvasNode | null> => {
       try {
         const nodeData: CreateNodeRequest = {
           name: name || `New ${type} node`,
@@ -188,6 +188,7 @@ export function useCanvas({ canvasId, autoSave = true, saveDebounceMs = 1000 }: 
           position_y: position.y,
           width: type === 'doc' ? 400 : 300,
           height: type === 'doc' ? 300 : 200,
+          ...(config ? { config } : {}),
         };
 
         const newNode = await api.createNode(nodeData);

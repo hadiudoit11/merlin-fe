@@ -277,6 +277,24 @@ export const authOptions: NextAuthOptions = {
         }
       }
 
+      // If email not verified in JWT, re-check with backend (session might be stale)
+      if (token.emailVerified === false && token.email) {
+        try {
+          const backendURL = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL;
+          const checkRes = await fetch(
+            `${backendURL}/api/v1/auth/check-verification?email=${encodeURIComponent(token.email as string)}`
+          );
+          if (checkRes.ok) {
+            const checkData = await checkRes.json();
+            if (checkData.email_verified) {
+              token.emailVerified = true;
+            }
+          }
+        } catch {
+          // Silently continue with current value
+        }
+      }
+
       // Check if token is expired for social/credentials providers
       if (token.accessTokenExpires && Date.now() >= token.accessTokenExpires) {
         // Token expired - mark as error so user re-authenticates
